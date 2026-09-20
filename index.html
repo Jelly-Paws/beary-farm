@@ -189,6 +189,83 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .orderCard:disabled .go{background:#ecdcd4}
 .bearFoodTag{font-size:10px;font-weight:700;color:#e2789f;background:#fff0f6;
   border-radius:8px;padding:2px 7px;margin-left:2px;vertical-align:middle}
+  .dishPop{position:fixed;top:12px;right:12px;background:#fff;border-radius:16px;
+  padding:10px 14px;box-shadow:0 6px 0 #f2dfd4,0 0 0 3px #fff0f6 inset;
+  font-size:13px;font-weight:700;color:#6b5145;z-index:45;opacity:0;
+  transform:translateX(20px);transition:opacity .3s,transform .3s;pointer-events:none;
+  display:flex;align-items:center;gap:8px;max-width:78%;line-height:1.4}
+.dishPop.on{opacity:1;transform:translateX(0)}
+.dishPop .de{font-size:22px;flex:none}
+  /* 左侧仓库抽屉 */
+.drawer {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 60vw; /* 只占屏幕宽度的60%，剩下右边是空白，方便点遮罩关闭 */
+  max-width: 320px;
+  height: 100vh;
+  background: #fffefb;
+  z-index: 500;
+  transition: left 0.3s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* 让手机滑动更流畅 */
+  padding: 50px 10px 20px 10px; /* 顶部留出空间放关闭按钮 */
+  box-shadow: 4px 0 20px rgba(107,81,69,.15);
+}
+.drawer.on { left: 0; }
+
+/* 抽屉专用的关闭按钮 */
+.drawerClose {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  width: 36px;
+  height: 36px;
+  background: #f2a0bd;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #dd89a8;
+}
+.drawerClose:active { transform: translateY(2px); }
+
+/* 抽屉里格子的排版，改成每行4个，适应窄屏幕 */
+.drawer .row { grid-template-columns: repeat(4, 1fr); }
+.drawer .row.dish { grid-template-columns: repeat(4, 1fr); }
+.drawer .slot { padding: 6px 2px; font-size: 13px; }
+.drawer .slot .n { font-size: 10px; }
+
+.drawerMask {
+  position: fixed;
+  inset: 0;
+  background: rgba(107,81,69,.4);
+  z-index: 499;
+  display: none;
+}
+.drawerMask.on { display: block; }
+
+.drawerBtn {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 600;
+  background: #f2a0bd;
+  color: #fff;
+  border: 0;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  box-shadow: 0 4px 0 #dd89a8;
+  cursor: pointer;
+}
+.drawerBtn:active { transform: translateY(2px); }
 </style>
 </head>
 <body>
@@ -202,9 +279,16 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
     <div class="pill">🧸 <span id="bears">0</span></div>
   </div>
   <div class="buff" id="buff"></div>
-  <div class="row" id="store"></div>
-  <div class="row dish" id="tray"></div>
-  <button class="sellall" id="sellall" style="display:none"></button>
+  <button class="drawerBtn" id="drawerBtn">🎒 背包</button>
+  <div class="drawerMask" id="drawerMask"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawerClose" id="drawerClose">✖</div>
+    <div class="secttl" style="margin-top:0">📦 物品仓库</div>
+    <div class="row" id="store"></div>
+    <div class="secttl">🍽️ 菜肴仓库</div>
+    <div class="row dish" id="tray"></div>
+    <button class="sellall" id="sellall" style="display:none"></button>
+  </div>
   <div class="tabs">
     <button class="tab on" id="tabFarm">🌱 农场</button>
     <button class="tab" id="tabKitchen">🍳 厨房</button>
@@ -232,10 +316,11 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
     <div class="recipes" id="recipes"></div>
   </div>
 
-  <div id="paneOrder" class="hide">
-    <div class="secttl">📦 订单板 · 每个订单要凑齐三样货</div>
-    <div class="ordersFull" id="ordersFull"></div>
-  </div>
+<div id="paneOrder" class="hide">
+  <div class="secttl">📦 订单板 · 每个订单要凑齐三样货</div>
+  <div class="ordersFull" id="ordersFull"></div>
+  <button class="catb" id="refreshOrders" style="margin-top:4px;background:#c9a9e0;box-shadow:0 4px 0 #ab8ac4">🍯 用 1 蜂蜜刷新订单</button>
+</div>
 
   <div id="paneBear" class="hide">
     <div class="secttl">🧸 小京的肚子</div>
@@ -244,6 +329,15 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
       <div class="fullBar"><i id="fullFill"></i></div>
       <div class="fullTxt" id="fullTxt"></div>
     </div>
+    <div id="expeditionBox" style="display:none; background:#fff; border-radius:16px; padding:12px; box-shadow:0 4px 0 #f2dfd4; margin-bottom:14px;">
+  <div id="expTitle" style="font-size:13px; font-weight:700; color:#7d6558;">🧸 小京正在探险中...</div>
+  <div style="height:10px; background:#f6ead9; border-radius:5px; margin-top:8px; overflow:hidden;">
+    <i id="expProgress" style="display:block; height:100%; width:0; background:linear-gradient(90deg,#ffd88a,#f2a0bd); border-radius:5px; transition:width .3s;"></i>
+  </div>
+  <div id="expTimeLeft" style="font-size:11px; color:#b09a8d; margin-top:6px; text-align:right;">剩余 60 秒</div>
+</div>
+
+    <button class="catb" id="goOut" style="margin-top:4px;background:#f2a0bd;box-shadow:0 4px 0 #dd89a8">🧸 带小京去森林探险</button>
     <div class="secttl">🍽️ 投喂小京（只有小熊料理可以喂哦）</div>
     <div class="seeds" id="feedGrid"></div>
   </div>
@@ -259,8 +353,11 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 <div id="trashTip">拖到这</div>
 <div class="overlay" id="overlay"><div class="panel" id="panel"></div></div>
 <div class="toast" id="toast"></div>
+<div class="dishPop" id="dishPop"></div>
+</div>
 
 <script>
+
 var KEY='kitty-farm-v1';
 var N=16, STOVES=3, BEAR_HONEY=5, BEAR_MAX=3, BEAR_SPEED=2000, BEAR_BONUS=0.10, ORDER_SLOTS=3;
 var POOP_LIMIT=6, ANIMAL_MAX=3;
@@ -274,12 +371,32 @@ var GOODS=[
   {id:'cane',    n:'甘蔗',   e:'🎋', price:100,  kind:'crop', cost:45,  grow:28},
   {id:'corn',    n:'玉米',   e:'🌽', price:190,  kind:'crop', cost:80,  grow:45},
   {id:'pumpkin', n:'南瓜',   e:'🎃', price:760,  kind:'crop', cost:300, grow:90},
+  {id:'tomato',  n:'番茄',   e:'🍅', price:150,  kind:'crop', cost:60,  grow:35},
+  {id:'greens',  n:'青菜',   e:'🥬', price:80,   kind:'crop', cost:30,  grow:25},
+  {id:'potato',  n:'土豆',   e:'🥔', price:320,  kind:'crop', cost:120, grow:70},
+  {id:'peanut',  n:'花生',   e:'🥜', price:400,  kind:'crop', cost:150, grow:75},
   {id:'milk',    n:'牛奶',   e:'🥛', price:260,  kind:'animal'},
   {id:'egg',     n:'鸡蛋',   e:'🥚', price:180,  kind:'animal'},
   {id:'choc',    n:'巧克力', e:'🍫', price:420,  kind:'animal'},
   {id:'sugar',   n:'糖',     e:'🍬', price:260,  kind:'craft'},
   {id:'flour',   n:'面粉',   e:'🍚', price:110,  kind:'craft'},
-  {id:'butter',  n:'黄油',   e:'🧈', price:1200, kind:'craft'}
+  {id:'butter',  n:'黄油',   e:'🧈', price:1200, kind:'craft'},
+  {id:'burp',    n:'饱嗝',   e:'💨', price:2000, kind:'craft'},
+  {id:'ketchup', n:'番茄酱', e:'🥫', price:500,  kind:'craft'},
+  {id:'oil',     n:'豆油',   e:'🟨', price:800,  kind:'craft'},
+  {id:'jam',     n:'草莓酱', e:'🍓', price:180,  kind:'craft'},
+  {id:'mayo',    n:'蛋黄酱', e:'🟠', price:800,  kind:'craft'},
+  // 下面这些是外出带回的材料，不会在订单里出现，不做要求
+  {id:'onion',   n:'洋葱',   e:'🧅', price:200,  kind:'material'},
+  {id:'shrimp',  n:'虾',     e:'🦐', price:500,  kind:'material'},
+  {id:'meat',    n:'肉',     e:'🥩', price:800,  kind:'material'},
+  {id:'patty',   n:'肉饼',   e:'🍖', price:1000, kind:'material'},
+  {id:'cheese',  n:'芝士',   e:'🧀', price:600,  kind:'material'},
+  {id:'ice',     n:'冰块',   e:'🧊', price:100,  kind:'material'},
+  {id:'lemon',   n:'柠檬',   e:'🍋', price:300,  kind:'material'},
+  {id:'alcohol', n:'酒精',   e:'🍺', price:1500, kind:'material'},
+  {id:'snowman', n:'小雪人', e:'⛄', price:500,  kind:'material'},
+  {id:'sparkle_snowman', n:'闪光小雪人', e:'☃️', price:5000, kind:'material'}
 ];
 var CROPS=[];
 GOODS.forEach(function(g){ if(g.kind==='crop') CROPS.push(g); });
@@ -293,18 +410,34 @@ var ANIMALS=[
 var CRAFTS=[
   {from:'cane', need:2, out:'sugar'},
   {from:'rice', need:2, out:'flour'},
-  {from:'milk', need:3, out:'butter'}
+  {from:'milk', need:3, out:'butter'},
+  {from:'tomato', need:3, out:'ketchup'},
+  {from:'peanut', need:3, out:'oil'},
+  {from:'berry', need:2, out:'jam'},
+  {multi:{egg:1,butter:1,lemon:1,sugar:1}, out:'mayo'}
 ];
 
 var DISHES=[
-  {id:'jam',     n:'草莓酱',    e:'🍓', need:{berry:2},                                     time:20,  price:70,   ev:1, feed:14},
-  {id:'salad',   n:'蔬菜沙拉',  e:'🥗', need:{carrot:2,berry:1},                              time:35,  price:220,  ev:2, feed:20},
+  {id:'salad',   n:'蔬菜沙拉',  e:'🥗', need:{greens:2,tomato:1,carrot:1},                   time:35,  price:220,  ev:2, feed:20},
   {id:'soup',    n:'玉米浓汤',  e:'🌽', need:{corn:2,carrot:1},                               time:60,  price:620,  ev:2, feed:28},
   {id:'cocoa',   n:'热可可',    e:'☕', need:{choc:2,milk:2},                                 time:55,  price:2600, ev:2, feed:34},
-  {id:'pie',     n:'南瓜派',    e:'🥧', need:{pumpkin:2,corn:1},                              time:100, price:2600, ev:3, feed:36},
+  {id:'pie',     n:'南瓜派',    e:'🥧', need:{flour:2,pumpkin:3,egg:1,sugar:1},              time:100, price:2600, ev:3, feed:36},
+  {id:'pasta_shrimp', n:'番茄虾仁意面', e:'🍝', need:{flour:2,butter:1,ketchup:1,onion:1,shrimp:1}, time:80, price:3500, ev:3, feed:45},
+  {id:'noodle',  n:'番茄鸡蛋面', e:'🍜', need:{flour:2,tomato:1,egg:1,greens:1},             time:50, price:800,  ev:2, feed:30},
+  {id:'taco',    n:'塔可',       e:'🌮', need:{ketchup:1,meat:1,onion:1,greens:1,oil:1,flour:2}, time:85, price:4000, ev:3, feed:48},
+  {id:'burger',  n:'汉堡',       e:'🍔', need:{ketchup:1,mayo:1,flour:4,patty:2,greens:1,tomato:1,cheese:1,onion:1}, time:120, price:8500, ev:4, feed:55},
+  {id:'toast',   n:'吐司',       e:'🍞', need:{flour:3,honey:1,milk:1,butter:1},             time:45, price:1200, ev:2, feed:35},
+  {id:'fries',   n:'薯条',       e:'🍟', need:{potato:3,oil:1,ketchup:1},                     time:50, price:900,  ev:2, feed:32},
+  {id:'ice3',    n:'三色冰激凌', e:'🍨', need:{ice:3,milk:3,choc:1,honey:1,jam:1},            time:90, price:3800, ev:3, feed:50},
+  {id:'smoothie',n:'草莓沙冰',   e:'🍧', need:{ice:2,milk:1,jam:2},                           time:40, price:1500, ev:2, feed:30},
+  {id:'icecream',n:'冰激凌',     e:'🍦', need:{ice:1,milk:1,sugar:1,egg:1,flour:1},           time:50, price:1100, ev:2, feed:33},
+  {id:'mojito',  n:'莫吉托',     e:'🍸', need:{alcohol:2,lemon:1,burp:1,ice:1},               time:60, price:2200, ev:3, feed:40},
+  // 下面是特殊的小熊料理
   {id:'donut',   n:'小熊甜甜圈',e:'🍩', need:{honey:2,flour:1,sugar:1,egg:1,choc:2,butter:1},  time:110, price:6500, ev:3, feed:50, bear:true},
   {id:'cookie',  n:'曲奇饼',    e:'🍪', need:{choc:2,sugar:1,butter:2,flour:1},               time:95,  price:5500, ev:3, feed:48, bear:true},
   {id:'pudding', n:'焦糖布丁',  e:'🍮', need:{sugar:1,honey:3,egg:3,milk:1},                  time:130, price:9000, ev:4, feed:55, bear:true},
+   {id:'skewer',  n:'丸子串串',  e:'🍡', need:{}, time:0, price:4500, ev:3, feed:100, bear:true, noCook:true},
+  {id:'sparkling',n:'超级起泡酒',e:'🍾', need:{burp:3,alcohol:3,sugar:3,ice:3},                time:150, price:25000,ev:4, feed:100, bear:true, special:'full'},
   {id:'cake',    n:'蛋糕',      e:'🍰', need:{flour:2,egg:2,milk:2,sugar:2,berry:2},          time:150, price:12000,ev:4, feed:60}
 ];
 var BEAR_DISHES = DISHES.filter(function(d){ return d.bear; });
@@ -328,7 +461,8 @@ function fresh(){
     plots:p, store:st, dish:dy, stoves:sv, seen:{berry:1}, orders:[],
     animals:{hen:0,cow:0,pig:0}, anT:{hen:0,cow:0,pig:0},
     poops:[], dung:0, poopT:0,
-    full:0, fullT:0
+    full:0, fullT:0,
+    expedition:null
   };
 }
 
@@ -341,7 +475,9 @@ else{
   if(typeof S.bears!=='number') S.bears = (typeof S.cats==='number' ? S.cats : 0);
   delete S.fish; delete S.cats;
   if(typeof S.full!=='number') S.full=0;
+  if(typeof S.bubbleBuffT!=='number') S.bubbleBuffT=0;
   if(typeof S.fullT!=='number') S.fullT=0;
+  if(typeof S.expedition==='undefined') S.expedition=null;
   if(S.dish) delete S.dish.fishtew;
 
   while(S.plots.length<N) S.plots.push({u:0,c:null,t:0});
@@ -392,10 +528,11 @@ function makeOrder(){
     for(var k=0;k<2;k++) pool.push({id:g.id,kind:'good',isCrop:false,price:g.price});
   });
   DISHES.forEach(function(d){
-  if(!S.seen[d.id]) return;
-  var w = d.bear ? 1 : 2;
-  for(var k=0;k<w;k++) pool.push({id:d.id,kind:'dish',isCrop:false,price:d.price});
-});
+    if(!S.seen[d.id]) return;
+    var w = d.bear ? 0 : 2;
+    if(d.special) w = 0;
+    for(var k=0;k<w;k++) pool.push({id:d.id,kind:'dish',isCrop:false,price:d.price});
+  });
   if(!pool.length) pool=[{id:'berry',kind:'good',isCrop:true,price:12}];
 
   var chosen=[], used={}, tries=0, maxTries=pool.length*4;
@@ -485,6 +622,7 @@ DISHES.forEach(function(d,i){
   var b=document.createElement('button');
   b.className='seed recipe';
   b.addEventListener('click',function(){ cook(i); });
+  if(d.noCook) b.style.display = 'none';
   recipeBox.appendChild(b);
 });
 
@@ -610,14 +748,31 @@ function paint(){
 
   CRAFTS.forEach(function(c,i){
     var b=craftBox.children[i];
-    var fg=byGood(c.from), og=byGood(c.out);
-    var have=S.store[c.from]||0;
-    var key=have+'|'+c.from;
-    if(b.getAttribute('data-k')!==key){
-      b.innerHTML='<span class="e">'+fg.e+og.e+'</span><span class="info"><span class="n">'+fg.n+' → '+og.n+'</span><span class="p">需要 '+c.need+' 个 · 有 '+have+'</span></span>';
-      b.setAttribute('data-k',key);
+    var og=byGood(c.out);
+    if(c.multi){
+      var parts=[], canMake=true, key='m|'+c.out;
+      for(var k in c.multi){
+        var gg=byGood(k);
+        var haveN=S.store[k]||0;
+        key+='|'+k+':'+haveN;
+        parts.push((gg?gg.e+'×':'')+c.multi[k]);
+        if(haveN<c.multi[k]) canMake=false;
+      }
+      if(b.getAttribute('data-k')!==key){
+        b.innerHTML='<span class="e">'+og.e+'</span><span class="info"><span class="n">蛋黄酱</span><span class="p">需要 '+parts.join(' ')+'</span></span>';
+        b.setAttribute('data-k',key);
+      }
+      b.classList.toggle('poor', !canMake);
+    } else {
+      var fg=byGood(c.from);
+      var have=S.store[c.from]||0;
+      var key2=have+'|'+c.from;
+      if(b.getAttribute('data-k')!==key2){
+        b.innerHTML='<span class="e">'+og.e+'</span><span class="info"><span class="n">'+fg.n+' → '+og.n+'</span><span class="p">需要 '+c.need+' 个 · 有 '+have+'</span></span>';
+        b.setAttribute('data-k',key2);
+      }
+      b.classList.toggle('poor', have<c.need);
     }
-    b.classList.toggle('poor', have<c.need);
   });
 
   var anyFree=false;
@@ -766,6 +921,24 @@ function paintBear(){
   var bf=$('bearFace');
   if(bf) bf.classList.toggle('happy', S.bears>0 && S.full>=BEAR_FULL_OK);
 
+  var expBox = $('expeditionBox');
+  if(expBox){
+    if(S.expedition){
+      expBox.style.display = 'block';
+      var now = Date.now();
+      var remain = Math.max(0, S.expedition.endTime - now);
+      var percent = Math.min(100, (1 - remain / S.expedition.duration) * 100);
+      var progEl = $('expProgress');
+      if(progEl) progEl.style.width = percent + '%';
+      var titleEl = $('expTitle');
+      if(titleEl) titleEl.textContent = '🧸 小京正在' + getSeasonName(S.expedition.season) + '探险中...';
+      var timeEl = $('expTimeLeft');
+      if(timeEl) timeEl.textContent = '剩余 ' + Math.ceil(remain / 1000) + ' 秒';
+    } else {
+      expBox.style.display = 'none';
+    }
+  }
+
   BEAR_DISHES.forEach(function(d,i){
     var b=feedGrid.children[i];
     if(!b) return;
@@ -788,9 +961,211 @@ function feedBear(id){
   S.dish[d.id]=n-1;
   S.full=Math.min(BEAR_FULL_MAX,(S.full||0)+d.feed);
   S.fullT=Date.now();
-  if(S.full>=BEAR_FULL_OK) toast('小京吃得饱饱的，开始帮你捡粑粑啦 🧸');
-  else toast('小京吃掉了'+d.e+d.n+'，肚子暖暖的');
+  if(d.special==='full'){
+    S.bubbleBuffT = Date.now() + 3*60*1000;
+    S.full = BEAR_FULL_MAX;
+    toast('🍾 小京喝下超级起泡酒，饱食度瞬间回满，3分钟不掉！');
+  }
   save(); paint();
+  if(S.full>=BEAR_FULL_OK && d.special!=='full') toast('小京吃得饱饱的，开始帮你捡粑粑啦 🧸');
+  else if(d.special!=='full') toast('小京吃掉了'+d.e+d.n+'，肚子暖暖的');
+  if(S.full >= BEAR_FULL_MAX && Math.random() < 0.1){
+    setTimeout(burpEvent, 500);
+  }
+}
+
+var tempPack = {honey:0, dishes:{}};
+
+function openOuting(){
+  tempPack = {honey:0, dishes:{}};
+  renderPackUI();
+}
+
+function renderPackUI(){
+  var totalFeed = 0;
+  for(var k in tempPack.dishes){
+    var d = byDish(k);
+    if(d) totalFeed += d.feed * tempPack.dishes[k];
+  }
+
+  var html = '<div class="ttl">🎒 小京的旅行背包</div>'+
+    '<div class="hintline" style="margin-bottom:14px">需要：总饱食度 ≥ 100 的小熊料理 + 1 罐蜂蜜</div>'+
+    '<div style="font-size:14px;font-weight:700;color:#e2789f;margin-bottom:12px">'+
+    '🍯 蜂蜜：'+tempPack.honey+' / 1<br>'+
+    '🍩 总饱食度：'+totalFeed+' / 100</div>'+
+    '<div class="seeds" style="max-height:180px;overflow-y:auto;margin-bottom:12px">';
+
+  html += '<button class="seed'+(tempPack.honey >= S.honey ? ' poor' : '')+'" id="packHoney">'+
+    '<span class="e">🍯</span><span class="info"><span class="n">蜂蜜</span><span class="p">有 '+S.honey+' 罐 · 装 1 罐</span></span></button>';
+
+  BEAR_DISHES.forEach(function(d){
+    var n = S.dish[d.id] || 0;
+    var packed = tempPack.dishes[d.id] || 0;
+    if(n <= 0) return;
+    var canPack = packed < n;
+    html += '<button class="seed'+(canPack ? '' : ' poor')+'" id="pack_'+d.id+'">'+
+      '<span class="e">'+d.e+'</span><span class="info"><span class="n">'+d.n+'</span><span class="p">有 '+n+' 份 · 装了 '+packed+' · 饱食 +'+d.feed+'</span></span></button>';
+  });
+
+  html += '</div>';
+
+  var canGo = totalFeed >= 100 && tempPack.honey >= 1;
+  html += '<button class="catb" id="packGo" '+(canGo ? '' : 'disabled')+'>'+(canGo ? '出发去森林' : '还没装满哦')+'</button>';
+  html += '<div class="hintline" style="margin-top:10px">点空白处关闭</div>';
+
+  panel.innerHTML = html;
+  overlay.classList.add('on');
+
+  var bh = $('packHoney');
+  if(bh) bh.addEventListener('click', function(){
+    if(tempPack.honey < S.honey) tempPack.honey++;
+    renderPackUI();
+  });
+
+  BEAR_DISHES.forEach(function(d){
+    var b = $('pack_'+d.id);
+    if(b) b.addEventListener('click', function(){
+      var packed = tempPack.dishes[d.id] || 0;
+      var have = S.dish[d.id] || 0;
+      if(packed < have){
+        tempPack.dishes[d.id] = packed + 1;
+        renderPackUI();
+      }
+    });
+  });
+
+  var pg = $('packGo');
+  if(pg) pg.addEventListener('click', function(){
+    if(totalFeed >= 100 && tempPack.honey >= 1){
+      showSeasonSelect();
+    }
+  });
+}
+
+function showSeasonSelect(){
+  panel.innerHTML='<div class="ttl">🍃 去哪个森林探险呢？</div>'+
+    '<button class="catb" id="outSpring" style="margin-top:8px;background:#f7c8dc;box-shadow:0 4px 0 #dd89a8">🌸 春季森林</button>'+
+    '<button class="catb" id="outSummer" style="margin-top:8px;background:#8fd0e8;box-shadow:0 4px 0 #6fb4d0">🏝️ 夏季森林</button>'+
+    '<button class="catb" id="outAutumn" style="margin-top:8px;background:#c9a9e0;box-shadow:0 4px 0 #ab8ac4">🍂 秋季森林</button>'+
+    '<button class="catb" id="outWinter" style="margin-top:8px;background:#b6d99a;box-shadow:0 4px 0 #9bc47e">❄️ 冬季森林</button>'+
+    '<div class="hintline" style="margin-top:12px">点空白处关闭</div>';
+  overlay.classList.add('on');
+
+  $('outSpring').addEventListener('click', function(){ startExpedition('spring'); });
+  $('outSummer').addEventListener('click', function(){ startExpedition('summer'); });
+  $('outAutumn').addEventListener('click', function(){ startExpedition('autumn'); });
+  $('outWinter').addEventListener('click', function(){ startExpedition('winter'); });
+}
+
+function getSeasonName(season){
+  if(season==='spring') return '春季森林';
+  if(season==='summer') return '夏季森林';
+  if(season==='autumn') return '秋季森林';
+  if(season==='winter') return '冬季森林';
+  return '';
+}
+
+function startExpedition(season){
+  overlay.classList.remove('on');
+  panel.innerHTML='';
+
+  S.honey -= tempPack.honey;
+  for(var k in tempPack.dishes){
+    S.dish[k] = (S.dish[k]||0) - tempPack.dishes[k];
+  }
+
+  S.expedition = {
+    season: season,
+    endTime: Date.now() + 60000,
+    duration: 60000
+  };
+
+  toast('小京出发去' + getSeasonName(season) + '探险了，要一分钟才回来哦');
+  save(); paint();
+}
+
+function finishExpedition(){
+  if(!S.expedition) return;
+  var season = S.expedition.season;
+  S.expedition = null;
+
+  var loot = {};
+  var total = 12;
+
+  function addLoot(id, n){
+    if(id === 'skewer'){
+      S.dish[id] = (S.dish[id]||0) + n;
+    } else {
+      S.store[id] = (S.store[id]||0) + n;
+    }
+    S.seen[id] = 1;
+    loot[id] = (loot[id]||0) + n;
+  }
+
+  for(var i=0;i<total;i++){
+    var r = Math.random();
+    if(r < 0.5){
+      addLoot('meat', 1);
+    } else if(r < 0.9){
+      var crop = CROPS[Math.floor(Math.random()*CROPS.length)];
+      addLoot(crop.id, 1);
+    } else {
+      var seasonRoll = Math.random();
+      if(season==='spring'){
+        if(seasonRoll < 0.7) addLoot('lemon', 1);
+        else addLoot('skewer', 1);
+      } else if(season==='summer'){
+        if(seasonRoll < 0.5) addLoot('alcohol', 1);
+        else addLoot('shrimp', 1);
+      } else if(season==='autumn'){
+        if(seasonRoll < 0.5) addLoot('onion', 1);
+        else addLoot('cheese', 1);
+      } else if(season==='winter'){
+        if(seasonRoll < 0.9) addLoot('ice', 1);
+        else if(seasonRoll < 0.999) addLoot('snowman', 1);
+        else addLoot('sparkle_snowman', 1);
+      }
+    }
+  }
+
+  var summary = [];
+  for(var k2 in loot){
+    var g = byGood(k2);
+    summary.push(g.e + g.n + ' ×' + loot[k2]);
+  }
+
+  panel.innerHTML='<div class="ttl">🧸 小京探险回来啦！</div>'+
+    '<div style="font-size:42px;margin:10px 0">🧸</div>'+
+    '<div style="font-size:13px;line-height:1.8;color:#7d6558;font-weight:700">'+
+    '它带着满满一篮子东西跑回来了：<br><br>'+
+    summary.join('，')+'<br><br>'+
+    '小京蹭了蹭你的手，把篮子递给你，眼睛亮亮的。'+
+    '</div>'+
+    '<button class="catb" id="outOk" style="margin-top:14px">摸摸它</button>';
+  overlay.classList.add('on');
+
+  $('outOk').addEventListener('click', function(){
+    overlay.classList.remove('on');
+    panel.innerHTML='';
+    save(); paint();
+  });
+  save(); paint();
+}
+
+function burpEvent(){
+  S.store.burp=(S.store.burp||0)+1;
+  panel.innerHTML='<div class="ttl">💨 嗝——</div>'+
+    '<div style="font-size:44px;margin:6px 0 10px">🧸</div>'+
+    '<div style="font-size:13px;line-height:1.75;color:#7d6558;font-weight:700">'+
+    '小京吃得太饱啦，打了个小小的嗝，有点不好意思地捂住嘴巴。<br><br>'+
+    '它蹭了蹭你，小声说：<br>“谢谢你把我喂得饱饱的，嗝…最喜欢你了。”'+
+    '</div>'+
+    '<button class="catb" id="burpOk" style="margin-top:14px">摸摸它</button>';
+  overlay.classList.add('on');
+  $('burpOk').addEventListener('click', function(){
+    overlay.classList.remove('on');
+    panel.innerHTML='';
+  });
 }
 
 /* ---------- 飘字 ---------- */
@@ -837,6 +1212,16 @@ function toast(msg){
   toastTimer=setTimeout(function(){ t.classList.remove('on'); },1700);
 }
 function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+var dishPopTimer=null;
+function dishNotice(d, got, msg){
+  var el=$('dishPop');
+  if(!el) return;
+  el.innerHTML='<span class="de">'+d.e+'</span><span>'+msg+'</span>';
+  el.classList.add('on');
+  clearTimeout(dishPopTimer);
+  dishPopTimer=setTimeout(function(){ el.classList.remove('on'); },3200);
+}
 
 var CHATTER=['这颗看起来有点像你，圆圆的','小熊说它很满意','泥土的味儿真好啊','又长胖了一点'];
 var GOOD=['漂亮，火候刚好','这一下很稳','闻着就香'];
@@ -1013,12 +1398,24 @@ setInterval(function(){
 /* ---------- 工坊 ---------- */
 function craft(i){
   var c=CRAFTS[i];
-  var fg=byGood(c.from), og=byGood(c.out);
-  if((S.store[c.from]||0)<c.need){ toast(fg.n+'还不够，要 '+c.need+' 个'); return; }
-  S.store[c.from]-=c.need;
+  var og=byGood(c.out);
+  if(c.multi){
+    for(var k in c.multi){
+      if((S.store[k]||0)<c.multi[k]){
+        var gg=byGood(k);
+        toast((gg?gg.n:k)+'还不够，要 '+c.multi[k]+' 个');
+        return;
+      }
+    }
+    for(var k2 in c.multi){ S.store[k2]-=c.multi[k2]; }
+  } else {
+    var fg=byGood(c.from);
+    if((S.store[c.from]||0)<c.need){ toast(fg.n+'还不够，要 '+c.need+' 个'); return; }
+    S.store[c.from]-=c.need;
+  }
   S.store[c.out]=(S.store[c.out]||0)+1;
   S.seen[c.out]=1;
-  toast(fg.e+fg.n+' 变成了 '+og.e+og.n);
+  toast('做好了一份 '+og.e+og.n);
   save(); paint();
 }
 
@@ -1197,7 +1594,7 @@ setInterval(function(){
       S.seen[d.id]=1;
       S.stoves[i]=null;
       stoveState[i]=null;
-      toast(msg);
+      dishNotice(d, got, msg);
       changed=true;
     }
   });
@@ -1263,6 +1660,34 @@ $('sellall').addEventListener('click',function(){
   save(); paint();
 });
 
+$('refreshOrders').addEventListener('click', function(){
+  if(S.honey < 1){ toast('蜂蜜不够呀，去收地攒一点吧'); return; }
+  S.honey--;
+  for(var i=0;i<ORDER_SLOTS;i++) S.orders[i] = makeOrder();
+  toast('订单刷新啦，用掉 1 🍯');
+  save(); paint();
+});
+
+$('drawerBtn').addEventListener('click', function(){
+  $('drawer').classList.add('on');
+  $('drawerMask').classList.add('on');
+});
+$('drawerClose').addEventListener('click', function(){
+  $('drawer').classList.remove('on');
+  $('drawerMask').classList.remove('on');
+});
+$('drawerMask').addEventListener('click', function(){
+  $('drawer').classList.remove('on');
+  $('drawerMask').classList.remove('on');
+});
+
+$('goOut').addEventListener('click', function(){
+  if(S.expedition){
+    toast('小京还在' + getSeasonName(S.expedition.season) + '探险中，等它回来再出发吧 🧸');
+    return;
+  }
+  openOuting();
+});
 $('bearb').addEventListener('click',function(){
   if(S.bears>=BEAR_MAX||S.honey<BEAR_HONEY) return;
   S.honey-=BEAR_HONEY;
@@ -1348,13 +1773,20 @@ setInterval(function(){
   var dt=now-S.fullT;
   S.fullT=now;
   var oldPct=Math.floor(S.full||0);
-  if(dt>0 && S.full>0) S.full=Math.max(0,S.full-dt/BEAR_FULL_DECAY);
+  if(now < S.bubbleBuffT){
+    S.full = BEAR_FULL_MAX;
+  } else if(dt>0 && S.full>0) {
+    S.full=Math.max(0,S.full-dt/BEAR_FULL_DECAY);
+  }
   if(Math.floor(S.full)!==oldPct) save();
 
   if(S.full>=BEAR_FULL_OK && S.poops.length>0 && now-lastAutoPick>900){
     lastAutoPick=now;
     collectPoop(S.poops[0]);
     return;
+  }
+    if(S.expedition && Date.now() >= S.expedition.endTime){
+    finishExpedition();
   }
   paintBear();
 },1000);
