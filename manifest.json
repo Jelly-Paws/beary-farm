@@ -1,0 +1,12 @@
+{
+  "name": "猫猫小农场",
+  "short_name": "猫猫农场",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffeef6",
+  "theme_color": "#f2a0bd",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

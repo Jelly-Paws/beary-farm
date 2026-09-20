@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#f2a0bd">
+<link rel="apple-touch-icon" href="icon.png">
+<title>小熊小农场</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:14px 12px 46px;min-height:100vh;
+  background:linear-gradient(180deg,#ffeef6 0%,#fdf4e6 55%,#e9f7e4 100%);
+  background-attachment:fixed;
+  font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  color:#6b5145;display:flex;justify-content:center}
+.wrap{width:100%;max-width:500px}
+h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacing:2px}
+.sub{text-align:center;font-size:12px;color:#bb9c8f;margin-bottom:12px}
+.bar{display:flex;gap:6px;margin-bottom:8px}
+.pill{flex:1;background:#fff;border-radius:18px;padding:8px 2px;text-align:center;
+  font-size:13px;font-weight:700;box-shadow:0 4px 0 #f2dfd4;white-space:nowrap}
+.pill.tap{cursor:pointer}
+.pill.tap:active{transform:translateY(2px)}
+.buff{text-align:center;font-size:12px;font-weight:700;color:#c98aa4;margin:0 0 10px;
+  min-height:16px;line-height:1.5}
+.row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:7px}
+.row.dish{grid-template-columns:repeat(4,1fr);margin-bottom:8px}
+.slot{background:#fff;border-radius:13px;padding:7px 2px;text-align:center;
+  box-shadow:0 3px 0 #f2dfd4;font-size:15px;font-weight:700;color:#7d6558;line-height:1.15}
+.slot .n{font-size:11px;margin-left:2px;color:#b09a8d}
+.slot.zero{opacity:.35}
+.slot.d{background:#fffbf0}
+.sellall{width:100%;border:0;border-radius:15px;padding:10px;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:700;background:#fff6e5;color:#c2913f;box-shadow:0 4px 0 #f3e6cd;
+  margin-bottom:12px}
+.sellall:disabled{opacity:.45;cursor:default}
+.sellall:active:not(:disabled){transform:translateY(2px)}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tab{flex:1;border:0;border-radius:14px;padding:10px 2px;cursor:pointer;font-family:inherit;
+  font-size:12px;font-weight:800;background:#fff;color:#bda99c;box-shadow:0 4px 0 #f2dfd4;
+  white-space:nowrap}
+.tab.on{background:#f2a0bd;color:#fff;box-shadow:0 4px 0 #dd89a8}
+.tab:active{transform:translateY(2px)}
+.hide{display:none}
+.secttl{font-size:12px;font-weight:800;color:#bda99c;margin:6px 0 7px;letter-spacing:1px}
+.field{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.plot{position:relative;aspect-ratio:1/1;border:0;border-radius:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1;
+  background:#e4d3ba;box-shadow:inset 0 -6px 0 rgba(0,0,0,.07);overflow:hidden;
+  transition:transform .12s ease;padding:0;color:#8d7565}
+.plot:active{transform:scale(.94)}
+.plot.empty{color:#c4ae95;font-size:26px}
+.plot.growing{background:#d3e9bd}
+.plot.ready{background:#ffefae}
+.plot.ready .em{display:block;animation:bob .8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+.plot.locked{background:#efe7dc;color:#b6a498;font-size:11px;font-weight:700;
+  flex-direction:column;gap:3px}
+.plot .poop{position:absolute;right:1px;bottom:1px;font-size:19px;line-height:1;z-index:2;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
+.prog{position:absolute;left:9px;right:9px;bottom:7px;height:6px;border-radius:8px;
+  background:rgba(255,255,255,.75);overflow:hidden}
+.prog i{display:block;height:100%;width:0;border-radius:8px;
+  background:linear-gradient(90deg,#9ada6f,#6cc3a0);transition:width .15s linear}
+.seeds,.recipes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.seed{border:0;cursor:pointer;border-radius:16px;padding:9px 8px;background:#fff;
+  box-shadow:0 4px 0 #f2dfd4;font-family:inherit;color:#6b5145;display:flex;
+  align-items:center;gap:7px;text-align:left;transition:transform .12s}
+.seed:active{transform:translateY(2px);box-shadow:0 2px 0 #f2dfd4}
+.seed .e{font-size:21px;flex:none}
+.seed .info{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.seed .n{font-size:13px;font-weight:700}
+.seed .p{font-size:11px;color:#b09a8d}
+.seed.on{background:#fff0f6;box-shadow:0 0 0 3px #f7c8dc,0 4px 0 #f2dfd4}
+.seed.poor{opacity:.45}
+.seed.recipe{background:#fffaf1}
+.crafts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stoves{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.stove{position:relative;background:#fff;border-radius:16px;padding:10px 6px;overflow:hidden;
+  box-shadow:0 4px 0 #f2dfd4;font-size:11px;font-weight:700;color:#7d6558;text-align:center;
+  min-height:62px}
+.stove .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#fff3d6;z-index:0;
+  transition:width .15s linear}
+.stove .txt{position:relative;z-index:1;line-height:1.35}
+.anbox{display:flex;flex-direction:column;gap:6px;margin-bottom:9px}
+.anrow{background:#fff;border-radius:14px;padding:9px 11px;font-size:12px;font-weight:700;
+  color:#7d6558;box-shadow:0 3px 0 #f2dfd4;line-height:1.45}
+.anrow.bad{background:#fff2f2;color:#c97070;box-shadow:0 3px 0 #f6dede}
+.anrow .em{font-size:16px;margin-right:3px}
+.buyb{width:100%;border:0;border-radius:16px;padding:10px 12px;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:700;background:#fff;color:#6b5145;box-shadow:0 4px 0 #f2dfd4;
+  margin-bottom:7px;display:flex;align-items:center;gap:8px;text-align:left}
+.buyb:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #f2dfd4}
+.buyb:disabled{opacity:.45}
+.buyb .be{font-size:19px}
+.buyb .bn{flex:1}
+.buyb .bp{color:#c2913f;white-space:nowrap}
+.catb{width:100%;border:0;border-radius:18px;padding:12px;cursor:pointer;font-family:inherit;
+  font-size:14px;font-weight:700;color:#fff;background:#f2a0bd;box-shadow:0 4px 0 #dd89a8}
+.catb:disabled{opacity:.45;cursor:default}
+.catb:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #dd89a8}
+.toggle{width:100%;margin-top:9px;border:0;border-radius:18px;padding:11px;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:700;background:#fff;color:#b09a8d;
+  box-shadow:0 4px 0 #f2dfd4}
+.toggle.on{background:#eefaf0;color:#5aa06f;box-shadow:0 4px 0 #d6eedd}
+.toggle:active{transform:translateY(2px)}
+.foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;
+  font-size:12px;color:#bda99c;gap:10px}
+.foot button{border:0;background:none;font-family:inherit;font-size:12px;color:#bda99c;
+  text-decoration:underline;cursor:pointer}
+.overlay{position:fixed;inset:0;background:rgba(107,81,69,.45);display:none;
+  align-items:center;justify-content:center;z-index:30;padding:18px}
+.overlay.on{display:flex}
+.panel{background:#fff;border-radius:26px;padding:18px;width:100%;max-width:330px;
+  box-shadow:0 10px 0 rgba(0,0,0,.08);text-align:center}
+.panel .ttl{font-size:15px;font-weight:800;color:#c96a8c;margin-bottom:12px;line-height:1.4}
+.panel .big{font-size:24px}
+.panel .hintline{font-size:12px;color:#b09a8d;margin-top:10px}
+.gbar{position:relative;height:38px;border-radius:19px;background:#f6ead9;overflow:hidden;
+  cursor:pointer;touch-action:none}
+.gbar .zone{position:absolute;top:0;bottom:0;background:#bfe6a4}
+.gbar .needle{position:absolute;top:4px;bottom:4px;width:5px;border-radius:3px;background:#e2789f}
+.gline{position:relative;height:160px;background:#fbf3e8;border-radius:18px;overflow:hidden;
+  touch-action:none}
+.gline i{position:absolute;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;
+  background:#fff;box-shadow:0 0 0 3px #f2dfd4;transition:background .1s,box-shadow .1s}
+.gline i.on{background:#f7c8dc;box-shadow:0 0 0 3px #e2789f}
+.gline i.target{background:#fff0f6;box-shadow:0 0 0 4px #f7c8dc;animation:tp .9s ease-in-out infinite}
+@keyframes tp{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.gline i b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#c9b0a4;font-style:normal}
+.pop{position:fixed;transform:translate(-50%,0);font-size:15px;font-weight:800;
+  color:#e2789f;pointer-events:none;animation:fly 1s ease-out forwards;
+  text-shadow:0 1px 0 #fff;z-index:9}
+@keyframes fly{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}
+  25%{opacity:1}100%{opacity:0;transform:translate(-50%,-46px) scale(1.06)}}
+.catfly{position:fixed;transform:translate(-50%,-50%);font-size:22px;pointer-events:none;
+  z-index:8;animation:catpop .7s ease-out forwards}
+@keyframes catpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  40%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}
+  100%{opacity:0;transform:translate(-50%,-95%) scale(1)}}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+  background:rgba(107,81,69,.92);color:#fff;font-size:13px;padding:9px 16px;
+  border-radius:16px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:40;
+  max-width:86%;text-align:center}
+.toast.on{opacity:1}
+#trash{position:fixed;right:14px;bottom:14px;width:62px;height:62px;border-radius:50%;
+  background:#fff;box-shadow:0 5px 0 #f2dfd4,0 0 0 3px #ffeef5 inset;
+  display:flex;align-items:center;justify-content:center;font-size:28px;z-index:20;
+  transition:transform .15s,box-shadow .15s,opacity .15s;opacity:.7;pointer-events:none}
+#trash.hot{opacity:1}
+#trash.over{transform:scale(1.18);box-shadow:0 5px 0 #f2dfd4,0 0 0 5px #f7c8dc}
+#trashTip{position:fixed;right:16px;bottom:80px;font-size:11px;font-weight:700;
+  color:#d6b6c6;pointer-events:none;z-index:20;text-align:center;width:60px}
+.poopGhost{position:fixed;transform:translate(-50%,-50%);font-size:30px;
+  pointer-events:none;z-index:50;filter:drop-shadow(0 3px 3px rgba(0,0,0,.2))}
+/* 小熊投喂页 */
+.fullWrap{background:#fff;border-radius:20px;padding:14px 14px 12px;box-shadow:0 4px 0 #f2dfd4;
+  margin-bottom:14px;text-align:center}
+.bearBig{font-size:54px;line-height:1;margin:2px 0 12px;display:inline-block;
+  transition:transform .2s}
+.bearBig.happy{animation:bearbob 1.2s ease-in-out infinite}
+@keyframes bearbob{0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-6px) scale(1.07)}}
+.fullBar{height:20px;border-radius:10px;background:#f6ead9;overflow:hidden;margin-bottom:9px}
+.fullBar i{display:block;height:100%;width:0;border-radius:10px;
+  background:linear-gradient(90deg,#ffd88a,#f2a0bd);transition:width .4s ease}
+.fullTxt{font-size:12px;font-weight:700;color:#b09a8d;line-height:1.55}
+/* 订单页 */
+.ordersFull{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.orderCard{background:#fff;border:0;border-radius:16px;padding:12px 13px;
+  box-shadow:0 4px 0 #f2dfd4;font-family:inherit;cursor:pointer;text-align:left;
+  display:flex;flex-direction:column;gap:9px;color:#6b5145}
+.orderCard:disabled{opacity:.55;cursor:default}
+.orderCard:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #f2dfd4}
+.orderItems{display:flex;flex-direction:column;gap:5px}
+.orderItem{display:flex;align-items:center;gap:7px;font-size:13px;
+  font-weight:700;color:#6b5145;line-height:1.2}
+.orderItem .oe{font-size:18px;flex:none;width:22px;text-align:center}
+.orderItem .on{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.orderItem .oc{font-size:12px;color:#c9b0a4;white-space:nowrap}
+.orderItem.done .oc{color:#5aa06f}
+.orderBottom{display:flex;justify-content:space-between;align-items:center;
+  border-top:1px dashed #f2dfd4;padding-top:8px}
+.orderBottom .pay{font-size:14px;font-weight:800;color:#e2789f}
+.orderBottom .go{background:#f7c8dc;color:#fff;border-radius:12px;padding:5px 13px;
+  font-size:12px;font-weight:700}
+.orderCard:disabled .go{background:#ecdcd4}
+.bearFoodTag{font-size:10px;font-weight:700;color:#e2789f;background:#fff0f6;
+  border-radius:8px;padding:2px 7px;margin-left:2px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>小熊小农场</h1>
+  <div class="sub">种地 · 喂动物 · 捡粑粑 · 做饭 · 喂小京</div>
+  <div class="bar">
+    <div class="pill">🪙 <span id="coins">0</span></div>
+    <div class="pill tap" id="gemsPill">💎 <span id="gems">0</span></div>
+    <div class="pill">🍯 <span id="honey">0</span></div>
+    <div class="pill">🧸 <span id="bears">0</span></div>
+  </div>
+  <div class="buff" id="buff"></div>
+  <div class="row" id="store"></div>
+  <div class="row dish" id="tray"></div>
+  <button class="sellall" id="sellall" style="display:none"></button>
+  <div class="tabs">
+    <button class="tab on" id="tabFarm">🌱 农场</button>
+    <button class="tab" id="tabKitchen">🍳 厨房</button>
+    <button class="tab" id="tabOrder">📦 订单</button>
+    <button class="tab" id="tabBear">🧸 小京</button>
+  </div>
+
+  <div id="paneFarm">
+    <div class="field" id="field"></div>
+    <div class="seeds" id="seeds"></div>
+    <div class="secttl">🐾 牧场</div>
+    <div class="anbox" id="anBox"></div>
+    <div id="shop"></div>
+    <button class="catb" id="fertb" style="margin-top:4px;background:#b6d99a;box-shadow:0 4px 0 #9bc47e">🪣 施肥</button>
+    <button class="catb" id="bearb" style="margin-top:9px"></button>
+    <button class="toggle" id="auto"></button>
+  </div>
+
+  <div id="paneKitchen" class="hide">
+    <div class="secttl">🏭 工坊</div>
+    <div class="crafts" id="crafts"></div>
+    <div class="secttl">🍳 灶台</div>
+    <div class="stoves" id="stoves"></div>
+    <div class="secttl">📖 菜谱</div>
+    <div class="recipes" id="recipes"></div>
+  </div>
+
+  <div id="paneOrder" class="hide">
+    <div class="secttl">📦 订单板 · 每个订单要凑齐三样货</div>
+    <div class="ordersFull" id="ordersFull"></div>
+  </div>
+
+  <div id="paneBear" class="hide">
+    <div class="secttl">🧸 小京的肚子</div>
+    <div class="fullWrap">
+      <div class="bearBig" id="bearFace">🧸</div>
+      <div class="fullBar"><i id="fullFill"></i></div>
+      <div class="fullTxt" id="fullTxt"></div>
+    </div>
+    <div class="secttl">🍽️ 投喂小京（只有小熊料理可以喂哦）</div>
+    <div class="seeds" id="feedGrid"></div>
+  </div>
+
+<div class="foot">
+  <span id="tip"></span>
+  <button id="exportSave">导出</button>
+  <button id="importSave">导入</button>
+  <button id="reset">重来</button>
+</div>
+
+<div id="trash">🗑️</div>
+<div id="trashTip">拖到这</div>
+<div class="overlay" id="overlay"><div class="panel" id="panel"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+var KEY='kitty-farm-v1';
+var N=16, STOVES=3, BEAR_HONEY=5, BEAR_MAX=3, BEAR_SPEED=2000, BEAR_BONUS=0.10, ORDER_SLOTS=3;
+var POOP_LIMIT=6, ANIMAL_MAX=3;
+var BEAR_FULL_MAX=100, BEAR_FULL_OK=60, BEAR_FULL_DECAY=3000;
+
+/* ---------- 物品表 ---------- */
+var GOODS=[
+  {id:'berry',   n:'草莓',   e:'🍓', price:12,   kind:'crop', cost:5,   grow:8 },
+  {id:'rice',    n:'水稻',   e:'🌾', price:25,   kind:'crop', cost:8,   grow:10},
+  {id:'carrot',  n:'胡萝卜', e:'🥕', price:55,   kind:'crop', cost:25,  grow:20},
+  {id:'cane',    n:'甘蔗',   e:'🎋', price:100,  kind:'crop', cost:45,  grow:28},
+  {id:'corn',    n:'玉米',   e:'🌽', price:190,  kind:'crop', cost:80,  grow:45},
+  {id:'pumpkin', n:'南瓜',   e:'🎃', price:760,  kind:'crop', cost:300, grow:90},
+  {id:'milk',    n:'牛奶',   e:'🥛', price:260,  kind:'animal'},
+  {id:'egg',     n:'鸡蛋',   e:'🥚', price:180,  kind:'animal'},
+  {id:'choc',    n:'巧克力', e:'🍫', price:420,  kind:'animal'},
+  {id:'sugar',   n:'糖',     e:'🍬', price:260,  kind:'craft'},
+  {id:'flour',   n:'面粉',   e:'🍚', price:110,  kind:'craft'},
+  {id:'butter',  n:'黄油',   e:'🧈', price:1200, kind:'craft'}
+];
+var CROPS=[];
+GOODS.forEach(function(g){ if(g.kind==='crop') CROPS.push(g); });
+
+var ANIMALS=[
+  {id:'hen', n:'小鸡', e:'🐥', price:2000,  feed:'rice',   out:'egg',  time:12, fname:'水稻'},
+  {id:'cow', n:'牛',   e:'🐄', price:8000,  feed:'carrot', out:'milk', time:18, fname:'胡萝卜'},
+  {id:'pig', n:'小猪', e:'🐖', price:30000, feed:'corn',   out:'choc', time:26, fname:'玉米'}
+];
+
+var CRAFTS=[
+  {from:'cane', need:2, out:'sugar'},
+  {from:'rice', need:2, out:'flour'},
+  {from:'milk', need:3, out:'butter'}
+];
+
+var DISHES=[
+  {id:'jam',     n:'草莓酱',    e:'🍓', need:{berry:2},                                     time:20,  price:70,   ev:1, feed:14},
+  {id:'salad',   n:'蔬菜沙拉',  e:'🥗', need:{carrot:2,berry:1},                              time:35,  price:220,  ev:2, feed:20},
+  {id:'soup',    n:'玉米浓汤',  e:'🌽', need:{corn:2,carrot:1},                               time:60,  price:620,  ev:2, feed:28},
+  {id:'cocoa',   n:'热可可',    e:'☕', need:{choc:2,milk:2},                                 time:55,  price:2600, ev:2, feed:34},
+  {id:'pie',     n:'南瓜派',    e:'🥧', need:{pumpkin:2,corn:1},                              time:100, price:2600, ev:3, feed:36},
+  {id:'donut',   n:'小熊甜甜圈',e:'🍩', need:{honey:2,flour:1,sugar:1,egg:1,choc:2,butter:1},  time:110, price:6500, ev:3, feed:50, bear:true},
+  {id:'cookie',  n:'曲奇饼',    e:'🍪', need:{choc:2,sugar:1,butter:2,flour:1},               time:95,  price:5500, ev:3, feed:48, bear:true},
+  {id:'pudding', n:'焦糖布丁',  e:'🍮', need:{sugar:1,honey:3,egg:3,milk:1},                  time:130, price:9000, ev:4, feed:55, bear:true},
+  {id:'cake',    n:'蛋糕',      e:'🍰', need:{flour:2,egg:2,milk:2,sugar:2,berry:2},          time:150, price:12000,ev:4, feed:60}
+];
+var BEAR_DISHES = DISHES.filter(function(d){ return d.bear; });
+
+var PLOT_PRICE=[0,0,0,0, 60,120,200,320, 500,780,1200,1800, 2700,4000,6000,9000];
+
+function byGood(id){ for(var i=0;i<GOODS.length;i++){ if(GOODS[i].id===id) return GOODS[i]; } return null; }
+function byId(id){ for(var i=0;i<CROPS.length;i++){ if(CROPS[i].id===id) return CROPS[i]; } return null; }
+function byDish(id){ for(var i=0;i<DISHES.length;i++){ if(DISHES[i].id===id) return DISHES[i]; } return null; }
+function byAnimal(id){ for(var i=0;i<ANIMALS.length;i++){ if(ANIMALS[i].id===id) return ANIMALS[i]; } return null; }
+
+/* ---------- 存档 ---------- */
+function fresh(){
+  var p=[],st={},dy={},sv=[];
+  for(var i=0;i<N;i++) p.push({u:i<4?1:0,c:null,t:0});
+  GOODS.forEach(function(g){ st[g.id]=0; });
+  DISHES.forEach(function(d){ dy[d.id]=0; });
+  for(var k=0;k<STOVES;k++) sv.push(null);
+  return {
+    coins:20, honey:0, gems:0, bears:0, sel:0, auto:1,
+    plots:p, store:st, dish:dy, stoves:sv, seen:{berry:1}, orders:[],
+    animals:{hen:0,cow:0,pig:0}, anT:{hen:0,cow:0,pig:0},
+    poops:[], dung:0, poopT:0,
+    full:0, fullT:0
+  };
+}
+
+var S=null;
+try{ S=JSON.parse(localStorage.getItem(KEY)); }catch(e){ S=null; }
+if(!S||!S.plots){ S=fresh(); }
+else{
+  /* 旧字段迁移：鱼→蜂蜜，猫→小熊 */
+  if(typeof S.honey!=='number') S.honey = (typeof S.fish==='number' ? S.fish : 0);
+  if(typeof S.bears!=='number') S.bears = (typeof S.cats==='number' ? S.cats : 0);
+  delete S.fish; delete S.cats;
+  if(typeof S.full!=='number') S.full=0;
+  if(typeof S.fullT!=='number') S.fullT=0;
+  if(S.dish) delete S.dish.fishtew;
+
+  while(S.plots.length<N) S.plots.push({u:0,c:null,t:0});
+  if(S.plots.length>N) S.plots.length=N;
+  if(typeof S.auto==='undefined') S.auto=1;
+  if(typeof S.sel!=='number') S.sel=0;
+  if(typeof S.gems!=='number') S.gems=0;
+  if(typeof S.dung!=='number') S.dung=0;
+  if(typeof S.poopT!=='number') S.poopT=0;
+  if(!S.store) S.store={};
+  GOODS.forEach(function(g){ if(typeof S.store[g.id]!=='number') S.store[g.id]=0; });
+  if(!S.dish) S.dish={};
+  DISHES.forEach(function(d){ if(typeof S.dish[d.id]!=='number') S.dish[d.id]=0; });
+  S.stoves = S.stoves || [];
+  while(S.stoves.length<STOVES) S.stoves.push(null);
+  if(S.stoves.length>STOVES) S.stoves.length=STOVES;
+  if(!S.seen) S.seen={berry:1};
+  if(!S.animals) S.animals={hen:0,cow:0,pig:0};
+  ANIMALS.forEach(function(a){ if(typeof S.animals[a.id]!=='number') S.animals[a.id]=0; });
+  if(!S.anT) S.anT={hen:0,cow:0,pig:0};
+  ANIMALS.forEach(function(a){ if(typeof S.anT[a.id]!=='number') S.anT[a.id]=0; });
+  if(!S.poops || !S.poops.length) S.poops=[];
+  S.poops = S.poops.filter(function(x){ return x>=0 && x<N && S.plots[x] && S.plots[x].u; });
+  delete S.house; delete S.own; delete S.walls; delete S.floors;
+}
+
+/* 订单结构迁移：旧单条结构→新三条结构 */
+if(!S.orders || !Array.isArray(S.orders)) S.orders=[];
+S.orders = S.orders.filter(function(o){ return o && Array.isArray(o.items) && o.items.length>0; });
+
+function money(x){ return Math.round(x*(1+S.bears*BEAR_BONUS)); }
+function haveMat(k){ return k==='honey' ? S.honey : (S.store[k]||0); }
+function takeMat(k,n){ if(k==='honey') S.honey-=n; else S.store[k]=(S.store[k]||0)-n; }
+function animalTotal(){ return S.animals.hen+S.animals.cow+S.animals.pig; }
+function animalsAngry(){ return S.poops.length>=POOP_LIMIT; }
+
+/* ---------- 订单：每个订单要三样货 ---------- */
+function makeOrder(){
+  var pool=[];
+  CROPS.forEach(function(c,i){
+    if(!S.seen[c.id]) return;
+    var w=[6,5,4,3,2,1][i]||1;
+    for(var k=0;k<w;k++) pool.push({id:c.id,kind:'good',isCrop:true,price:c.price});
+  });
+  GOODS.forEach(function(g){
+    if(g.kind==='crop') return;
+    if(!S.seen[g.id]) return;
+    for(var k=0;k<2;k++) pool.push({id:g.id,kind:'good',isCrop:false,price:g.price});
+  });
+  DISHES.forEach(function(d){
+  if(!S.seen[d.id]) return;
+  var w = d.bear ? 1 : 2;
+  for(var k=0;k<w;k++) pool.push({id:d.id,kind:'dish',isCrop:false,price:d.price});
+});
+  if(!pool.length) pool=[{id:'berry',kind:'good',isCrop:true,price:12}];
+
+  var chosen=[], used={}, tries=0, maxTries=pool.length*4;
+  while(chosen.length<3 && tries<maxTries){
+    tries++;
+    var o=pool[Math.floor(Math.random()*pool.length)];
+    var key=o.kind+':'+o.id;
+    if(used[key]) continue;
+    used[key]=1;
+    var maxNeed = o.kind==='dish' ? 1 : (o.isCrop ? 3 : 2);
+    var need = 1+Math.floor(Math.random()*maxNeed);
+    chosen.push({id:o.id, kind:o.kind, need:need, price:o.price});
+  }
+  var fb=pool[0];
+  while(chosen.length<3){
+    chosen.push({id:fb.id, kind:fb.kind, need:2, price:fb.price});
+  }
+  var base=0;
+  chosen.forEach(function(it){ base += it.price*it.need; });
+  var pay = Math.round(base*(1.5+Math.random()*0.5));
+  return {items:chosen, pay:pay};
+}
+
+function orderItemOf(it){ return it.kind==='good' ? byGood(it.id) : byDish(it.id); }
+function orderItemHave(it){ return it.kind==='good' ? (S.store[it.id]||0) : (S.dish[it.id]||0); }
+function orderReady(o){
+  for(var i=0;i<o.items.length;i++){
+    if(orderItemHave(o.items[i]) < o.items[i].need) return false;
+  }
+  return true;
+}
+function orderTake(o){
+  o.items.forEach(function(it){
+    if(it.kind==='good') S.store[it.id]=(S.store[it.id]||0)-it.need;
+    else S.dish[it.id]=(S.dish[it.id]||0)-it.need;
+  });
+}
+
+while(S.orders.length<ORDER_SLOTS) S.orders.push(makeOrder());
+if(S.orders.length>ORDER_SLOTS) S.orders.length=ORDER_SLOTS;
+
+/* ---------- DOM 搭建 ---------- */
+function $(id){return document.getElementById(id);}
+var field=$('field'), seedsBox=$('seeds'), ordersFull=$('ordersFull'),
+    storeBox=$('store'), trayBox=$('tray'), stoveBox=$('stoves'), recipeBox=$('recipes'),
+    craftBox=$('crafts'), anBox=$('anBox'), shopBox=$('shop'),
+    feedGrid=$('feedGrid');
+var plotEls=[], cellState=[], storeEls=[], trayEls=[], stoveEls=[], stoveState=[],
+    orderEls=[], bearNext=[];
+
+for(var i=0;i<N;i++){
+  (function(i){
+    var b=document.createElement('button');
+    b.className='plot';
+    b.innerHTML='<span class="em"></span>';
+    b.addEventListener('click',function(){ tapPlot(i); });
+    b.addEventListener('pointerdown',function(e){ dragStart(e,i); });
+    field.appendChild(b);
+    plotEls.push(b);
+  })(i);
+}
+
+GOODS.forEach(function(g,i){
+  var s=document.createElement('div'); s.className='slot'; storeBox.appendChild(s); storeEls.push(s);
+});
+
+CROPS.forEach(function(c,i){
+  var b=document.createElement('button');
+  b.className='seed';
+  b.innerHTML='<span class="e">'+c.e+'</span><span class="info"><span class="n">'+c.n+'</span><span class="p">🪙'+c.cost+' · '+c.grow+'秒</span></span>';
+  b.addEventListener('click',function(){ S.sel=i; save(); paint(); });
+  seedsBox.appendChild(b);
+});
+
+DISHES.forEach(function(d){
+  var s=document.createElement('div'); s.className='slot d'; trayBox.appendChild(s); trayEls.push(s);
+});
+
+CRAFTS.forEach(function(c,i){
+  var b=document.createElement('button');
+  b.className='seed';
+  b.addEventListener('click',function(){ craft(i); });
+  craftBox.appendChild(b);
+});
+
+DISHES.forEach(function(d,i){
+  var b=document.createElement('button');
+  b.className='seed recipe';
+  b.addEventListener('click',function(){ cook(i); });
+  recipeBox.appendChild(b);
+});
+
+for(var k=0;k<STOVES;k++){
+  (function(){
+    var s=document.createElement('div');
+    s.className='stove';
+    s.innerHTML='<div class="fill"></div><div class="txt">闲着</div>';
+    stoveBox.appendChild(s);
+    stoveEls.push(s);
+  })();
+}
+for(var k2=0;k2<ORDER_SLOTS;k2++){
+  (function(k2){
+    var b=document.createElement('button');
+    b.className='orderCard';
+    b.addEventListener('click',function(){ deliver(k2); });
+    ordersFull.appendChild(b);
+    orderEls.push(b);
+  })(k2);
+}
+ANIMALS.forEach(function(a){
+  var b=document.createElement('button');
+  b.className='buyb';
+  b.addEventListener('click',function(){ buyAnimal(a.id); });
+  b.setAttribute('data-buy',a.id);
+  shopBox.appendChild(b);
+});
+
+/* 投喂页按钮：只有小熊料理 */
+BEAR_DISHES.forEach(function(d,i){
+  var b=document.createElement('button');
+  b.className='seed recipe';
+  b.addEventListener('click',function(){ feedBear(d.id); });
+  feedGrid.appendChild(b);
+});
+
+function needText(d){
+  var a=[];
+  for(var k in d.need){
+    var e = k==='honey' ? '🍯' : (byGood(k)?byGood(k).e:'?');
+    a.push(e+'×'+d.need[k]);
+  }
+  return a.join(' ');
+}
+function cropOf(p){ return p.c?byId(p.c):null; }
+function prog(p){ var c=cropOf(p); if(!c) return 0; return Math.min(1,(Date.now()-p.t)/(c.grow*1000)); }
+function isReady(p){ var c=cropOf(p); return !!(p.c&&c&&(Date.now()-p.t)>=c.grow*1000); }
+
+/* ---------- 渲染 ---------- */
+function paint(){
+  $('coins').textContent=Math.floor(S.coins);
+  $('gems').textContent=S.gems;
+  $('honey').textContent=S.honey;
+  $('bears').textContent=S.bears;
+
+  var line1 = S.bears===0
+    ? '还没有小熊，价钱都是原价'
+    : '×'+S.bears+' 让卖出去的东西多赚 '+Math.round(S.bears*BEAR_BONUS*100)+'%';
+  var line2='';
+  if(S.poops.length>=POOP_LIMIT){
+    line2='<span style="color:#d06060">地上 '+S.poops.length+' 坨💩，动物全都罢工了！快拖到右下角桶里</span>';
+  }else if(S.poops.length>0){
+    line2='<span style="color:#d0885f">地上有 '+S.poops.length+' 坨💩，拖到右下角的桶里</span>';
+  }
+  var buffHtml = line1 + (line2?'<br>'+line2:'');
+  if($('buff').innerHTML!==buffHtml) $('buff').innerHTML=buffHtml;
+
+  GOODS.forEach(function(g,i){
+    var n=S.store[g.id]||0;
+    if(storeEls[i].getAttribute('data-n')!==String(n)){
+      storeEls[i].className='slot'+(n?'':' zero');
+      storeEls[i].innerHTML='<span>'+g.e+'</span><span class="n">'+n+'</span>';
+      storeEls[i].setAttribute('data-n',n);
+    }
+  });
+  DISHES.forEach(function(d,i){
+    var n=S.dish[d.id]||0;
+    if(trayEls[i].getAttribute('data-n')!==String(n)){
+      trayEls[i].className='slot d'+(n?'':' zero');
+      trayEls[i].innerHTML='<span>'+d.e+'</span><span class="n">'+n+'</span>';
+      trayEls[i].setAttribute('data-n',n);
+    }
+  });
+
+  var total=0;
+  GOODS.forEach(function(g){ total+=money(g.price)*(S.store[g.id]||0); });
+  DISHES.forEach(function(d){ total+=money(d.price)*(S.dish[d.id]||0); });
+  var sb=$('sellall');
+  var txt = total>0 ? '全部散卖 · 得到 🪙'+total : '仓库空空的，先去种点什么';
+  if(sb.textContent!==txt) sb.textContent=txt;
+  sb.disabled = total<=0;
+
+  S.plots.forEach(function(p,i){
+    var el=plotEls[i], kind, c=cropOf(p);
+    var hasPoop = S.poops.indexOf(i)>=0;
+    if(!p.u) kind='locked';
+    else if(!p.c) kind='empty';
+    else kind=isReady(p)?'ready':'growing';
+
+    el.style.touchAction = hasPoop ? 'none' : '';
+
+    var cs=cellState[i], key=kind+':'+(p.c||'')+':'+(hasPoop?1:0);
+    if(!cs||cs.key!==key){
+      el.className='plot '+(kind==='locked'?'locked':kind);
+      var inner='';
+      if(kind==='locked') inner='<span class="em" style="font-size:18px">🔒</span><span>'+PLOT_PRICE[i]+'</span>';
+      else if(kind==='empty') inner='<span class="em">＋</span>';
+      else if(kind==='ready') inner='<span class="em">'+c.e+'</span>';
+      else inner='<span class="em">'+c.e+'</span><div class="prog"><i></i></div>';
+      if(hasPoop) inner+='<span class="poop">💩</span>';
+      el.innerHTML=inner;
+      cellState[i]={key:key, fill:el.querySelector('.prog i')};
+      cs=cellState[i];
+    }
+    if(cs.fill && kind==='growing') cs.fill.style.width=(prog(p)*100)+'%';
+  });
+
+  Array.prototype.forEach.call(seedsBox.children,function(b,i){
+    b.classList.toggle('on', i===S.sel);
+    b.classList.toggle('poor', S.coins<CROPS[i].cost);
+  });
+
+  CRAFTS.forEach(function(c,i){
+    var b=craftBox.children[i];
+    var fg=byGood(c.from), og=byGood(c.out);
+    var have=S.store[c.from]||0;
+    var key=have+'|'+c.from;
+    if(b.getAttribute('data-k')!==key){
+      b.innerHTML='<span class="e">'+fg.e+og.e+'</span><span class="info"><span class="n">'+fg.n+' → '+og.n+'</span><span class="p">需要 '+c.need+' 个 · 有 '+have+'</span></span>';
+      b.setAttribute('data-k',key);
+    }
+    b.classList.toggle('poor', have<c.need);
+  });
+
+  var anyFree=false;
+  S.stoves.forEach(function(x){ if(!x) anyFree=true; });
+  Array.prototype.forEach.call(recipeBox.children,function(b,i){
+    var d=DISHES[i], ok=true;
+    for(var k in d.need){ if(haveMat(k)<d.need[k]) ok=false; }
+    b.classList.toggle('poor', !(ok&&anyFree));
+    var key=(d.bear?'🐻|':'')+needText(d)+'|'+d.time;
+    if(b.getAttribute('data-rk')!==key){
+      var tag = d.bear ? ' <span class="bearFoodTag">小熊料理</span>' : '';
+      b.innerHTML='<span class="e">'+d.e+'</span><span class="info"><span class="n">'+d.n+tag+'</span><span class="p">'+needText(d)+' · '+d.time+'秒</span></span>';
+      b.setAttribute('data-rk',key);
+    }
+  });
+
+  S.stoves.forEach(function(st,i){
+    var el=stoveEls[i], fill=el.querySelector('.fill'), txt=el.querySelector('.txt');
+    if(!st){
+      if(!stoveState[i]||stoveState[i].key!=='idle'){
+        fill.style.width='0%'; txt.innerHTML='闲着';
+        stoveState[i]={key:'idle'};
+      }
+      return;
+    }
+    var d=byDish(st.d);
+    if(!d){ S.stoves[i]=null; return; }
+    var r=Math.min(1,(Date.now()-st.t)/(d.time*1000));
+    if(!stoveState[i]||stoveState[i].key!=='cook'+d.id){
+      txt.innerHTML='🔥 '+d.e+d.n;
+      stoveState[i]={key:'cook'+d.id};
+    }
+    fill.style.width=(r*100)+'%';
+  });
+
+  paintOrders();
+  paintAnimals();
+  paintShop();
+  paintBear();
+
+  var cb=$('bearb');
+  cb.disabled = !(S.bears<BEAR_MAX && S.honey>=BEAR_HONEY);
+  var ct = S.bears>=BEAR_MAX ? '小京的朋友已经够多了 🧸'
+    : (S.bears===0 ? '请小京来帮忙收地 · 🍯'+BEAR_HONEY
+    : '再请一只小熊 · 🍯'+BEAR_HONEY+'（'+S.bears+'/'+BEAR_MAX+'）');
+  if(cb.textContent!==ct) cb.textContent=ct;
+
+  var fb=$('fertb');
+  fb.disabled = S.dung<3;
+  var ft='🪣 施肥 · 有 '+S.dung+' 坨（攒 3 坨，地里全部催熟）';
+  if(fb.textContent!==ft) fb.textContent=ft;
+
+  var ab=$('auto');
+  ab.classList.toggle('on', !!S.auto);
+  ab.textContent = S.auto ? '小京顺手替你补种：开着' : '小京顺手替你补种：关着';
+
+  $('tip').textContent = S.auto && S.bears>0 ? '小京替你种地，你负责看锅' : '点土地种下去，熟了再收';
+}
+
+function paintOrders(){
+  S.orders.forEach(function(o,i){
+    var el=orderEls[i];
+    if(!el) return;
+    var ready=orderReady(o);
+    var key = JSON.stringify(o) + '|' + S.bears + '|' + Math.floor(S.coins);
+    if(el.getAttribute('data-k')!==key){
+      var html='<div class="orderItems">';
+      o.items.forEach(function(it){
+        var g=orderItemOf(it);
+        if(!g) return;
+        var have=orderItemHave(it);
+        var done=have>=it.need;
+        html+='<div class="orderItem'+(done?' done':'')+'">'+
+          '<span class="oe">'+g.e+'</span>'+
+          '<span class="on">'+g.n+'</span>'+
+          '<span class="oc">'+have+' / '+it.need+'</span></div>';
+      });
+      html+='</div>';
+      html+='<div class="orderBottom">'+
+        '<span class="pay">🪙'+money(o.pay)+'</span>'+
+        '<span class="go">'+(ready?'交付':'还没凑齐')+'</span></div>';
+      el.innerHTML=html;
+      el.setAttribute('data-k',key);
+    }
+    el.disabled = !ready;
+  });
+}
+
+function paintAnimals(){
+  var total=animalTotal();
+  var angry=animalsAngry();
+  var html='';
+  if(total<=0){
+    html='<div class="anrow">牧场还空着，下面可以请动物来住 🐾</div>';
+  }else{
+    ANIMALS.forEach(function(a){
+      var num=S.animals[a.id];
+      if(num<=0) return;
+      var feed=S.store[a.feed]||0;
+      var fg=byGood(a.feed), og=byGood(a.out);
+      var st, bad=false;
+      if(angry){ st='罢工中（地上太脏了）'; bad=true; }
+      else if(feed<=0){ st='饿着，没有'+a.fname; bad=true; }
+      else st=a.time+'秒一个'+og.e;
+      html+='<div class="anrow'+(bad?' bad':'')+'" data-a="'+a.id+'">'+
+        '<span class="em">'+a.e+'</span>'+a.n+' ×'+num+
+        ' · 吃'+fg.e+a.fname+' ×'+feed+' · '+st+'</div>';
+    });
+  }
+  if(anBox.getAttribute('data-k')!==html){
+    anBox.innerHTML=html;
+    anBox.setAttribute('data-k',html);
+  }
+}
+
+function paintShop(){
+  ANIMALS.forEach(function(a){
+    var b=shopBox.querySelector('[data-buy="'+a.id+'"]');
+    if(!b) return;
+    var num=S.animals[a.id];
+    b.disabled = num>=ANIMAL_MAX || S.coins<a.price;
+    var key=num+'|'+S.coins;
+    if(b.getAttribute('data-k')!==key){
+      b.innerHTML='<span class="be">'+a.e+'</span>'+
+        '<span class="bn">请一只'+a.n+'（'+num+'/'+ANIMAL_MAX+'）</span>'+
+        '<span class="bp">🪙'+a.price+'</span>';
+      b.setAttribute('data-k',key);
+    }
+  });
+}
+
+/* ---------- 小熊投喂页 ---------- */
+function paintBear(){
+  if(!feedGrid) return;
+  var pct=Math.max(0,Math.min(100,Math.round(S.full||0)));
+  var ff=$('fullFill'); if(ff) ff.style.width=pct+'%';
+  var ft=$('fullTxt');
+  if(ft){
+    var txt;
+    if(S.bears<=0) txt='还没有小熊呢，先去农场请一只吧 🧸';
+    else if(S.full>=BEAR_FULL_OK) txt='饱饱的 '+pct+'% · 正在帮你捡地上的粑粑 🧹';
+    else if(S.full>0) txt='有点饿 '+pct+'% · 吃饱 '+BEAR_FULL_OK+'% 就会帮你干活';
+    else txt='肚子空空的 0% · 喂点小熊料理给它吧';
+    if(ft.textContent!==txt) ft.textContent=txt;
+  }
+  var bf=$('bearFace');
+  if(bf) bf.classList.toggle('happy', S.bears>0 && S.full>=BEAR_FULL_OK);
+
+  BEAR_DISHES.forEach(function(d,i){
+    var b=feedGrid.children[i];
+    if(!b) return;
+    var n=S.dish[d.id]||0;
+    var key=d.id+'|'+n;
+    if(b.getAttribute('data-k')!==key){
+      b.innerHTML='<span class="e">'+d.e+'</span><span class="info"><span class="n">'+d.n+'</span><span class="p">有 '+n+' 份 · 饱食 +'+d.feed+'</span></span>';
+      b.setAttribute('data-k',key);
+    }
+    b.classList.toggle('poor', n<=0);
+  });
+}
+
+function feedBear(id){
+  var d=byDish(id);
+  if(!d||!d.bear){ toast('这个不是小熊料理，小京不吃哦'); return; }
+  if(S.bears<=0){ toast('还没有小熊呢，先去农场请一只吧'); return; }
+  var n=S.dish[d.id]||0;
+  if(n<=0){ toast('还没有'+d.n+'呢，先去厨房做一份吧'); return; }
+  S.dish[d.id]=n-1;
+  S.full=Math.min(BEAR_FULL_MAX,(S.full||0)+d.feed);
+  S.fullT=Date.now();
+  if(S.full>=BEAR_FULL_OK) toast('小京吃得饱饱的，开始帮你捡粑粑啦 🧸');
+  else toast('小京吃掉了'+d.e+d.n+'，肚子暖暖的');
+  save(); paint();
+}
+
+/* ---------- 飘字 ---------- */
+function pop(i,text){
+  var r=plotEls[i].getBoundingClientRect();
+  if(!r.width) return;
+  var d=document.createElement('div');
+  d.className='pop';
+  d.textContent=text;
+  d.style.left=(r.left+r.width/2)+'px';
+  d.style.top=(r.top+r.height*0.35)+'px';
+  document.body.appendChild(d);
+  setTimeout(function(){ d.remove(); },1000);
+}
+function bearFly(i){
+  var r=plotEls[i].getBoundingClientRect();
+  if(!r.width) return;
+  var d=document.createElement('div');
+  d.className='catfly';
+  d.textContent='🧸';
+  d.style.left=(r.left+r.width/2)+'px';
+  d.style.top=(r.top+r.height/2)+'px';
+  document.body.appendChild(d);
+  setTimeout(function(){ d.remove(); },700);
+}
+function flyFromEl(el,text){
+  if(!el) return;
+  var r=el.getBoundingClientRect();
+  if(!r.width) return;
+  var d=document.createElement('div');
+  d.className='pop';
+  d.textContent=text;
+  d.style.left=(r.left+r.width/2)+'px';
+  d.style.top=(r.top)+'px';
+  document.body.appendChild(d);
+  setTimeout(function(){ d.remove(); },1000);
+}
+var toastTimer=null;
+function toast(msg){
+  var t=$('toast');
+  t.textContent=msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove('on'); },1700);
+}
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+var CHATTER=['这颗看起来有点像你，圆圆的','小熊说它很满意','泥土的味儿真好啊','又长胖了一点'];
+var GOOD=['漂亮，火候刚好','这一下很稳','闻着就香'];
+var SAVED=['小京伸爪子帮你救了一下','差点糊了，小京给翻了个面','小京替你盯着呢'];
+var BURNT=['焦了…小京闭着眼睛吃掉了','糊成一团，小京说它吃','锅底黑了一块，小京去刷'];
+
+/* ---------- 收地 ---------- */
+function harvest(i,byBear){
+  var p=S.plots[i], c=cropOf(p);
+  if(!c) return;
+  S.store[c.id]=(S.store[c.id]||0)+1;
+  S.seen[c.id]=1;
+  pop(i,'+1 '+c.e);
+  if(byBear) bearFly(i);
+  if(Math.random()<0.25){ S.honey++; pop(i,'🍯'); }
+  if(!byBear && Math.random()<0.03) toast(pick(CHATTER));
+  p.c=null; p.t=0;
+  if(byBear && S.auto){
+    var seed=CROPS[S.sel];
+    if(S.coins>=seed.cost){ S.coins-=seed.cost; p.c=seed.id; p.t=Date.now(); }
+  }
+  save(); paint();
+}
+
+/* ---------- 种地 ---------- */
+var lastNudge=0;
+function tapPlot(i){
+  if(Date.now()<dragBlock) return;
+  var p=S.plots[i];
+  if(!p.u){
+    var price=PLOT_PRICE[i];
+    if(S.coins>=price){ S.coins-=price; p.u=1; toast('新的一块地开出来啦'); save(); paint(); }
+    else toast('还差 '+Math.ceil(price-S.coins)+' 🪙 就能开这块地');
+    return;
+  }
+  if(!p.c){
+    var c=CROPS[S.sel];
+    if(S.coins<c.cost){ toast('金币还不够买 '+c.n+' 的种子呢'); return; }
+    S.coins-=c.cost; p.c=c.id; p.t=Date.now();
+    save(); paint();
+    return;
+  }
+  if(isReady(p)){ harvest(i,false); return; }
+  if(Date.now()-lastNudge>2000){
+    lastNudge=Date.now();
+    toast('它还在慢慢长呀，等下再来看看');
+  }
+}
+
+/* ---------- 粑粑拖拽 ---------- */
+var dragIdx=-1, dragGhost=null, dragMoved=false, dragSX=0, dragSY=0, dragBlock=0;
+
+function dragStart(e,i){
+  if(S.poops.indexOf(i)<0) return;
+  dragIdx=i; dragMoved=false; dragSX=e.clientX; dragSY=e.clientY;
+  document.addEventListener('pointermove',dragMove);
+  document.addEventListener('pointerup',dragEnd);
+  document.addEventListener('pointercancel',dragEnd);
+}
+function dragMove(e){
+  if(dragIdx<0) return;
+  var dx=e.clientX-dragSX, dy=e.clientY-dragSY;
+  if(!dragMoved){
+    if(Math.abs(dx)+Math.abs(dy)<9) return;
+    dragMoved=true;
+    dragGhost=document.createElement('div');
+    dragGhost.className='poopGhost';
+    dragGhost.textContent='💩';
+    document.body.appendChild(dragGhost);
+    var t0=$('trash'); if(t0) t0.classList.add('hot');
+  }
+  dragGhost.style.left=e.clientX+'px';
+  dragGhost.style.top=e.clientY+'px';
+  var tr=$('trash');
+  if(tr){
+    var r=tr.getBoundingClientRect();
+    var near = e.clientX>=r.left-22 && e.clientX<=r.right+22 &&
+               e.clientY>=r.top-22  && e.clientY<=r.bottom+22;
+    tr.classList.toggle('over', near);
+  }
+  if(e.cancelable) e.preventDefault();
+}
+function dragEnd(e){
+  document.removeEventListener('pointermove',dragMove);
+  document.removeEventListener('pointerup',dragEnd);
+  document.removeEventListener('pointercancel',dragEnd);
+  if(dragGhost){ dragGhost.remove(); dragGhost=null; }
+  var tr=$('trash');
+  if(tr){ tr.classList.remove('hot'); tr.classList.remove('over'); }
+  if(dragMoved){
+    dragBlock=Date.now()+350;
+    var r=tr.getBoundingClientRect();
+    if(e.clientX>=r.left-26 && e.clientX<=r.right+26 &&
+       e.clientY>=r.top-26  && e.clientY<=r.bottom+26){
+      collectPoop(dragIdx);
+    }else{
+      toast('没对准，要把粑粑拖到右下角那个桶里');
+    }
+  }
+  dragIdx=-1; dragMoved=false;
+}
+function collectPoop(i){
+  var k=S.poops.indexOf(i);
+  if(k<0) return;
+  S.poops.splice(k,1);
+  S.dung++;
+  S.coins+=5;
+  pop(i,'🪙+5 🪣+1');
+  save(); paint();
+}
+function addPoops(n){
+  var free=[];
+  for(var i=0;i<N;i++){
+    if(S.plots[i].u && S.poops.indexOf(i)<0) free.push(i);
+  }
+  for(var j=0;j<n && free.length;j++){
+    var idx=Math.floor(Math.random()*free.length);
+    S.poops.push(free[idx]);
+    free.splice(idx,1);
+  }
+}
+
+/* ---------- 动物 ---------- */
+function buyAnimal(id){
+  var a=byAnimal(id);
+  if(!a) return;
+  if(S.animals[a.id]>=ANIMAL_MAX){ toast('已经有 '+ANIMAL_MAX+' 只'+a.n+'啦，够热闹的'); return; }
+  if(S.coins<a.price){ toast('还差 '+Math.ceil(a.price-S.coins)+' 🪙'); return; }
+  S.coins-=a.price;
+  S.animals[a.id]++;
+  if(!S.anT[a.id]) S.anT[a.id]=Date.now()+a.time*1000;
+  toast('一只'+a.e+a.n+'住进来了，它爱吃'+a.fname);
+  save(); paint();
+}
+
+setInterval(function(){
+  var now=Date.now(), changed=false;
+  if(animalTotal()<=0) return;
+  var angry=animalsAngry();
+  ANIMALS.forEach(function(a){
+    var num=S.animals[a.id];
+    if(num<=0) return;
+    if(!S.anT[a.id]){ S.anT[a.id]=now+a.time*1000; return; }
+    if(now<S.anT[a.id]) return;
+    S.anT[a.id]=now+a.time*1000;
+    if(angry) return;
+    var have=S.store[a.feed]||0;
+    var made=Math.min(num,have);
+    if(made<=0) return;
+    S.store[a.feed]-=made;
+    S.store[a.out]=(S.store[a.out]||0)+made;
+    S.seen[a.out]=1;
+    changed=true;
+    flyFromEl(anBox.querySelector('[data-a="'+a.id+'"]'), '+'+made+' '+byGood(a.out).e);
+  });
+  if(changed){ save(); paint(); }
+},300);
+
+/* ---------- 粑粑生成 ---------- */
+setInterval(function(){
+  var total=animalTotal();
+  if(total<=0) return;
+  var now=Date.now();
+  if(!S.poopT){ S.poopT=now+12000; return; }
+  if(now<S.poopT) return;
+  S.poopT=now+12000;
+  var made=0;
+  for(var i=0;i<total;i++){ if(Math.random()<0.35) made++; }
+  if(made<=0) return;
+  addPoops(made);
+  save(); paint();
+},1000);
+
+/* ---------- 工坊 ---------- */
+function craft(i){
+  var c=CRAFTS[i];
+  var fg=byGood(c.from), og=byGood(c.out);
+  if((S.store[c.from]||0)<c.need){ toast(fg.n+'还不够，要 '+c.need+' 个'); return; }
+  S.store[c.from]-=c.need;
+  S.store[c.out]=(S.store[c.out]||0)+1;
+  S.seen[c.out]=1;
+  toast(fg.e+fg.n+' 变成了 '+og.e+og.n);
+  save(); paint();
+}
+
+/* ---------- 做饭小游戏 ---------- */
+var overlay=$('overlay'), panel=$('panel'), activeEvent=null, eventLock=false;
+
+function genPts(){
+  var pts=[], guard=0;
+  while(pts.length<4 && guard<600){
+    guard++;
+    var p={x:18+Math.random()*64, y:18+Math.random()*64};
+    var ok=true;
+    for(var i=0;i<pts.length;i++){
+      var dx=(pts[i].x-p.x)*2.9, dy=(pts[i].y-p.y)*1.5;
+      if(Math.sqrt(dx*dx+dy*dy)<46){ ok=false; break; }
+    }
+    if(ok) pts.push(p);
+  }
+  while(pts.length<4) pts.push({x:14+Math.random()*72, y:14+Math.random()*72});
+  return pts;
+}
+
+function triggerEvent(si){
+  var st=S.stoves[si];
+  if(!st) return;
+  var type = Math.random()<0.5 ? 'bar' : 'line';
+  activeEvent={si:si, type:type, start:Date.now(),
+               limit: type==='bar'?6000:4500, down:false, last:null};
+  buildEventUI();
+}
+
+function buildEventUI(){
+  var ev=activeEvent;
+  if(!ev) return;
+  if(ev.type==='bar'){
+    var zs=0.10+Math.random()*0.48;
+    ev.zoneStart=zs;
+    panel.innerHTML='<div class="ttl">🔥 火候！指针进绿区时点一下</div>'+
+      '<div class="gbar" id="gbar"><div class="zone" style="left:'+(zs*100)+'%;width:32%"></div>'+
+      '<div class="needle" id="needle"></div></div>'+
+      '<div class="hintline">只有一次机会，稳稳点</div>';
+    overlay.classList.add('on');
+    $('gbar').addEventListener('pointerdown',function(){
+      if(!activeEvent||activeEvent.type!=='bar') return;
+      var p=needlePos();
+      endEvent(p>=ev.zoneStart-0.015 && p<=ev.zoneStart+0.32+0.015);
+    });
+  } else {
+    var pts=genPts();
+    ev.pts=pts; ev.k=0;
+    var html='<div class="ttl">✍️ 按 1→2→3→4 划过去</div><div class="gline" id="gline">';
+    for(var i=0;i<pts.length;i++){
+      html+='<i style="left:'+pts[i].x+'%;top:'+pts[i].y+'%"><b>'+(i+1)+'</b></i>';
+    }
+    html+='</div><div class="hintline">按住别松手，划到亮的那个点</div>';
+    panel.innerHTML=html;
+    overlay.classList.add('on');
+    var gl=$('gline');
+    ev.box=gl.getBoundingClientRect();
+    gl.children[0].classList.add('target');
+    gl.addEventListener('pointerdown',function(e){ ev.down=true; ev.last=null; hitPoint(e); });
+    gl.addEventListener('pointermove',function(e){ if(ev.down) hitPoint(e); });
+    gl.addEventListener('pointerup',function(){ ev.down=false; ev.last=null; });
+    gl.addEventListener('pointercancel',function(){ ev.down=false; ev.last=null; });
+  }
+}
+
+function checkHit(x,y){
+  var ev=activeEvent;
+  if(!ev||ev.k>=ev.pts.length) return false;
+  var b=ev.box, p=ev.pts[ev.k];
+  var dx=x-(p.x/100*b.width), dy=y-(p.y/100*b.height);
+  if(Math.sqrt(dx*dx+dy*dy)<40){
+    var gl=$('gline');
+    if(gl&&gl.children[ev.k]){
+      gl.children[ev.k].classList.remove('target');
+      gl.children[ev.k].classList.add('on');
+    }
+    ev.k++;
+    if(ev.k>=ev.pts.length){ endEvent(true); return true; }
+    if(gl&&gl.children[ev.k]) gl.children[ev.k].classList.add('target');
+  }
+  return false;
+}
+
+function hitPoint(e){
+  var ev=activeEvent;
+  if(!ev||ev.type!=='line') return;
+  var b=ev.box;
+  var x=e.clientX-b.left, y=e.clientY-b.top;
+  if(ev.last){
+    var dx=x-ev.last.x, dy=y-ev.last.y;
+    var dist=Math.sqrt(dx*dx+dy*dy);
+    var steps=Math.max(1,Math.ceil(dist/12));
+    for(var s=1;s<=steps;s++){
+      if(checkHit(ev.last.x+dx*s/steps, ev.last.y+dy*s/steps)) break;
+    }
+  } else {
+    checkHit(x,y);
+  }
+  ev.last={x:x,y:y};
+}
+
+function needlePos(){
+  var ev=activeEvent;
+  if(!ev) return 0;
+  var period=2200;
+  var ph=((Date.now()-ev.start)%period)/period;
+  return ph<0.5 ? ph*2 : 2-ph*2;
+}
+
+function endEvent(ok){
+  var ev=activeEvent;
+  if(!ev) return;
+  activeEvent=null;
+  eventLock=true;
+  var st=S.stoves[ev.si];
+  var saved=false;
+  if(!ok && st && S.bears>0 && Math.random() < 0.3*S.bears){ ok=true; saved=true; }
+  if(st && ok) st.s++;
+  panel.innerHTML='<div class="ttl big">'+(ok?(saved?'🧸 小京救了你':'✨ 刚好'):'😿 差一点')+'</div>';
+  setTimeout(function(){
+    overlay.classList.remove('on');
+    panel.innerHTML='';
+    eventLock=false;
+  },460);
+  if(ok) toast(saved?pick(SAVED):pick(GOOD));
+  paint();
+}
+
+function rafLoop(){
+  if(activeEvent && activeEvent.type==='bar'){
+    var n=$('needle');
+    if(n) n.style.left=(needlePos()*100)+'%';
+  }
+  if(activeEvent && Date.now()-activeEvent.start > activeEvent.limit){
+    endEvent(false);
+  }
+  requestAnimationFrame(rafLoop);
+}
+requestAnimationFrame(rafLoop);
+
+function cook(i){
+  var d=DISHES[i], slot=-1;
+  S.stoves.forEach(function(st,k){ if(!st && slot<0) slot=k; });
+  if(slot<0){ toast('灶台都占着呢，等一下'); return; }
+  for(var k in d.need){ if(haveMat(k)<d.need[k]){ toast('材料还不够呀，先去种'); return; } }
+  for(var k2 in d.need){ takeMat(k2,d.need[k2]); }
+  S.stoves[slot]={d:d.id, t:Date.now(), total:d.ev, fired:0, s:0, next:0.25};
+  toast('小京系上围裙了，给你做'+d.n);
+  save(); paint();
+}
+
+setInterval(function(){
+  var now=Date.now(), changed=false;
+  var hidden=document.hidden;
+  S.stoves.forEach(function(st,i){
+    if(!st) return;
+    var d=byDish(st.d);
+    if(!d){ S.stoves[i]=null; stoveState[i]=null; changed=true; return; }
+    var r=(now-st.t)/(d.time*1000);
+    if(!hidden && !activeEvent && !eventLock && st.fired<st.total && r>=st.next && r<0.93){
+      st.fired++;
+      st.next += 0.6/st.total;
+      triggerEvent(i);
+      changed=true;
+    }
+    if(r>=1){
+      if(activeEvent && activeEvent.si===i){
+        activeEvent=null; overlay.classList.remove('on'); panel.innerHTML='';
+      }
+      var got=1, msg='出锅啦 '+d.e+d.n;
+      if(st.fired===st.total && st.s===st.total && st.total>0){ got=2; msg='完美出锅！多得一份 '+d.e+d.n; }
+      else if(st.fired>0 && st.s===0){ got=0; msg=pick(BURNT)+' '+d.e+d.n; }
+      if(got>0) S.dish[d.id]=(S.dish[d.id]||0)+got;
+      S.seen[d.id]=1;
+      S.stoves[i]=null;
+      stoveState[i]=null;
+      toast(msg);
+      changed=true;
+    }
+  });
+  if(changed){ save(); paint(); }
+},150);
+
+/* ---------- 订单交付 ---------- */
+function deliver(i){
+  var o=S.orders[i];
+  if(!o) return;
+  if(!orderReady(o)){ toast('还没凑齐三样货呢'); return; }
+  orderTake(o);
+  var gain=money(o.pay);
+  S.coins+=gain;
+  toast('交付成功，+'+gain+' 🪙');
+  S.orders[i]=makeOrder();
+  save(); paint();
+}
+
+/* ---------- 金库 ---------- */
+function openWallet(){
+  panel.innerHTML='<div class="ttl">💎 金库</div>'+
+    '<div class="hintline" style="margin:0 0 14px">现在有 🪙'+Math.floor(S.coins)+' 和 💎'+S.gems+'</div>'+
+    '<button class="catb" id="wBuy" style="background:#8fd0e8;box-shadow:0 4px 0 #6fb4d0">用 10000 🪙 换 1 💎</button>'+
+    '<button class="catb" id="wSell" style="margin-top:9px;background:#c9a9e0;box-shadow:0 4px 0 #ab8ac4">用 1 💎 换 10000 🪙</button>'+
+    '<div class="hintline">点空白的地方关掉</div>';
+  overlay.classList.add('on');
+  $('wBuy').addEventListener('click',function(){
+    if(S.coins<10000){ toast('金币还不够 10000 呢'); return; }
+    S.coins-=10000; S.gems++;
+    toast('换到 1 💎，亮闪闪的');
+    save(); paint(); openWallet();
+  });
+  $('wSell').addEventListener('click',function(){
+    if(S.gems<1){ toast('还没有钻石呀'); return; }
+    S.gems--; S.coins+=10000;
+    toast('钻石换回 10000 🪙');
+    save(); paint(); openWallet();
+  });
+}
+
+overlay.addEventListener('click',function(e){
+  if(e.target!==overlay) return;
+  if(activeEvent||eventLock) return;
+  overlay.classList.remove('on');
+  panel.innerHTML='';
+});
+
+/* ---------- 按钮 ---------- */
+$('sellall').addEventListener('click',function(){
+  var got=0;
+  GOODS.forEach(function(g){
+    var n=S.store[g.id]||0;
+    if(n>0){ got+=money(g.price)*n; S.store[g.id]=0; }
+  });
+  DISHES.forEach(function(d){
+    var n=S.dish[d.id]||0;
+    if(n>0){ got+=money(d.price)*n; S.dish[d.id]=0; }
+  });
+  if(got<=0){ toast('仓库是空的呀'); return; }
+  S.coins+=got;
+  toast('全卖掉啦，+'+got+' 🪙');
+  save(); paint();
+});
+
+$('bearb').addEventListener('click',function(){
+  if(S.bears>=BEAR_MAX||S.honey<BEAR_HONEY) return;
+  S.honey-=BEAR_HONEY;
+  S.bears++;
+  toast(S.bears===1?'小京收好行李住进来了，以后地它替你收'
+    :'又来一只，现在卖东西能多赚 '+Math.round(S.bears*BEAR_BONUS*100)+'%');
+  save(); paint();
+});
+
+$('fertb').addEventListener('click',function(){
+  if(S.dung<3){ toast('堆肥还不够，要攒够 3 坨呀'); return; }
+  var n=0;
+  S.plots.forEach(function(p){
+    if(p.c && !isReady(p)){
+      p.t=Date.now()-byId(p.c).grow*1000-1000;
+      n++;
+    }
+  });
+  if(n<=0){ toast('地里没有正在长的东西呀'); return; }
+  S.dung-=3;
+  toast('哗——'+n+' 块地一下子全熟了');
+  save(); paint();
+});
+
+$('gemsPill').addEventListener('click',openWallet);
+
+$('auto').addEventListener('click',function(){
+  S.auto = S.auto?0:1;
+  save(); paint();
+});
+
+function showPane(t){
+  $('paneFarm').classList.toggle('hide', t!=='farm');
+  $('paneKitchen').classList.toggle('hide', t!=='kitchen');
+  $('paneOrder').classList.toggle('hide', t!=='order');
+  $('paneBear').classList.toggle('hide', t!=='bear');
+  $('tabFarm').classList.toggle('on', t==='farm');
+  $('tabKitchen').classList.toggle('on', t==='kitchen');
+  $('tabOrder').classList.toggle('on', t==='order');
+  $('tabBear').classList.toggle('on', t==='bear');
+}
+$('tabFarm').addEventListener('click',function(){ showPane('farm'); });
+$('tabKitchen').addEventListener('click',function(){ showPane('kitchen'); });
+$('tabOrder').addEventListener('click',function(){ showPane('order'); });
+$('tabBear').addEventListener('click',function(){ showPane('bear'); });
+
+$('reset').addEventListener('click',function(){
+  if(confirm('要把小农场清空重来吗？')){
+    S=fresh();
+    while(S.orders.length<ORDER_SLOTS) S.orders.push(makeOrder());
+    save();
+    for(var i=0;i<N;i++) cellState[i]=null;
+    for(var k=0;k<STOVES;k++) stoveState[k]=null;
+    bearNext=[];
+    activeEvent=null; eventLock=false; overlay.classList.remove('on'); panel.innerHTML='';
+    paint();
+  }
+});
+
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+
+/* ---------- 小熊自动收地 ---------- */
+setInterval(function(){
+  if(S.bears<=0) return;
+  var now=Date.now();
+  for(var k=0;k<S.bears;k++){
+    if(!bearNext[k]){ bearNext[k]=now+BEAR_SPEED; continue; }
+    if(now>=bearNext[k]){
+      bearNext[k]=now+BEAR_SPEED;
+      var idx=-1;
+      for(var i=0;i<N;i++){ if(S.plots[i].u&&isReady(S.plots[i])){ idx=i; break; } }
+      if(idx>=0) harvest(idx,true);
+    }
+  }
+},100);
+
+/* ---------- 小熊饱食度 / 自动捡粑粑 ---------- */
+var lastAutoPick=0;
+setInterval(function(){
+  if(S.bears<=0) return;
+  var now=Date.now();
+  if(!S.fullT) S.fullT=now;
+  var dt=now-S.fullT;
+  S.fullT=now;
+  var oldPct=Math.floor(S.full||0);
+  if(dt>0 && S.full>0) S.full=Math.max(0,S.full-dt/BEAR_FULL_DECAY);
+  if(Math.floor(S.full)!==oldPct) save();
+
+  if(S.full>=BEAR_FULL_OK && S.poops.length>0 && now-lastAutoPick>900){
+    lastAutoPick=now;
+    collectPoop(S.poops[0]);
+    return;
+  }
+  paintBear();
+},1000);
+
+$('exportSave').addEventListener('click', function(){
+  var data = JSON.stringify(S);
+  panel.innerHTML = '<div class="ttl">📤 导出存档</div>'+
+    '<textarea id="saveData" readonly style="width:100%;height:150px;font-size:12px;border-radius:12px;border:1px solid #f2dfd4;padding:8px;box-sizing:border-box;resize:none;"></textarea>'+
+    '<div class="hintline">长按全选复制，或者点下面的按钮复制</div>'+
+    '<button class="catb" id="copySave" style="margin-top:9px">复制存档</button>'+
+    '<div class="hintline">点空白关闭</div>';
+  overlay.classList.add('on');
+  var ta = $('saveData');
+  ta.value = data;
+  ta.addEventListener('click', function(){ ta.select(); });
+  $('copySave').addEventListener('click', function(){
+    ta.select();
+    try{
+      document.execCommand('copy');
+      toast('已复制存档，快去粘贴保存吧');
+    }catch(e){
+      toast('复制失败，请长按全选复制');
+    }
+  });
+});
+
+$('importSave').addEventListener('click', function(){
+  panel.innerHTML = '<div class="ttl">📥 导入存档</div>'+
+    '<textarea id="importData" placeholder="把导出的存档字符串粘贴到这里" style="width:100%;height:150px;font-size:12px;border-radius:12px;border:1px solid #f2dfd4;padding:8px;box-sizing:border-box;resize:none;"></textarea>'+
+    '<button class="catb" id="doImport" style="margin-top:9px">确认导入</button>'+
+    '<div class="hintline">导入会覆盖当前进度，请谨慎操作</div>';
+  overlay.classList.add('on');
+  $('doImport').addEventListener('click', function(){
+    var txt = $('importData').value.trim();
+    if(!txt){ toast('还没粘贴存档呢'); return; }
+    try{
+      var obj = JSON.parse(txt);
+      if(!obj || typeof obj !== 'object' || !obj.plots){ toast('存档格式不对，请检查'); return; }
+      localStorage.setItem(KEY, JSON.stringify(obj));
+      toast('导入成功，正在重新加载...');
+      setTimeout(function(){ location.reload(); }, 600);
+    }catch(e){
+      toast('解析失败，存档内容有误');
+    }
+  });
+});
+
+paint();
+</script>
+</body>
+</html>
