@@ -8,8 +8,61 @@
 <link rel="apple-touch-icon" href="icon.png">
 <title>小熊小农场</title>
 <style>
+/* ============================================================
+   小熊小农场 · 样式表
+   ------------------------------------------------------------
+   分区：
+     1. 设计变量（颜色 + 层级表）
+     2. 基础
+     3. 通用组件
+     4. 页面：农场 / 厨房 / 订单 / 小京
+     5. 左侧导航栏 rail + 仓库抽屉 drawer
+     6. 弹窗 · 飘字 · 提示条
+     7. 拖拽与投放区
+   ============================================================ */
+
+/* ---------- 1. 设计变量 ---------- */
+:root{
+  /* 颜色 */
+  --pink:     #f2a0bd;
+  --pink-d:   #dd89a8;
+  --rose:     #e2789f;
+  --rose-l:   #f7c8dc;
+  --ink:      #6b5145;
+  --ink-2:    #7d6558;
+  --ink-3:    #b09a8d;
+  --ink-4:    #bda99c;
+  --line:     #f2dfd4;
+  --green:    #b6d99a;
+  --green-d:  #9bc47e;
+  --purple:   #c9a9e0;
+  --purple-d: #ab8ac4;
+  --blue:     #8fd0e8;
+  --blue-d:   #6fb4d0;
+
+  /* 层级表 —— 全文只有这里写 z-index 的数字，别处一律用 var()。
+     从下往上一层压一层，谁该盖谁一读就懂，不用再去猜数字。 */
+  --z-float:  20;   /* 飘字、场景内的浮动元素 */
+  --z-mask:   40;   /* 抽屉遮罩 */
+  --z-drawer: 50;   /* 抽屉本体 */
+  --z-rail:   60;   /* 左侧导航栏：必须高于遮罩，按钮才永远点得到 */
+  --z-pop:    65;   /* 右上角料理提示 */
+  --z-modal:  70;   /* 弹窗 */
+  --z-toast:  80;   /* 底部提示条 */
+  --z-drag:   90;   /* 拖拽替身，跟手 */
+  /* 【2026-09-22】层级表之外那档「特权 999」已经取消。
+     它原本只给 #bearTrash 用，但那个写法是错的
+     —— 熊头垃圾桶会浮在抽屉、遮罩、弹窗等一切面板之上，
+        走到哪个页面都甩不掉它，对一个只在厨房用得到的东西毫无道理。
+     现在全文 z-index 一律走上面这张表，一个例外都没有。
+     （拖拽靠 elementFromPoint 找投放区，本来就不需要靠层级分胜负。） */
+
+  /* 尺寸 */
+  --rail-w: 58px;   /* 左侧导航栏宽度 —— 抽屉的起点就是它 */
+}
+
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;padding:14px 12px 46px;min-height:100vh;
+body{margin:0;padding:14px 12px 46px calc(var(--rail-w) + 4px);min-height:100vh;
   background:linear-gradient(180deg,#ffeef6 0%,#fdf4e6 55%,#e9f7e4 100%);
   background-attachment:fixed;
   font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
@@ -22,8 +75,25 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
   font-size:13px;font-weight:700;box-shadow:0 4px 0 #f2dfd4;white-space:nowrap}
 .pill.tap{cursor:pointer}
 .pill.tap:active{transform:translateY(2px)}
-.buff{text-align:center;font-size:12px;font-weight:700;color:#c98aa4;margin:0 0 10px;
+/* 农场页里的两行小提示。
+   【2026-09-24 拆开】原来这两行挤在页面顶部的货币栏下面，白占地方。
+   用户要求拆开、各去各该在的位置：
+
+     .buff     = 「×N 让卖出去的东西多赚 X%」
+                 → 挂在农场页「小京的朋友」按钮下面
+     .poopWarn = 「地上有 X 坨💩……」
+                 → 挂在农场页田地下面、种子上面（只有点农场才看得到）
+
+   ⚠️ 为什么「地上有💩」不能安安静静待在角落：
+      粑粑攒够 6 坨，动物就全体罢工。光靠一行小字，玩家可能半小时都没发现
+      —— 所以现在【顶部「🌱 农场」标签上还会亮一个小叹号】（见 .tab 那段）。 */
+.buff{text-align:center;font-size:12px;font-weight:700;color:#c98aa4;margin:9px 0 0;
   min-height:16px;line-height:1.5}
+/* ⚠️ 这个【故意不写 min-height】——
+   没粑粑的时候它要完全不占地方（JS 会直接 display:none）。 */
+.poopWarn{text-align:center;font-size:12px;font-weight:700;color:#d0885f;
+  margin:0 0 9px;line-height:1.5}
+.poopWarn.bad{color:#d06060}
 .row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:7px}
 .row.dish{grid-template-columns:repeat(4,1fr);margin-bottom:8px}
 .slot{background:#fff;border-radius:13px;padding:7px 2px;text-align:center;
@@ -37,9 +107,14 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .sellall:disabled{opacity:.45;cursor:default}
 .sellall:active:not(:disabled){transform:translateY(2px)}
 .tabs{display:flex;gap:6px;margin-bottom:12px}
-.tab{flex:1;border:0;border-radius:14px;padding:10px 2px;cursor:pointer;font-family:inherit;
-  font-size:12px;font-weight:800;background:#fff;color:#bda99c;box-shadow:0 4px 0 #f2dfd4;
-  white-space:nowrap}
+/* ⚠️ `position:relative` 是给右上角的小叹号（.rail-badge）当定位基准的。
+   现在「🌱 农场」标签上挂着「粑粑够多、动物要罢工」的叹号。
+   为什么非要有这个叹号：那行「地上有 X 坨💩」的小字在农场页里，
+   玩家不点农场就看不见 —— 而粑粑攒够 6 坨动物就罢工了，
+   等他自己发现可能已经过去半小时。（用户原话） */
+.tab{position:relative;flex:1;border:0;border-radius:14px;padding:10px 2px;cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:800;background:#fff;color:#bda99c;
+  box-shadow:0 4px 0 #f2dfd4;white-space:nowrap}
 .tab.on{background:#f2a0bd;color:#fff;box-shadow:0 4px 0 #dd89a8}
 .tab:active{transform:translateY(2px)}
 .hide{display:none}
@@ -63,7 +138,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
   background:rgba(255,255,255,.75);overflow:hidden}
 .prog i{display:block;height:100%;width:0;border-radius:8px;
   background:linear-gradient(90deg,#9ada6f,#6cc3a0);transition:width .15s linear}
-.seeds,.recipes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.seeds{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .seed{border:0;cursor:pointer;border-radius:16px;padding:9px 8px;background:#fff;
   box-shadow:0 4px 0 #f2dfd4;font-family:inherit;color:#6b5145;display:flex;
   align-items:center;gap:7px;text-align:left;transition:transform .12s}
@@ -76,13 +151,118 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .seed.poor{opacity:.45}
 .seed.recipe{background:#fffaf1}
 .crafts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
-.stoves{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
-.stove{position:relative;background:#fff;border-radius:16px;padding:10px 6px;overflow:hidden;
-  box-shadow:0 4px 0 #f2dfd4;font-size:11px;font-weight:700;color:#7d6558;text-align:center;
-  min-height:62px}
-.stove .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#fff3d6;z-index:0;
-  transition:width .15s linear}
-.stove .txt{position:relative;z-index:1;line-height:1.35}
+/* ============================================================
+   4.5 厨房 · 九宫格锅（2026-09-22 新增）
+   ------------------------------------------------------------
+   这里原来是三口灶台 + 火候小游戏，已经整块删掉
+   （用户要求：「取消三个灶台，取消做菜时间」）。
+   现在的厨房从上到下是四层：
+     ① 🧺 食材区   —— 只有 icon，拖进锅
+     ② 🔥 九宫格锅 —— 靠左；右边是「当前选的菜」+「菜谱缩略图」
+     ③ 提交行      —— 成品格（左）· 提交（中）· 熊头垃圾桶（右）
+     ④ 📖 菜肴列表 —— 每行 3 个，点一下选中
+   ============================================================ */
+
+/* 食材区：**只有 icon，没有名字也没有数量** —— 格子太小放不下字。
+   有没有货靠「灰不灰」区分，不靠数字。 */
+.pantry{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px}
+/* ⚠️ 下面这些「要被拖着走的东西」，必须关掉浏览器的默认触摸手势。
+   不关的话，手指一滑页面就先滚起来了，浏览器会直接把这次拖动 cancel 掉，
+   表现就是「拖到一半突然松手」。
+
+   现在的名单是：食材区 / 锅格子 / 成品格 / 菜肴列表。
+   —— 菜肴列表是 2026-09-24 加进来的（它现在也是拖拽源，能直接把菜拖给订单）。
+
+   代价：在这几片方块【上面】滑动不能滚页面 ——
+   方块之间有 6~7px 的缝，想滚页面从缝里滑、或者从别的地方滑都行。 */
+.pantryItem,.potCell,.outSlot,.dishBtn{touch-action:none}
+.pantryItem{border:0;cursor:pointer;border-radius:13px;aspect-ratio:1/1;padding:0;
+  background:#fff;box-shadow:0 3px 0 #f2dfd4;font-size:22px;line-height:1;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .12s,box-shadow .12s,opacity .12s}
+.pantryItem:active{transform:translateY(2px);box-shadow:0 1px 0 #f2dfd4}
+.pantryItem.zero{opacity:.3}   /* 仓库里没有这个食材 → 变灰 */
+
+/* 锅 + 左边那一栏。
+   ⚠️ 2026-09-24 左右镜像翻转过：以前是【锅在左、提示在右】，
+      现在是【提示在左、锅在右】。用户原话：
+      "改成九宫格放在右侧，缩略图和菜肴的名字放在左侧。
+       （因为游玩的时候一般都是用右手大拇指来玩，
+        缩略图放在右侧的话，来回就会被遮到，看不清楚）"
+      所以 DOM 顺序是 [potSide][pot]：左边提示、右边锅。 */
+.potWrap{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+.pot{flex:none;width:66%;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  padding:10px;border-radius:24px;background:#fff;
+  box-shadow:0 5px 0 #f2dfd4,0 0 0 3px #ffeef5 inset}
+.potCell{border:0;padding:0;aspect-ratio:1/1;border-radius:14px;background:#fdf6ef;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.05);font-size:24px;line-height:1;color:#c4ae95;
+  font-family:inherit;display:flex;align-items:center;justify-content:center;
+  transition:transform .12s,background .12s}
+.potCell.has{background:#fff0f6;box-shadow:inset 0 -3px 0 rgba(226,120,159,.15)}
+.potSide{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+
+/* 左上那一格：菜谱缩略图（2026-09-24 挪到左边，而且挪到名字【上面】了）。
+   故意做得很小 —— 用户原话：「大小要小，不要把九宫格挤没了」。
+   为什么放上面：用户说「缩略图靠近食材的话，肉眼会比较舒服，比较好对照」。 */
+.potRef{background:#fff;border-radius:16px;padding:7px;box-shadow:0 4px 0 #f2dfd4}
+.potRef .mini{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.potRef .mini i{aspect-ratio:1/1;border-radius:7px;background:#fdf6ef;font-style:normal;
+  font-size:13px;line-height:1;color:#c4ae95;
+  display:flex;align-items:center;justify-content:center}
+
+/* 左下那一格：当前选中的菜（icon + 名字）。
+   （2026-09-24 之前它在右上，现在挪到左边、并且在缩略图【下面】。） */
+.potPick{background:#fff;border-radius:16px;padding:8px 5px;text-align:center;
+  box-shadow:0 4px 0 #f2dfd4;font-size:11px;font-weight:800;color:#7d6558;line-height:1.25}
+.potPick .pe{display:block;font-size:26px;line-height:1.1;margin-bottom:2px}
+.potPick.empty{color:#c4ae95;font-weight:700}
+
+/* 提交行：成品格（左）· 提交（中）· 熊头垃圾桶（右）。
+
+   ⚠️ 2026-09-24 改成【铺满整行】。以前它只有锅那么宽（66%），右边空出一大片。
+      用户原话："这个提交的按钮太短了，导致有一侧空的地方太多不好看，
+                我希望这个提交的按钮足够长，让侧边不要有空位。"
+      所以宽度从 66% 改成 100%（跟上面「提示栏 + 锅」加起来一样宽），
+      提交按钮 flex:1 把中间那一大段全吃掉。 */
+.potBar{display:flex;align-items:center;gap:8px;width:100%;margin-bottom:16px}
+/* 成品格：提交之前是空的（留空），提交之后才出现东西。
+   ⚠️ 它有东西的时候【不许被下一道菜覆盖】——
+      所以「提交」按钮这时候是灰的，必须先把它处理掉。 */
+.outSlot{flex:none;width:52px;height:52px;border-radius:16px;background:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:28px;line-height:1;
+  box-shadow:0 4px 0 #f2dfd4,0 0 0 2px #f7c8dc inset;transition:transform .15s}
+.outSlot.empty{font-size:20px;color:#e4d3ba;box-shadow:0 4px 0 #f2dfd4}
+.potGo{flex:1;border:0;border-radius:16px;padding:15px 4px;cursor:pointer;font-family:inherit;
+  font-size:14px;font-weight:800;color:#fff;background:#f2a0bd;box-shadow:0 4px 0 #dd89a8}
+.potGo:disabled{opacity:.45;cursor:default}
+.potGo:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #dd89a8}
+
+/* 菜肴列表：每行 5 个，**只有 icon，没有名字**（用户 2026-09-24 要求）。
+
+   两种高亮，含义不一样，别搞混：
+     .have —— 背包里【有】这道菜 → 粉色底。
+              用户原话："如果背包里面有这道菜，那么这个菜肴的渲染框就是粉色的。
+                        我们不应该让不存在于背包的菜是灰色的，
+                        因为其实大部分菜背包里都不会有存货的，就很不好看。"
+     .on   —— 当前【选中】的是这道菜 → 粉色粗描边。
+   两个可以叠加：选中 + 有货 = 粉底 + 粉边。 */
+.recipes{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px}
+.dishBtn{border:0;cursor:pointer;border-radius:14px;padding:0;aspect-ratio:1/1;
+  background:#fff;box-shadow:0 3px 0 #f2dfd4;font-family:inherit;font-size:24px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .12s,box-shadow .12s,background .12s}
+.dishBtn:active{transform:translateY(2px);box-shadow:0 1px 0 #f2dfd4}
+.dishBtn.have{background:#fff0f6}
+.dishBtn.on{box-shadow:0 0 0 3px #f7c8dc,0 3px 0 #f2dfd4}
+
+/* 「📖 菜谱图鉴」弹窗里的小格子（点左侧「📖 菜谱」按钮弹出来的那个）。
+   为什么要单独一套：厨房那片菜肴列表现在是「只有 icon、每行 5 个」，
+   而图鉴是给玩家看的记录 —— 光有 emoji 认不出是什么，所以它保留名字。 */
+.guideGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;
+  max-height:300px;overflow-y:auto}
+.guideItem{background:#fffbf0;border-radius:14px;padding:8px 4px;text-align:center;
+  box-shadow:0 3px 0 #f2dfd4;font-size:11px;font-weight:700;color:#7d6558;line-height:1.25}
+.guideItem .e{display:block;font-size:24px;line-height:1.1;margin-bottom:3px}
 .anbox{display:flex;flex-direction:column;gap:6px;margin-bottom:9px}
 .anrow{background:#fff;border-radius:14px;padding:9px 11px;font-size:12px;font-weight:700;
   color:#7d6558;box-shadow:0 3px 0 #f2dfd4;line-height:1.45}
@@ -110,51 +290,79 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .foot button{border:0;background:none;font-family:inherit;font-size:12px;color:#bda99c;
   text-decoration:underline;cursor:pointer}
 .overlay{position:fixed;inset:0;background:rgba(107,81,69,.45);display:none;
-  align-items:center;justify-content:center;z-index:30;padding:18px}
+  align-items:center;justify-content:center;z-index:var(--z-modal);padding:18px}
 .overlay.on{display:flex}
 .panel{background:#fff;border-radius:26px;padding:18px;width:100%;max-width:330px;
   box-shadow:0 10px 0 rgba(0,0,0,.08);text-align:center}
 .panel .ttl{font-size:15px;font-weight:800;color:#c96a8c;margin-bottom:12px;line-height:1.4}
 .panel .big{font-size:24px}
 .panel .hintline{font-size:12px;color:#b09a8d;margin-top:10px}
-.gbar{position:relative;height:38px;border-radius:19px;background:#f6ead9;overflow:hidden;
-  cursor:pointer;touch-action:none}
-.gbar .zone{position:absolute;top:0;bottom:0;background:#bfe6a4}
-.gbar .needle{position:absolute;top:4px;bottom:4px;width:5px;border-radius:3px;background:#e2789f}
-.gline{position:relative;height:160px;background:#fbf3e8;border-radius:18px;overflow:hidden;
-  touch-action:none}
-.gline i{position:absolute;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;
-  background:#fff;box-shadow:0 0 0 3px #f2dfd4;transition:background .1s,box-shadow .1s}
-.gline i.on{background:#f7c8dc;box-shadow:0 0 0 3px #e2789f}
-.gline i.target{background:#fff0f6;box-shadow:0 0 0 4px #f7c8dc;animation:tp .9s ease-in-out infinite}
-@keyframes tp{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
-.gline i b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:14px;font-weight:800;color:#c9b0a4;font-style:normal}
+/* 【已删除 · 2026-09-22】火候小游戏的两个控件本来在这里：
+     .gbar  —— 横条 + 指针，指针进绿区时点一下
+     .gline —— 九宫格划点，按 1→2→3→4 划过去
+   灶台取消之后它们没有载体了，CSS 连同 JS 里的
+   genPts / triggerEvent / buildEventUI / checkHit / hitPoint /
+   needlePos / endEvent / rafLoop 一起删掉（总纲第 6 条：删干净）。
+   —— 以后想复活火候玩法，记得连上面这些一起重写，别只加回 CSS。 */
 .pop{position:fixed;transform:translate(-50%,0);font-size:15px;font-weight:800;
   color:#e2789f;pointer-events:none;animation:fly 1s ease-out forwards;
-  text-shadow:0 1px 0 #fff;z-index:9}
+  text-shadow:0 1px 0 #fff;z-index:var(--z-float)}
 @keyframes fly{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}
   25%{opacity:1}100%{opacity:0;transform:translate(-50%,-46px) scale(1.06)}}
 .catfly{position:fixed;transform:translate(-50%,-50%);font-size:22px;pointer-events:none;
-  z-index:8;animation:catpop .7s ease-out forwards}
+  z-index:var(--z-float);animation:catpop .7s ease-out forwards}
 @keyframes catpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
   40%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}
   100%{opacity:0;transform:translate(-50%,-95%) scale(1)}}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
   background:rgba(107,81,69,.92);color:#fff;font-size:13px;padding:9px 16px;
-  border-radius:16px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:40;
+  border-radius:16px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:var(--z-toast);
   max-width:86%;text-align:center}
 .toast.on{opacity:1}
-#trash{position:fixed;right:14px;bottom:14px;width:62px;height:62px;border-radius:50%;
-  background:#fff;box-shadow:0 5px 0 #f2dfd4,0 0 0 3px #ffeef5 inset;
-  display:flex;align-items:center;justify-content:center;font-size:28px;z-index:20;
-  transition:transform .15s,box-shadow .15s,opacity .15s;opacity:.7;pointer-events:none}
-#trash.hot{opacity:1}
-#trash.over{transform:scale(1.18);box-shadow:0 5px 0 #f2dfd4,0 0 0 5px #f7c8dc}
-#trashTip{position:fixed;right:16px;bottom:80px;font-size:11px;font-weight:700;
-  color:#d6b6c6;pointer-events:none;z-index:20;text-align:center;width:60px}
-.poopGhost{position:fixed;transform:translate(-50%,-50%);font-size:30px;
-  pointer-events:none;z-index:50;filter:drop-shadow(0 3px 3px rgba(0,0,0,.2))}
+/* 🗑️ 垃圾桶（💩 的投放区）
+   ------------------------------------------------------------
+   【2026-09-24 第二次搬家】它原来固定在屏幕右下角，
+   结果把农场页下半部分的按钮盖得死死的 ——
+   用户截图里「小京的朋友已经够多了」和「小京顺手替你补种」两个按钮都被它压住。
+
+   现在它住进左侧导航栏，位置在【订单槽上面、那条粉色小横线的上方】——
+   那一竖条本来就是空的，放这儿不挡任何东西。
+   代价：导航栏只有 58px 宽，所以它从 62px 缩到了 46px。 */
+#trash{
+  pointer-events: auto;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 0 #f2dfd4, 0 0 0 3px #ffeef5 inset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  line-height: 1;
+  transition: transform .15s;
+}
+/* ⚠️ 🗑️ 是圆的，通用那圈方形 outline 套上去很难看 ——
+   所以它不用 outline 提示，只用「放大」来告诉玩家「松手就丢这儿」。 */
+#trash.drop-hot{outline:none}
+#trash.drop-over{outline:none;transform:scale(1.18)}
+/* 【已删除 · 2026-09-24】#trashTip（"拖到这"那行小字）。
+   垃圾桶搬进导航栏之后，那里只有 46px 宽，塞不下字；
+   而且桶本身就是一个明确的投放区，不需要额外标注了。 */
+/* 拖拽替身：跟着手指跑的那个 icon。
+   名字从 .poopGhost 改成 .dragGhost —— 现在三种东西（💩 / 食材 / 成品）
+   共用同一套拖拽骨架，不再只是粑粑了。 */
+.dragGhost{position:fixed;transform:translate(-50%,-50%);font-size:30px;
+  pointer-events:none;z-index:var(--z-drag);filter:drop-shadow(0 3px 3px rgba(0,0,0,.2))}
+
+/* ---------- 投放区的高亮 ----------
+   每个能接东西的元素都带一个 data-drop 属性（见 JS 的「统一拖拽骨架」）。
+   拖动一开始，凡是「接得住你手上这个东西」的投放区都会亮起粉圈，
+   告诉你该往哪儿拖；手指悬上去时颜色加深、轻微放大。
+   用 outline 而不是 box-shadow —— 不覆盖各元素自己的那层「下沿厚投影」。 */
+[data-drop].drop-hot{outline:3px solid #f7c8dc;outline-offset:2px}
+[data-drop].drop-over{outline:3px solid #e2789f;outline-offset:3px;transform:scale(1.08)}
 /* 小熊投喂页 */
 .fullWrap{background:#fff;border-radius:20px;padding:14px 14px 12px;box-shadow:0 4px 0 #f2dfd4;
   margin-bottom:14px;text-align:center}
@@ -167,105 +375,285 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .fullBar i{display:block;height:100%;width:0;border-radius:10px;
   background:linear-gradient(90deg,#ffd88a,#f2a0bd);transition:width .4s ease}
 .fullTxt{font-size:12px;font-weight:700;color:#b09a8d;line-height:1.55}
-/* 订单页 */
-.ordersFull{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
-.orderCard{background:#fff;border:0;border-radius:16px;padding:12px 13px;
-  box-shadow:0 4px 0 #f2dfd4;font-family:inherit;cursor:pointer;text-align:left;
-  display:flex;flex-direction:column;gap:9px;color:#6b5145}
-.orderCard:disabled{opacity:.55;cursor:default}
-.orderCard:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 #f2dfd4}
-.orderItems{display:flex;flex-direction:column;gap:5px}
-.orderItem{display:flex;align-items:center;gap:7px;font-size:13px;
-  font-weight:700;color:#6b5145;line-height:1.2}
-.orderItem .oe{font-size:18px;flex:none;width:22px;text-align:center}
-.orderItem .on{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.orderItem .oc{font-size:12px;color:#c9b0a4;white-space:nowrap}
-.orderItem.done .oc{color:#5aa06f}
-.orderBottom{display:flex;justify-content:space-between;align-items:center;
-  border-top:1px dashed #f2dfd4;padding-top:8px}
-.orderBottom .pay{font-size:14px;font-weight:800;color:#e2789f}
-.orderBottom .go{background:#f7c8dc;color:#fff;border-radius:12px;padding:5px 13px;
-  font-size:12px;font-weight:700}
-.orderCard:disabled .go{background:#ecdcd4}
-.bearFoodTag{font-size:10px;font-weight:700;color:#e2789f;background:#fff0f6;
-  border-radius:8px;padding:2px 7px;margin-left:2px;vertical-align:middle}
-  .dishPop{position:fixed;top:12px;right:12px;background:#fff;border-radius:16px;
+/* 【已删除 · 2026-09-22】订单页那一整片样式本来在这里：
+     .ordersFull / .orderCard / .orderItems / .orderItem / .orderBottom
+   它们伺候的是「一个订单凑三样货」的旧订单卡片。
+   订单大改之后（只剩一道菜、只显示 icon、搬进左侧导航栏），
+   这些类名一个都不再有元素挂着了，所以连样式一起删干净。
+   新订单槽的样式在「5. 左侧导航栏」那一段里，类名是 .oslot。 */
+.dishPop{position:fixed;top:12px;right:12px;background:#fff;border-radius:16px;
   padding:10px 14px;box-shadow:0 6px 0 #f2dfd4,0 0 0 3px #fff0f6 inset;
-  font-size:13px;font-weight:700;color:#6b5145;z-index:45;opacity:0;
+  font-size:13px;font-weight:700;color:#6b5145;z-index:var(--z-pop);opacity:0;
   transform:translateX(20px);transition:opacity .3s,transform .3s;pointer-events:none;
   display:flex;align-items:center;gap:8px;max-width:78%;line-height:1.4}
 .dishPop.on{opacity:1;transform:translateX(0)}
 .dishPop .de{font-size:22px;flex:none}
-  /* 左侧仓库抽屉 */
-.drawer {
-  position: fixed;
-  top: 0;
-  left: -100%;
-  width: 60vw; /* 只占屏幕宽度的60%，剩下右边是空白，方便点遮罩关闭 */
-  max-width: 320px;
-  height: 100vh;
-  background: #fffefb;
-  z-index: 500;
-  transition: left 0.3s ease;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* 让手机滑动更流畅 */
-  padding: 50px 10px 20px 10px; /* 顶部留出空间放关闭按钮 */
-  box-shadow: 4px 0 20px rgba(107,81,69,.15);
-}
-.drawer.on { left: 0; }
+/* ============================================================
+   5. 左侧导航栏 rail + 仓库抽屉 drawer
+   ------------------------------------------------------------
+   核心设计：【不重叠】
+     · rail 贴屏幕最左，永远可见、永远可点
+     · drawer 从 rail 的右边展开，两者在空间上完全不重叠
+     · 所以它们之间不需要靠 z-index 分胜负 ——
+       层级只用来处理「和遮罩的关系」
+   好处：以后再加新按钮，只要往 rail 里加一个，
+        不用动任何层级，也不会遮住任何东西。
+   ============================================================ */
 
-/* 抽屉专用的关闭按钮 */
-.drawerClose {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  width: 36px;
-  height: 36px;
-  background: #f2a0bd;
+.rail{
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--rail-w);
+  padding: 12px 0;
+  display: flex;
+  flex-direction: column;   /* 竖排是定案：横排放在上方会把顶栏挤爆 */
+  align-items: center;
+  gap: 8px;
+  z-index: var(--z-rail);
+  pointer-events: none;     /* 栏内空白可以点穿，方便点遮罩关抽屉 */
+}
+.rail-btn{
+  pointer-events: auto;
+  flex: none;
+  position: relative;       /* 给右上角的小叹号当定位基准 */
+  width: 50px;
+  height: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 0;
+  border-radius: 17px;
+  font-family: inherit;
+  font-size: 18px;
+  line-height: 1;
   color: #fff;
-  border-radius: 50%;
+  background: var(--pink);
+  box-shadow: 0 4px 0 var(--pink-d);
+  cursor: pointer;
+  transition: transform .12s ease;
+}
+.rail-btn .lb{ font-size: 9px; font-weight: 800; letter-spacing: .5px; }
+.rail-btn:active{ transform: translateY(2px); box-shadow: 0 2px 0 var(--pink-d); }
+.rail-btn.is-on{ background: #fff; color: var(--pink); box-shadow: 0 4px 0 var(--line); }
+
+/* 导航栏按钮右上角的小叹号：有东西等着你处理时才出现。
+   现在用在「工坊加工好了没收」和「小京探险回来了」两处。 */
+.rail-badge{
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 9px;
+  background: var(--rose);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 17px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #fff;
+  display: none;
+}
+.rail-badge.is-on{ display: block; }
+
+/* ---------- 订单槽：长在导航栏里，但它【不是按钮】 ----------
+   用户原话：「订单抽屉其实是根本打不开的……它只是位置在左侧抽屉区而已，
+             但它其实根本不是一个抽屉。」
+   所以它长得跟上面的按钮**故意不一样**：
+     按钮    = 实心粉底、有文字、点得开抽屉
+     订单槽  = 奶油底 + 粉色虚线框、里面只有一个菜肴 icon、点不开任何东西
+   一眼就能看出「这里是可以放东西的地方」，而不是「这里可以点」。
+
+   五个槽各自独立：把对应的成品（或者背包里的菜）拖上来就结算付钱，
+   然后它自己变成下一道菜。
+   ⚠️ 槽的个数由 ORDER_SLOTS 决定，2026-09-24 从 3 个加到了 5 个。
+   （后期可以在槽下面加进度条、时间条、叹号 —— 留了位置。） */
+.rail-orders{
+  margin-top: auto;        /* 推到导航栏底部，和上面那排按钮分家 */
+  margin-bottom: 18px;
+  padding-top: 12px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: none;              /* 屏幕矮的时候不许被压扁 —— 它是投放区，扁了就拖不准 */
+}
+/* 一条粉色小横线，把「按钮区」和「订单区」隔开 */
+.rail-orders::before{
+  content: '';
+  position: absolute;
+  top: 0; left: 6px; right: 6px;
+  height: 2px;
+  border-radius: 2px;
+  background: #f7c8dc;
+}
+.oslot{
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 2px dashed #f7c8dc;
+  background: #fffaf1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 3px 0 #dd89a8;
+  font-size: 22px;
+  line-height: 1;
+  transition: transform .15s;
 }
-.drawerClose:active { transform: translateY(2px); }
 
-/* 抽屉里格子的排版，改成每行4个，适应窄屏幕 */
-.drawer .row { grid-template-columns: repeat(4, 1fr); }
-.drawer .row.dish { grid-template-columns: repeat(4, 1fr); }
-.drawer .slot { padding: 6px 2px; font-size: 13px; }
-.drawer .slot .n { font-size: 10px; }
+/* 订单区的小标题。
+   为什么非要加它（用户原话）：
+     "否则其实玩家根本不知道这五个莫名其妙的图案是做什么用的"
+   —— 5 个槽里只显示一个菜肴 emoji，没有文字的话谁也猜不到那是订单。
+   要求：**就一行小字，不要加背景块**（比底色更浅、更轻）。 */
+.rail-note{
+  font-size: 9px;
+  font-weight: 800;
+  color: #c4ae95;
+  text-align: center;
+  letter-spacing: 1px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
 
-.drawerMask {
+/* ---------- 工坊：加工中的进度条 + 做好待收 ---------- */
+.seed .cprog{
+  display: block;
+  height: 5px;
+  border-radius: 4px;
+  background: #f2dfd4;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.seed .cprog i{
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  background: linear-gradient(90deg,#9ada6f,#6cc3a0);
+  transition: width .45s linear;
+}
+.seed.working{ background: #fffaf1; }
+.seed.done{
+  background: #eefaf0;
+  box-shadow: 0 0 0 3px #bfe6a4, 0 4px 0 #d6eedd;
+  animation: doneBob 1s ease-in-out infinite;
+}
+@keyframes doneBob{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-3px) } }
+
+.drawerMask{
   position: fixed;
   inset: 0;
   background: rgba(107,81,69,.4);
-  z-index: 499;
+  z-index: var(--z-mask);
   display: none;
 }
-.drawerMask.on { display: block; }
+.drawerMask.is-on{ display: block; }
 
-.drawerBtn {
+.drawer{
   position: fixed;
-  top: 14px;
-  left: 14px;
-  z-index: 600;
-  background: #f2a0bd;
-  color: #fff;
+  left: var(--rail-w);      /* 从导航栏右边开始 —— 绝不覆盖按钮 */
+  top: 0;
+  bottom: 0;
+  right: 0;                 /* 铺满手机（用户要求：展开后可以沾满手机） */
+  max-width: 420px;         /* 但桌面端别拉成一整条，太难看 */
+  background: #fffefb;
+  border-radius: 0 22px 22px 0;
+  box-shadow: 4px 0 20px rgba(107,81,69,.15);
+  z-index: var(--z-drawer);
+  /* 收起时往左滑走：自身宽度 + 导航栏宽度，才算完全出屏。
+     不能只写百分比 —— 抽屉宽度是 min(62vw,290px)，
+     写死百分比会在窄屏上露出一条边。 */
+  transform: translateX(calc(-100% - var(--rail-w) - 8px));
+  transition: transform .28s ease;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 12px 20px;
+}
+.drawer.is-on{ transform: translateX(0); }
+
+/* 抽屉里的分类标签 */
+.drawer-tabs{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.dtab{
   border: 0;
-  border-radius: 20px;
-  padding: 8px 16px;
-  font-size: 13px;
+  background: #fff;
+  color: var(--ink-4);
+  border-radius: 12px;
+  padding: 6px 11px;
+  font-size: 12px;
   font-weight: 700;
   font-family: inherit;
-  box-shadow: 0 4px 0 #dd89a8;
+  box-shadow: 0 2px 0 var(--line);
   cursor: pointer;
+  transition: transform .1s ease;
 }
-.drawerBtn:active { transform: translateY(2px); }
+.dtab:active{ transform: translateY(1px); }
+.dtab.is-on{ background: var(--pink); color: #fff; box-shadow: 0 2px 0 var(--pink-d); }
+
+/* 抽屉里的区块：标题和内容是「一对」，
+   永远一起出现、一起消失 —— 不会再出现空标题孤零零挂着 */
+.dsec{ margin-bottom: 14px; }
+.dsec-ttl{
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-4);
+  margin: 0 0 7px;
+  letter-spacing: 1px;
+}
+
+/* 抽屉里格子改每行 4 个，适应窄屏 */
+.drawer .row{ grid-template-columns: repeat(4,1fr); }
+.drawer .row.dish{ grid-template-columns: repeat(4,1fr); }
+/* 【已删除 · 2026-09-24】这里本来有一条 .drawer .slot.d{ touch-action:none }，
+   因为那时候我把「能拖去交订单」的拖拽源错挂在了抽屉的菜肴仓库上。
+   用户纠正之后，拖拽源改成了【厨房最下面那排菜肴 ui】，这条就没用了。 */
+.drawer .slot{ padding: 6px 2px; font-size: 13px; }
+.drawer .slot .n{ font-size: 10px; }
+
+/* ---------- 【火候 999】全文唯一的 !important ----------
+   格子 / 区块的显隐必须压过其它所有布局规则，
+   所以这里有意使用最高优先级。这不是遗留问题，是有意为之。
+   —— 想动它之前，先确认不会影响到别处的显隐逻辑。 */
+.is-hidden{ display: none !important; }
+
+/* ---------- 7. 拖拽与投放区 ---------- */
+
+/* 🐻 熊头垃圾桶 = 厨房里的「喂小京」投放区
+   ------------------------------------------------------------
+   【2026-09-22 大改】它从「固定在屏幕右下角、z-index 写死 999」
+   变成了「挂在九宫格锅下面右侧的一个普通布局元素」。
+
+   为什么把 999 拿掉：那个数字本来就是错的。
+   它原意是「投放区必须永远能被拖到」，但写死成最高层级之后，
+   熊头会浮在【一切】面板之上 —— 抽屉、遮罩、弹窗、导入导出框，
+   走到哪都能看见它。一个只在厨房用的东西，没有理由到处刷存在感。
+
+   现在它老老实实呆在自己的位置上，不抢层级。
+   拖拽本身靠 elementFromPoint 找投放区（见 JS），
+   根本不需要靠层级分胜负 —— 这跟当初解决
+   「导航栏 vs 抽屉」是同一个思路：不重叠，就不用比火候。 */
+#bearTrash{
+  flex: none;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  line-height: 1;
+  transition: transform .15s;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.18));
+}
 </style>
 </head>
 <body>
@@ -278,53 +666,80 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
     <div class="pill">🍯 <span id="honey">0</span></div>
     <div class="pill">🧸 <span id="bears">0</span></div>
   </div>
-  <div class="buff" id="buff"></div>
-  <button class="drawerBtn" id="drawerBtn">🎒 背包</button>
-  <div class="drawerMask" id="drawerMask"></div>
-  <div class="drawer" id="drawer">
-    <div class="drawerClose" id="drawerClose">✖</div>
-    <div class="secttl" style="margin-top:0">📦 物品仓库</div>
-    <div class="row" id="store"></div>
-    <div class="secttl">🍽️ 菜肴仓库</div>
-    <div class="row dish" id="tray"></div>
-    <button class="sellall" id="sellall" style="display:none"></button>
-  </div>
-  <div class="tabs">
-    <button class="tab on" id="tabFarm">🌱 农场</button>
-    <button class="tab" id="tabKitchen">🍳 厨房</button>
-    <button class="tab" id="tabOrder">📦 订单</button>
-    <button class="tab" id="tabBear">🧸 小京</button>
-  </div>
+  <!-- 【2026-09-24 搬走】提示区原来在这儿（货币栏下面），白占一行地方。
+       现在拆成两块、各去各该在的位置（都在农场页里）：
+         「×N 让卖出去的东西多赚 X%」   → 「小京的朋友」按钮下面（#buff）
+         「地上有 X 坨💩……」          → 田地下面、种子上面（#poopWarn）
+       另外：粑粑攒够 6 坨时，顶部「🌱 农场」标签上会亮一个小叹号（#farmBadge） -->
 
-  <div id="paneFarm">
-    <div class="field" id="field"></div>
-    <div class="seeds" id="seeds"></div>
-    <div class="secttl">🐾 牧场</div>
-    <div class="anbox" id="anBox"></div>
-    <div id="shop"></div>
-    <button class="catb" id="fertb" style="margin-top:4px;background:#b6d99a;box-shadow:0 4px 0 #9bc47e">🪣 施肥</button>
-    <button class="catb" id="bearb" style="margin-top:9px"></button>
-    <button class="toggle" id="auto"></button>
-  </div>
+<!-- ========== 左侧导航栏 ==========
+     永远钉在屏幕最左，竖排；抽屉打开时它不会移动、不会被盖住。
+     上半部分：四个「点得开抽屉」的按钮。
+     下半部分：三个「订单槽」—— 它们不是按钮，是投放区，
+               把成品拖上去就结算（详见 CSS 里的说明）。
 
-  <div id="paneKitchen" class="hide">
-    <div class="secttl">🏭 工坊</div>
+     以后要加新入口（比如「配方书」），往下加一个 rail-btn 就行，
+     不用改任何层级，也不会挤到别人。 -->
+<nav class="rail" id="rail">
+  <button class="rail-btn" data-view="bag" id="drawerBtn">🎒<span class="lb">背包</span></button>
+  <button class="rail-btn" id="recipeBtn">📖<span class="lb">菜谱</span></button>
+  <button class="rail-btn" data-view="craft" id="craftBtn">🏭<span class="lb">工坊</span><i class="rail-badge" id="craftBadge">!</i></button>
+  <button class="rail-btn" data-view="bear" id="bearBtn" data-drop="bearbtn">🧸<span class="lb">小京</span><i class="rail-badge" id="bearBadge">!</i></button>
+
+  <!-- 🗑️ 垃圾桶：💩 的投放区。
+       2026-09-24 从屏幕右下角搬到这里 —— 在那儿它会盖住农场页的按钮。
+       现在的位置：订单槽上面、那条粉色小横线的上方。 -->
+  <div id="trash" data-drop="trash">🗑️</div>
+
+  <!-- 订单区：一行小标题 + 5 个槽（槽本身是 JS 生成的）。
+       小标题是 2026-09-24 用户要求加的 —— 原话：
+       "否则其实玩家根本不知道这五个莫名其妙的图案是做什么用的" -->
+  <div class="rail-orders" id="railOrders">
+    <div class="rail-note">订单</div>
+  </div>
+</nav>
+
+<div class="drawerMask" id="drawerMask"></div>
+
+<!-- ========== 仓库抽屉 ==========
+     从导航栏右边展开：不覆盖按钮，也不铺满屏幕（右侧留遮罩，点一下关掉）。
+     每个区块是「标题 + 内容」的一对，由 JS 整块切换，
+     所以不会再有「标题还在、格子没了」的空壳。 -->
+<aside class="drawer" id="drawer">
+
+  <!-- ===== 视图 1：背包 ===== -->
+  <section class="dview" data-view="bag">
+    <div class="drawer-tabs" id="drawerTabs">
+      <button class="dtab is-on" data-cat="crop">🌱 农作物</button>
+      <button class="dtab" data-cat="material">🥩 特殊食材</button>
+      <button class="dtab" data-cat="craft">🍬 工坊产品</button>
+      <button class="dtab" data-cat="dish">🍲 菜肴</button>
+      <button class="dtab" data-cat="souvenir">⛄ 纪念品</button>
+    </div>
+
+    <section class="dsec" data-sec="goods">
+      <div class="dsec-ttl">📦 物品仓库</div>
+      <div class="row" id="store"></div>
+      <button class="sellall" id="sellall" style="display:none"></button>
+    </section>
+
+    <section class="dsec is-hidden" data-sec="dish">
+      <div class="dsec-ttl">🍽️ 菜肴仓库</div>
+      <div class="row dish" id="tray"></div>
+    </section>
+  </section>
+
+  <!-- ===== 视图 2：工坊 =====
+       点一下开始加工 → 等它慢慢做 → 做好了卡片会跳，点一下才收进背包。 -->
+  <section class="dview is-hidden" data-view="craft">
+    <div class="dsec-ttl">🏭 工坊 · 点一下开始加工，做好了要手动来收</div>
     <div class="crafts" id="crafts"></div>
-    <div class="secttl">🍳 灶台</div>
-    <div class="stoves" id="stoves"></div>
-    <div class="secttl">📖 菜谱</div>
-    <div class="recipes" id="recipes"></div>
-  </div>
+  </section>
 
-<div id="paneOrder" class="hide">
-  <div class="secttl">📦 订单板 · 每个订单要凑齐三样货</div>
-  <div class="ordersFull" id="ordersFull"></div>
-  <button class="catb" id="refreshOrders" style="margin-top:4px;background:#c9a9e0;box-shadow:0 4px 0 #ab8ac4">🍯 用 1 蜂蜜刷新订单</button>
-</div>
-
-  <div id="paneBear" class="hide">
+  <!-- ===== 视图 3：小京（原来是顶部的一个标签，现在搬进抽屉） ===== -->
+  <section class="dview is-hidden" data-view="bear" id="paneBear">
     <div class="secttl">🧸 小京的肚子</div>
-    <div class="fullWrap">
+    <div class="fullWrap" style="position:relative;">
       <div class="bearBig" id="bearFace">🧸</div>
       <div class="fullBar"><i id="fullFill"></i></div>
       <div class="fullTxt" id="fullTxt"></div>
@@ -338,9 +753,78 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 </div>
 
     <button class="catb" id="goOut" style="margin-top:4px;background:#f2a0bd;box-shadow:0 4px 0 #dd89a8">🧸 带小京去森林探险</button>
+    <button class="catb" id="lootBtn" style="display:none; margin-top:4px; background:#f7c8dc; box-shadow:0 4px 0 #dd89a8;">🎁 领取小京带回的礼物</button>
     <div class="secttl">🍽️ 投喂小京（只有小熊料理可以喂哦）</div>
     <div class="seeds" id="feedGrid"></div>
+  </section>
+
+</aside>
+    <div class="tabs">
+    <!-- 农场标签上的小叹号：粑粑攒够 6 坨、动物要罢工时亮起来。
+         为什么要有它：那行警告在农场页里，不点农场就看不见 ——
+         等玩家自己发现可能已经过去半小时了。（用户原话） -->
+    <button class="tab on" id="tabFarm">🌱 农场<i class="rail-badge" id="farmBadge">!</i></button>
+    <button class="tab" id="tabKitchen">🍳 厨房</button>
   </div>
+
+  <div id="paneFarm">
+    <div class="field" id="field"></div>
+    <!-- 💩 警告：放在田地下面、种子上面。
+         没粑粑的时候 JS 会把它整个藏起来（display:none），一点地方都不占。 -->
+    <div class="poopWarn" id="poopWarn"></div>
+    <div class="seeds" id="seeds"></div>
+    <div class="secttl">🐾 牧场</div>
+    <div class="anbox" id="anBox"></div>
+    <div id="shop"></div>
+    <button class="catb" id="fertb" style="margin-top:4px;background:#b6d99a;box-shadow:0 4px 0 #9bc47e">🪣 施肥</button>
+    <button class="catb" id="bearb" style="margin-top:9px"></button>
+    <!-- 「×N 让卖出去的东西多赚 X%」—— 2026-09-24 从页面顶部搬到这里 -->
+    <div class="buff" id="buff"></div>
+    <button class="toggle" id="auto"></button>
+  </div>
+
+  <div id="paneKitchen" class="hide">
+
+    <!-- ① 食材区：只有 icon，没有名字也没有数量。
+         仓库里没有的会变灰，点了/拖了都会提示「仓库里没有哦」。 -->
+    <div class="secttl">🧺 食材 · 拖进锅里</div>
+    <div class="pantry" id="pantry"></div>
+
+    <!-- ② 锅：**九宫格在右、提示栏在左**（2026-09-24 镜像翻转过）。
+         左边那一栏从上到下是：菜谱缩略图 → 当前选中的菜（icon + 名字）。
+
+         为什么这么排（都是用户原话）：
+           · 锅放右边 —— "游玩的时候一般都是用右手大拇指来玩，
+                          缩略图放在右侧的话，来回就会被遮到，看不清楚"
+           · 缩略图在上面 —— "缩略图靠近食材的话，肉眼会比较舒服，比较好对照" -->
+    <div class="potWrap">
+      <div class="potSide">
+        <div class="potRef" id="potRef"></div>
+        <div class="potPick empty" id="potPick">先选一道菜</div>
+      </div>
+      <div class="pot" id="pot"></div>
+    </div>
+
+    <!-- ③ 提交行：铺满整行（2026-09-24 从「只有锅那么宽」改成了铺满整行）。
+         左边 = 成品格（提交之前留空）；中间 = 提交；右边 = 熊头垃圾桶。
+         成品格有东西的时候不许被覆盖，所以「提交」会变灰。 -->
+    <div class="potBar">
+      <div class="outSlot empty" id="outSlot">·</div>
+      <button class="potGo" id="potGo">提交</button>
+      <div id="bearTrash" data-drop="bear">🐻</div>
+    </div>
+
+    <!-- ④ 菜肴列表：每行 3 个，点一下选中，右边就会显示它的菜谱 -->
+    <div class="secttl">📖 菜谱 · 点一下选中</div>
+    <div class="recipes" id="recipes"></div>
+  </div>
+
+  <!-- 订单板原本在这里（顶部的一个标签页）。
+       2026-09-22 已经搬进左侧导航栏的「订单槽」里了，
+       而且它不再是标签页，也不是抽屉 —— 就是三个能接东西的槽，
+       见上面 rail 里的 .rail-orders。 -->
+
+  <!-- 小京原本在这里，已经搬进左侧抽屉（见上面 data-view="bear"） -->
 
 <div class="foot">
   <span id="tip"></span>
@@ -349,8 +833,9 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
   <button id="reset">重来</button>
 </div>
 
-<div id="trash">🗑️</div>
-<div id="trashTip">拖到这</div>
+<!-- 垃圾桶和「拖到这」原来在这一行，2026-09-24 搬走了：
+     垃圾桶 → 进了左边导航栏（见上面 rail 里那个 #trash）
+     「拖到这」那行小字 → 直接删掉（导航栏只有 46px 宽，塞不下字） -->
 <div class="overlay" id="overlay"><div class="panel" id="panel"></div></div>
 <div class="toast" id="toast"></div>
 <div class="dishPop" id="dishPop"></div>
@@ -359,90 +844,499 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 <script>
 
 var KEY='kitty-farm-v1';
-var N=16, STOVES=3, BEAR_HONEY=5, BEAR_MAX=3, BEAR_SPEED=2000, BEAR_BONUS=0.10, ORDER_SLOTS=3;
-var POOP_LIMIT=6, ANIMAL_MAX=3;
-var BEAR_FULL_MAX=100, BEAR_FULL_OK=60, BEAR_FULL_DECAY=3000;
+/* ORDER_SLOTS：订单槽个数。2026-09-24 用户从 3 个加到 5 个
+   —— 原话："订单数量增加到五个（因为我玩的时候一不小心给自己穷死了）"
+   导航栏左侧会有 5 个订单槽，那里空着不好看，挤一挤刚好。 */
+/* ============================================================
+   音效系统（2026-09-24 新增）
+   ------------------------------------------------------------
+   全部声音都是**代码现场合成**的，不加载任何音频文件 ——
+   所以游戏还是一个单文件 html，也没有任何素材版权问题。
 
-/* ---------- 物品表 ---------- */
+   ⚠️⚠️ 四条必须知道的，改之前先看完：
+
+     ① 手机浏览器的死规矩：**用户第一次点屏幕之前，声音一律放不出来。**
+        所以第一次 pointerdown 时会偷偷"解锁"一次（audioUnlock）。
+        这是浏览器的安全规定，绕不过去，别试图在页面一打开就出声。
+
+     ② **用户明确说不要静音开关。** 原话：
+        "妈的还想静音？不许静音！静音我不就白做了！"
+        所以界面上【没有】那个按钮 —— 想安静就按手机的音量键。
+        （引擎里保留了 masterGain 这一层，哪天用户改主意要开关，加个按钮就行。）
+
+     ③ **小京自动干活是不出声的**（用户特别要求，原话：
+        "小京帮我做事是没有声音的，小京种菜收菜收粑粑都是没声音的（不然会很吵）"）。
+        所以凡是小京自动触发的 harvest / collectPoop，都要传 silent = true。
+        ⚠️ 这条很容易在以后加音效时被破坏 —— 加音效时先问一句：
+           "这一下是玩家干的，还是小京自动干的？"
+
+     ④ 音量（表里的 `v`）别超过 0.4，不然会爆音、也吵。
+
+   加新音效 = 往 SOUNDS 表里加一行 + 在要响的地方写 sfx('名字')。
+   ============================================================ */
+
+var AC = null;            /* AudioContext：整套声音的总开关 */
+var masterGain = null;    /* 总音量（现在固定 0.5，留这一层是为了以后能加音量条） */
+
+function audioUnlock(){
+  if(AC) return;
+  try{
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;                       /* 老浏览器没有这个能力 */
+    AC = new Ctx();
+    masterGain = AC.createGain();
+    masterGain.gain.value = 0.5;
+    masterGain.connect(AC.destination);
+  }catch(e){
+    AC = null;                             /* 出错就彻底放弃声音，游戏照常玩 */
+  }
+}
+/* 第一次点屏幕时解锁。用 pointerdown 而不是 load，因为必须发生在"用户手势"里。 */
+document.addEventListener('pointerdown', function(){
+  audioUnlock();
+  if(AC && AC.state === 'suspended'){ try{ AC.resume(); }catch(e){} }
+});
+
+/* ---------- 音效配方表 ----------
+   一个音效 = 若干个「音符」（parts）+ 可选的「噪声层」（noise）。
+
+   音符：{ f: 起始频率, f2: 结束频率（省了就变平音，有就滑过去）,
+           t: 什么时候开始（秒，省了就是 0）, d: 持续多久, v: 多大声,
+           w: 波形 —— 省了就是 'sine'（最柔）
+         }
+   噪声：{ d: 持续多久, v: 多大声, f: 中心频率, q: 集中程度 }
+
+   ⚠️⚠️ 【2026-09-24 第二版：全部改成可爱治愈风】⚠️⚠️
+      第一版被用户骂惨了 —— 原话："听得我他妈的拳头想喝血了"。
+      原因有两个，都是我的错：
+        ① 用了 `sawtooth`（锯齿波）—— 这个波形天生就是"刺"的
+        ② 用了噪声（noise）—— 噪声本质上就是"呲——"的一声
+
+      **所以《《 现在一个噪声都没有、一个锯齿波都没有 》》。**
+      全部只用 `sine`（正弦波），这是最柔和的波形。
+
+      可爱治愈风的四条配方（改音效之前先读这四条）：
+        ① **只用 sine**。sawtooth / square 一律不许出现。
+        ② **音高往上走**。上行 = 开心、可爱、有精神；下行 = 沉重、失落。
+           （只有"失败"那种音才允许**轻微**下行，而且要短、要高，别掉到 400Hz 以下。）
+        ③ **频率待在 420 ~ 2400Hz 之间**。
+           低于 400 会闷、会"砸"；高于 2600 会尖。
+        ④ **音量不超过 0.24**，而且"可爱"的声音往往是**小而轻**的。
+           想让它更明显，**加长衰减（d）**，不要加大音量。
+
+      另外两个万能的"可爱"公式：
+        · **上滑的水泡**：f 到 f2 往上滑（比如 660→990）→ 听着像"啵"，很萌
+        · **八音盒**：短促的起音 + 长长的尾巴（d 拉到 0.3~0.45）→ 像敲了一下钢片琴 */
+var SOUNDS = {
+
+  /* ---------- 厨房 ---------- */
+  /* 食材落进锅：小水泡"啵"（往上滑一点点，轻轻放下） */
+  ingDrop: { parts:[{f:660, f2:990, d:0.09, v:0.20}] },
+  /* 食材拿出来：更短、更轻的一下 */
+  ingPick: { parts:[{f:880, f2:1100, d:0.06, v:0.13}] },
+  /* 锅里两格交换：两个小水泡"啵啵" */
+  ingSwap: { parts:[{f:660, f2:990,  d:0.08, v:0.17},
+                    {f:740, f2:1110, d:0.08, v:0.15, t:0.085}] },
+  /* 成功做出一道菜：八音盒上行三音"叮—咚—叮"
+     （最后一个音特意拉长到 0.45 秒，那是"做好了！"的余韵） */
+  cookOk:  { parts:[{f:880,  f2:880,  d:0.16, v:0.18},
+                    {f:1109, f2:1109, d:0.16, v:0.18, t:0.10},
+                    {f:1319, f2:1319, d:0.45, v:0.20, t:0.20}] },
+  /* 黑暗料理：**只许轻微下滑、不许刺耳**。
+     像"唔…哦"，垂头丧气但依然软软的，还是用 sine。 */
+  cookBad: { parts:[{f:590, f2:520, d:0.14, v:0.15},
+                    {f:494, f2:420, d:0.26, v:0.14, t:0.13}] },
+  /* 小京吃掉了：开心的两下（往上走）—— "嗯！好吃" */
+  bearEat: { parts:[{f:520, f2:700, d:0.09, v:0.17},
+                    {f:620, f2:840, d:0.11, v:0.15, t:0.10}] },
+
+  /* ---------- 订单交货：钱的声音 ----------
+     用户要求"像钱的声音"。
+     做法：两声清脆的上行（收银机弹开）+ 后面撒一串很短的高音（金币一枚枚落下）。
+     全部是 sine，所以清脆但不刺耳。 */
+  pay: { parts:[
+      {f:1046, f2:1046, d:0.14, v:0.20},
+      {f:1568, f2:1568, d:0.40, v:0.20, t:0.085},
+      {f:2093, f2:2093, d:0.10, v:0.10, t:0.22},
+      {f:2349, f2:2349, d:0.10, v:0.09, t:0.29},
+      {f:1975, f2:1975, d:0.10, v:0.08, t:0.36}
+    ] },
+
+  /* ---------- 农场 ---------- */
+  /* 手动把💩丢进桶里：用户要的"piaji（吧唧）"。
+     ⚠️ 第一版我做成了"低频锯齿波 + 噪声"，用户听了想喝血。
+        现在改成**两个弹跳的小水泡**（"啵叽"）——
+        不像真实声音，但俏皮、不刺耳，这才是这个游戏该有的味道。 */
+  poopPick: { parts:[{f:520, f2:880,  d:0.08, v:0.19},
+                     {f:700, f2:1180, d:0.10, v:0.16, t:0.085}] },
+  /* 施肥：倒东西的"沙沙沙"。
+     ⚠️ 第一版也是噪声，同样被骂。
+        现在改成**六颗小沙粒落下来**（六个很短的高音错开）——
+        听着像小铃铛撒了一地，可爱又不吵。 */
+  fert: { parts:[
+      {f:1320, f2:1320, d:0.05, v:0.090},
+      {f:1480, f2:1480, d:0.05, v:0.085, t:0.055},
+      {f:1240, f2:1240, d:0.05, v:0.080, t:0.110},
+      {f:1560, f2:1560, d:0.05, v:0.075, t:0.165},
+      {f:1380, f2:1380, d:0.05, v:0.070, t:0.220},
+      {f:1660, f2:1660, d:0.07, v:0.065, t:0.275}
+    ] }
+};
+
+/* 播放一个音效。名字写错 / 还没解锁 / 浏览器不支持 → 安静跳过，绝不报错。 */
+function sfx(name){
+  if(!AC || !masterGain) return;
+  if(AC.state === 'suspended') return;
+  var cfg = SOUNDS[name];
+  if(!cfg) return;
+
+  var t0 = AC.currentTime;
+
+  /* --- 音符层 --- */
+  (cfg.parts || []).forEach(function(p){
+    var start = t0 + (p.t || 0);
+    var end   = start + p.d;
+    var o = AC.createOscillator();
+    var g = AC.createGain();
+    o.type = p.w || 'sine';
+    o.frequency.setValueAtTime(Math.max(1, p.f), start);
+    if(p.f2 && p.f2 !== p.f){
+      o.frequency.exponentialRampToValueAtTime(Math.max(1, p.f2), end);
+    }
+    /* 音量包络：猛地起、慢慢落 —— 这样听着像乐器，而不是"哔"的一声电子音。
+       ⚠️ exponentialRamp 的目标不能是 0，只能用 0.0001 这种极小值。 */
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, p.v), start + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, end);
+    o.connect(g); g.connect(masterGain);
+    o.start(start); o.stop(end + 0.03);
+  });
+
+  /* --- 噪声层 --- */
+  if(cfg.noise){
+    var n = cfg.noise;
+    var len = Math.max(1, Math.ceil(AC.sampleRate * n.d));
+    var buf = AC.createBuffer(1, len, AC.sampleRate);
+    var dat = buf.getChannelData(0);
+    for(var i=0;i<len;i++) dat[i] = Math.random() * 2 - 1;
+    var src = AC.createBufferSource(); src.buffer = buf;
+    var flt = AC.createBiquadFilter();
+    flt.type = 'bandpass';
+    flt.frequency.value = n.f || 1000;
+    flt.Q.value = n.q || 1;
+    var ng = AC.createGain();
+    ng.gain.setValueAtTime(n.v, t0);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t0 + n.d);
+    src.connect(flt); flt.connect(ng); ng.connect(masterGain);
+    src.start(t0); src.stop(t0 + n.d + 0.03);
+  }
+}
+
+var N=16, BEAR_HONEY=5, BEAR_MAX=3, BEAR_SPEED=2000, BEAR_BONUS=0.10, ORDER_SLOTS=5;
+var POOP_LIMIT=6, ANIMAL_MAX=3;
+var BEAR_FULL_MAX=100, BEAR_FULL_OK=50,BEAR_FULL_DECAY=3000;
+/* 锅 = 九宫格。（原来的 STOVES=3 三口灶台已经删掉了。）
+   九宫格的硬规则，两条，都别改：
+     ① 一个格子 = 一个食材 —— 要几个就占几个格子，不支持「一格带数量」
+     ② 位置算数 —— 摆错格子做不出来（像 Minecraft 的合成，位置本身就是谜题） */
+var POT_N=9;
+
+/* ---------- 物品表 ----------
+   kind（种类）＝ 这件东西属于哪一类。**只管显示在背包抽屉的哪个标签下**，
+   不参与任何游戏规则（这一点很重要，见下面的 noOrder）。
+
+     crop     农作物
+     animal   动物产品（牛奶 / 鸡蛋 / 巧克力）—— 没有单独标签，跟在「农作物」里显示
+     craft    工坊产品
+     material 特殊食材
+     souvenir 纪念品（小雪人系列，以后拿来做家具的，不是吃的）
+
+   noOrder:true ＝ 这件东西**不会出现在订单里**。不写 = 可以进订单。
+                  跟 noCook 是一个路子（名字都是一家人：no + 干什么）。
+
+   ⚠️ 2026-09-21 拆过一次字段：
+      以前「能不能进订单」是拿 kind 猜的（material 不进订单），
+      于是"分类"和"玩法"被焊死在一起 —— 饱嗝明明该算特殊食材，
+      却因为 kind 写了 craft 而混进了订单。
+      现在拆开了：**kind 只分类，能不能进订单看 noOrder**。加东西时记得标一下。
+*/
 var GOODS=[
-  {id:'berry',   n:'草莓',   e:'🍓', price:12,   kind:'crop', cost:5,   grow:8 },
-  {id:'rice',    n:'水稻',   e:'🌾', price:25,   kind:'crop', cost:8,   grow:10},
-  {id:'carrot',  n:'胡萝卜', e:'🥕', price:55,   kind:'crop', cost:25,  grow:20},
-  {id:'cane',    n:'甘蔗',   e:'🎋', price:100,  kind:'crop', cost:45,  grow:28},
-  {id:'corn',    n:'玉米',   e:'🌽', price:190,  kind:'crop', cost:80,  grow:45},
-  {id:'pumpkin', n:'南瓜',   e:'🎃', price:760,  kind:'crop', cost:300, grow:90},
-  {id:'tomato',  n:'番茄',   e:'🍅', price:150,  kind:'crop', cost:60,  grow:35},
-  {id:'greens',  n:'青菜',   e:'🥬', price:80,   kind:'crop', cost:30,  grow:25},
-  {id:'potato',  n:'土豆',   e:'🥔', price:320,  kind:'crop', cost:120, grow:70},
-  {id:'peanut',  n:'花生',   e:'🥜', price:400,  kind:'crop', cost:150, grow:75},
-  {id:'milk',    n:'牛奶',   e:'🥛', price:260,  kind:'animal'},
-  {id:'egg',     n:'鸡蛋',   e:'🥚', price:180,  kind:'animal'},
-  {id:'choc',    n:'巧克力', e:'🍫', price:420,  kind:'animal'},
-  {id:'sugar',   n:'糖',     e:'🍬', price:260,  kind:'craft'},
-  {id:'flour',   n:'面粉',   e:'🍚', price:110,  kind:'craft'},
-  {id:'butter',  n:'黄油',   e:'🧈', price:1200, kind:'craft'},
-  {id:'burp',    n:'饱嗝',   e:'💨', price:2000, kind:'craft'},
-  {id:'ketchup', n:'番茄酱', e:'🥫', price:500,  kind:'craft'},
-  {id:'oil',     n:'豆油',   e:'🟨', price:800,  kind:'craft'},
-  {id:'jam',     n:'草莓酱', e:'🍓', price:180,  kind:'craft'},
-  {id:'mayo',    n:'蛋黄酱', e:'🟠', price:800,  kind:'craft'},
-  // 下面这些是外出带回的材料，不会在订单里出现，不做要求
-  {id:'onion',   n:'洋葱',   e:'🧅', price:200,  kind:'material'},
-  {id:'shrimp',  n:'虾',     e:'🦐', price:500,  kind:'material'},
-  {id:'meat',    n:'肉',     e:'🥩', price:800,  kind:'material'},
-  {id:'patty',   n:'肉饼',   e:'🍖', price:1000, kind:'material'},
-  {id:'cheese',  n:'芝士',   e:'🧀', price:600,  kind:'material'},
-  {id:'ice',     n:'冰块',   e:'🧊', price:100,  kind:'material'},
-  {id:'lemon',   n:'柠檬',   e:'🍋', price:300,  kind:'material'},
-  {id:'alcohol', n:'酒精',   e:'🍺', price:1500, kind:'material'},
-  {id:'snowman', n:'小雪人', e:'⛄', price:500,  kind:'material'},
-  {id:'sparkle_snowman', n:'闪光小雪人', e:'☃️', price:5000, kind:'material'}
+  {id:'berry',           n:'草莓',       e:'🍓',  price:12,   kind:'crop',     cost:5,   grow:8},
+  {id:'rice',            n:'小麦',       e:'🌾',  price:25,   kind:'crop',     cost:8,   grow:10},
+  {id:'carrot',          n:'胡萝卜',     e:'🥕',  price:55,   kind:'crop',     cost:25,  grow:20},
+  {id:'cane',            n:'甘蔗',       e:'🎋',  price:100,  kind:'crop',     cost:45,  grow:28},
+  {id:'corn',            n:'玉米',       e:'🌽',  price:190,  kind:'crop',     cost:80,  grow:45},
+  {id:'tomato',          n:'番茄',       e:'🍅',  price:150,  kind:'crop',     cost:60,  grow:35},
+  {id:'greens',          n:'青菜',       e:'🥬',  price:80,   kind:'crop',     cost:30,  grow:25},
+  {id:'potato',          n:'土豆',       e:'🥔',  price:320,  kind:'crop',     cost:120, grow:70},
+  {id:'peanut',          n:'花生',       e:'🥜',  price:400,  kind:'crop',     cost:150, grow:75},
+  {id:'onion',           n:'洋葱',       e:'🧅',  price:220,  kind:'crop',     cost:100, grow:30},
+  {id:'milk',            n:'牛奶',       e:'🥛',  price:260,  kind:'animal'},
+  {id:'egg',             n:'鸡蛋',       e:'🥚',  price:180,  kind:'animal'},
+  {id:'choc',            n:'巧克力',     e:'🍫',  price:420,  kind:'animal'},
+  {id:'sugar',           n:'糖',         e:'🍬',  price:260,  kind:'craft'},
+  {id:'flour',           n:'面粉',       e:'⚪',   price:110,  kind:'craft'},
+  {id:'butter',          n:'黄油',       e:'🧈',  price:1200, kind:'craft'},
+  {id:'burp',            n:'饱嗝',       e:'💨',  price:2000, kind:'material'},
+  {id:'ketchup',         n:'番茄酱',     e:'🥫',  price:500,  kind:'craft'},
+  {id:'oil',             n:'豆油',       e:'🟨',  price:800,  kind:'craft'},
+  {id:'jam',             n:'草莓酱',     e:'🔴',  price:180,  kind:'craft'},
+  {id:'mayo',            n:'蛋黄酱',     e:'🟠',  price:800,  kind:'craft'},
+  {id:'shrimp',          n:'虾',         e:'🦐',  price:500,  kind:'material'},
+  {id:'meat',            n:'肉',         e:'🥩',  price:800,  kind:'material'},
+  {id:'cheese',          n:'芝士',       e:'🧀',  price:600,  kind:'material'},
+  {id:'ice',             n:'冰块',       e:'🧊',  price:100,  kind:'material'},
+  {id:'lemon',           n:'柠檬',       e:'🍋',  price:300,  kind:'material'},
+  {id:'alcohol',         n:'酒精',       e:'🍺',  price:1500, kind:'material'},
+  {id:'snowman',         n:'小雪人',     e:'⛄',   price:500,  kind:'souvenir'},
+  {id:'sparkle_snowman', n:'闪光小雪人', e:'☃️', price:5000, kind:'souvenir'},
 ];
 var CROPS=[];
 GOODS.forEach(function(g){ if(g.kind==='crop') CROPS.push(g); });
 
+/* 种子按钮的排列顺序：按【生长时间从短到长】。
+   —— 用户 2026-09-24 要求："把种子这里按时间排序一下。"
+      前期能种的排前面，一眼就看到了。
+   ⚠️ 排序只影响「种子按钮显示的先后」，CROPS 本身保持数据表的原始顺序不动。
+      要用排好序的列表就认准 CROPS_SORTED。 */
+var CROPS_SORTED = CROPS.slice().sort(function(a,b){
+  if(a.grow !== b.grow) return a.grow - b.grow;
+  return a.cost - b.cost;      /* 生长时间一样时，便宜的排前面 */
+});
+
 var ANIMALS=[
-  {id:'hen', n:'小鸡', e:'🐥', price:2000,  feed:'rice',   out:'egg',  time:12, fname:'水稻'},
+  {id:'hen', n:'小鸡', e:'🐥', price:2000,  feed:'rice',   out:'egg',  time:16, fname:'小麦'},
   {id:'cow', n:'牛',   e:'🐄', price:8000,  feed:'carrot', out:'milk', time:18, fname:'胡萝卜'},
   {id:'pig', n:'小猪', e:'🐖', price:30000, feed:'corn',   out:'choc', time:26, fname:'玉米'}
 ];
 
+/* 工坊配方。time = 加工需要几秒。
+   ⚠️ 2026-09-24 调过两轮（都是用户试玩后定的新数字）：
+        第一轮：糖 12→5 · 面粉 12→10 · 黄油 25→13 · 豆油 30→18 · 果酱 15→10 · 蛋黄酱 40→30
+        第二轮：面粉 10→4
+        番茄酱没提，保持 22。
+
+   ⚠️ 这张表和游戏里别的数据不一样 —— **它不在笔记里**，是手写的。
+      `小熊小农场数据\` 里没有「工坊」这一类笔记，所以同步脚本不碰它。
+      （哪天想让它也由笔记驱动，就在笔记里加一个 `类型: 工坊` 类型。） */
 var CRAFTS=[
-  {from:'cane', need:2, out:'sugar'},
-  {from:'rice', need:2, out:'flour'},
-  {from:'milk', need:3, out:'butter'},
-  {from:'tomato', need:3, out:'ketchup'},
-  {from:'peanut', need:3, out:'oil'},
-  {from:'berry', need:2, out:'jam'},
-  {multi:{egg:1,butter:1,lemon:1,sugar:1}, out:'mayo'}
+  {from:'cane',   need:2, out:'sugar',   time:5},
+  {from:'rice',   need:2, out:'flour',   time:4},
+  {from:'milk',   need:3, out:'butter',  time:13},
+  {from:'tomato', need:3, out:'ketchup', time:22},
+  {from:'peanut', need:3, out:'oil',     time:18},
+  {from:'berry',  need:2, out:'jam',     time:10},
+  {multi:{egg:1,butter:1,lemon:1,sugar:1}, out:'mayo', time:30},
+
+  /* ---------- 第二组槽位（2026-09-24 加）----------
+     用户原话："糖和面粉的加工按钮增加到两个（因为平时不太够用）"
+
+     实现办法很土但很稳：**把同一个配方再写一遍**。
+     数组下标天然把它们分开了 —— S.craftT[0] 和 S.craftT[7] 各算各的，
+     所以这两个槽可以同时开工，互不干扰。
+
+     ⚠️ 新增的槽位一律【追加在数组末尾】，绝不要插到中间：
+        存档里「正在加工的是哪一项」是按【数组下标】记的，
+        插在中间会让后面所有下标错位，旧存档的加工进度就全乱套了。 */
+  {from:'cane',   need:2, out:'sugar',   time:5},
+  {from:'rice',   need:2, out:'flour',   time:4}
 ];
 
+/* ---------- 菜品表 ----------
+   标记说明（不写标记 = 普通菜）：
+     bear:true      = 小熊料理：只有小京能吃，而且不会出现在订单里
+     special:true   = 特殊料理：只有 20% 概率出现在订单里，但价格 ×1.5
+                      ⚠️ 只对「普通菜」有意义。小熊料理在第784行就被 bear:true 拦住了，
+                         根本走不到 special 那一步，所以给 bear 菜写 special 是没用的。
+     onEat:'效果名'  = 小京吃下去的**那一刻**触发一个特殊效果。
+                      这里只写"哪个效果"，具体做什么写在下面的 EAT_EFFECTS 表里。
+                      （目前有：'fullBelly' = 饱食度拉满 + 3 分钟不掉）
+     noCook:true    = 不出现在厨房的菜谱列表里（丸子串串靠探险拿）
+
+   ⚠️ 带 bear:true 的菜，必须集中放在下面那条「分界线」以下，不许混进普通菜里。
+      反过来，普通菜也绝对不要放到分界线下面 —— 见分界线那里的详细说明。
+
+   ⚠️ 一个字段只干一件事：
+      "是不是特殊菜"   → special（布尔值）
+      "吃了有什么效果" → onEat（效果名，字符串）
+      不要往一个字段里塞两种意思 —— 那是 2026-09-21 修掉的旧毛病
+      （它原本写 special:'full'，一个字段既当开关又当种类）。
+
+   ⚠️ 加新效果的正确姿势：
+      **不要**在菜品表里加一个 xxx:true 开关（那样 20 种效果就要 20 个字段）。
+      正确做法：往 EAT_EFFECTS 表里加一条，然后在菜上写 onEat:'那个名字'。
+*/
 var DISHES=[
-  {id:'salad',   n:'蔬菜沙拉',  e:'🥗', need:{greens:2,tomato:1,carrot:1},                   time:35,  price:220,  ev:2, feed:20},
-  {id:'soup',    n:'玉米浓汤',  e:'🌽', need:{corn:2,carrot:1},                               time:60,  price:620,  ev:2, feed:28},
-  {id:'cocoa',   n:'热可可',    e:'☕', need:{choc:2,milk:2},                                 time:55,  price:2600, ev:2, feed:34},
-  {id:'pie',     n:'南瓜派',    e:'🥧', need:{flour:2,pumpkin:3,egg:1,sugar:1},              time:100, price:2600, ev:3, feed:36},
-  {id:'pasta_shrimp', n:'番茄虾仁意面', e:'🍝', need:{flour:2,butter:1,ketchup:1,onion:1,shrimp:1}, time:80, price:3500, ev:3, feed:45},
-  {id:'noodle',  n:'番茄鸡蛋面', e:'🍜', need:{flour:2,tomato:1,egg:1,greens:1},             time:50, price:800,  ev:2, feed:30},
-  {id:'taco',    n:'塔可',       e:'🌮', need:{ketchup:1,meat:1,onion:1,greens:1,oil:1,flour:2}, time:85, price:4000, ev:3, feed:48},
-  {id:'burger',  n:'汉堡',       e:'🍔', need:{ketchup:1,mayo:1,flour:4,patty:2,greens:1,tomato:1,cheese:1,onion:1}, time:120, price:8500, ev:4, feed:55},
-  {id:'toast',   n:'吐司',       e:'🍞', need:{flour:3,honey:1,milk:1,butter:1},             time:45, price:1200, ev:2, feed:35},
-  {id:'fries',   n:'薯条',       e:'🍟', need:{potato:3,oil:1,ketchup:1},                     time:50, price:900,  ev:2, feed:32},
-  {id:'ice3',    n:'三色冰激凌', e:'🍨', need:{ice:3,milk:3,choc:1,honey:1,jam:1},            time:90, price:3800, ev:3, feed:50},
-  {id:'smoothie',n:'草莓沙冰',   e:'🍧', need:{ice:2,milk:1,jam:2},                           time:40, price:1500, ev:2, feed:30},
-  {id:'icecream',n:'冰激凌',     e:'🍦', need:{ice:1,milk:1,sugar:1,egg:1,flour:1},           time:50, price:1100, ev:2, feed:33},
-  {id:'mojito',  n:'莫吉托',     e:'🍸', need:{alcohol:2,lemon:1,burp:1,ice:1},               time:60, price:2200, ev:3, feed:40},
-  // 下面是特殊的小熊料理
-  {id:'donut',   n:'小熊甜甜圈',e:'🍩', need:{honey:2,flour:1,sugar:1,egg:1,choc:2,butter:1},  time:110, price:6500, ev:3, feed:50, bear:true},
-  {id:'cookie',  n:'曲奇饼',    e:'🍪', need:{choc:2,sugar:1,butter:2,flour:1},               time:95,  price:5500, ev:3, feed:48, bear:true},
-  {id:'pudding', n:'焦糖布丁',  e:'🍮', need:{sugar:1,honey:3,egg:3,milk:1},                  time:130, price:9000, ev:4, feed:55, bear:true},
-   {id:'skewer',  n:'丸子串串',  e:'🍡', need:{}, time:0, price:4500, ev:3, feed:100, bear:true, noCook:true},
-  {id:'sparkling',n:'超级起泡酒',e:'🍾', need:{burp:3,alcohol:3,sugar:3,ice:3},                time:150, price:25000,ev:4, feed:100, bear:true, special:'full'},
-  {id:'cake',    n:'蛋糕',      e:'🍰', need:{flour:2,egg:2,milk:2,sugar:2,berry:2},          time:150, price:12000,ev:4, feed:60}
+  {id:'salad',        n:'蔬菜沙拉',     e:'🥗', price:220},
+  {id:'cocoa',        n:'热可可',       e:'☕',  price:2600},
+  {id:'pasta_shrimp', n:'番茄虾仁意面', e:'🍝', price:3500},
+  {id:'noodle',       n:'番茄鸡蛋面',   e:'🍜', price:800},
+  {id:'taco',         n:'塔可',         e:'🌮', price:4000},
+  {id:'toast',        n:'吐司',         e:'🍞', price:1200},
+  {id:'fries',        n:'薯条',         e:'🍟', price:900},
+  {id:'pot',          n:'一锅出',       e:'🥘', price:6000},
+  {id:'burger',       n:'汉堡',         e:'🍔', price:8500,  special:true},
+  {id:'ice3',         n:'三色冰激凌',   e:'🍨', price:3800,  special:true},
+  {id:'smoothie',     n:'草莓沙冰',     e:'🍧', price:1500,  special:true},
+  {id:'icecream',     n:'冰激凌',       e:'🍦', price:1100,  special:true},
+  {id:'tempura',      n:'天妇罗',       e:'🍤', price:3500,  special:true},
+  {id:'mojito',       n:'莫吉托',       e:'🍸', price:2200,  special:true},
+  {id:'cake',         n:'蛋糕',         e:'🍰', price:12000},
+
+  /* ============================================================
+     【分界线】这条线以下，全部是「小熊料理」，只有小京能吃。
+     ------------------------------------------------------------
+     线下面的每一道菜，都必须带 bear:true。
+     ⚠️ 反过来这一条更重要：**不是小熊料理的菜，绝对不许放到这条线下面。**
+        因为这条线看起来像"这里是不是漏了标记"，后来的 AI 很容易顺手
+        把 bear:true 或 special:true 补上去 —— 那会直接改坏玩法：
+          · 补上 bear:true    → 这道菜从订单里彻底消失，而且只有小京能吃
+          · 补上 special:true → 这道菜进订单的概率从"必出"掉到 20%，价格反而 ×1.5
+     ============================================================ */
+  {id:'donut',     n:'小熊甜甜圈', e:'🍩', price:6500,  bear:true, feed:50},
+  {id:'cookie',    n:'曲奇饼',     e:'🍪', price:5500,  bear:true, feed:48},
+  {id:'pudding',   n:'焦糖布丁',   e:'🍮', price:9000,  bear:true, feed:55},
+  {id:'skewer',    n:'丸子串串',   e:'🍡', price:4500,  bear:true, feed:100, noCook:true},
+  {id:'sparkling', n:'超级起泡酒', e:'🍾', price:25000, bear:true, feed:100, onEat:'fullBelly'},
 ];
 var BEAR_DISHES = DISHES.filter(function(d){ return d.bear; });
 
-var PLOT_PRICE=[0,0,0,0, 60,120,200,320, 500,780,1200,1800, 2700,4000,6000,9000];
+/* ============================================================
+   九宫格菜谱数据
+   ------------------------------------------------------------
+   数据来源：`小熊小农场数据/菜谱九宫格配菜数据.md`
+   ⚠️ 一切菜谱冲突，以「小熊小农场数据」文件夹为准。
+      这里只是把那份 md 翻译成 JS 看得懂的样子，不要凭印象改。
+
+   每道菜 = 9 个字符串，按「从左到右、从上到下」排：
+        第 1 行 = 0 1 2
+        第 2 行 = 3 4 5
+        第 3 行 = 6 7 8
+   空字符串 '' = 这一格必须【空着】。
+
+   判定是全等的：9 格一模一样才算做出来 —— 位置算数。
+
+   要从 md 里粘一道新菜，只要把 9 个 emoji 翻译成食材 id。
+   对照关系看 GOODS 表的 e 字段：
+     ⚪面粉→flour   🥬青菜→greens  🔴草莓酱→jam    🟨豆油→oil      🥫番茄酱→ketchup
+     🍅番茄→tomato  🥩肉→meat      🦐虾→shrimp     🧀芝士→cheese   🍯蜂蜜→honey
+     💨饱嗝→burp    🧊冰块→ice     🍺酒精→alcohol  🍬糖→sugar      🥚鸡蛋→egg
+     🥕胡萝卜→carrot 🥛牛奶→milk   🍫巧克力→choc   🧈黄油→butter
+     🧅洋葱→onion   🥔土豆→potato  🌽玉米→corn     🍓草莓→berry    🍋柠檬→lemon
+     🟠蛋黄酱→mayo
+   （md 里的「空」表示「这一格空着」→ 这里写成 ''。
+     ⚠️ 2026-09-24：用户把 md 里的 ⬜ 换成了中文「空」。
+        以前那个 ⬜（U+2B1C）和 ⚪（U+26AA，面粉）肉眼几乎分不出来，
+        我为此抄错过 4 道菜（塔可 / 汉堡 / 甜甜圈 / 蛋糕）。
+        换成「空」之后，这种错再也不会发生了 —— 别改回去。）
+   ============================================================ */
+var RECIPES = {
+  salad:        ['',       '',       '',
+                 'tomato', 'corn',   'carrot',
+                 'greens', 'greens', 'greens'],
+  cocoa:        ['',       '',       '',
+                 'milk',   'milk',   'milk',
+                 'choc',   'choc',   'choc'],
+  pasta_shrimp: ['shrimp', 'ketchup','butter',
+                 '',       'onion',  '',
+                 'flour',  'flour',  'flour'],
+  noodle:       ['',       '',       '',
+                 'tomato', 'egg',    'greens',
+                 'flour',  'flour',  'flour'],
+  taco:         ['',       'ketchup','',
+                 'onion',  'meat',   'greens',
+                 'flour',  'oil',    'flour'],
+  toast:        ['',       '',       '',
+                 'honey',  'milk',   'butter',
+                 'flour',  'flour',  'flour'],
+  fries:        ['',       'ketchup','',
+                 'potato', 'potato', 'potato',
+                 'oil',    'oil',    'oil'],
+  pot:          ['potato', 'tomato', 'greens',
+                 'corn',   'corn',   'corn',
+                 'meat',   'meat',   'meat'],
+  burger:       ['ketchup','flour',  'mayo',
+                 'egg',    'meat',   'cheese',
+                 'greens', 'flour',  'tomato'],
+  ice3:         ['choc',   'jam',    'honey',
+                 'milk',   'milk',   'milk',
+                 'ice',    'ice',    'ice'],
+  smoothie:     ['jam',    '',       'jam',
+                 '',       'milk',   '',
+                 'ice',    '',       'ice'],
+  icecream:     ['',       '',       '',
+                 'milk',   'sugar',  'ice',
+                 'egg',    '',       'flour'],
+  tempura:      ['flour',  'flour',  'flour',
+                 'shrimp', 'shrimp', 'shrimp',
+                 'oil',    'oil',    'oil'],
+  mojito:       ['burp',   '',       'ice',
+                 '',       'lemon',  '',
+                 'alcohol','alcohol','alcohol'],
+  cake:         ['sugar',  'jam',    'sugar',
+                 'egg',    'butter', 'egg',
+                 'flour',  'milk',   'flour'],
+
+  /* ---------- 小熊料理 ---------- */
+  donut:        ['honey',  'sugar',  'honey',
+                 'choc',   'choc',   'choc',
+                 'flour',  'butter', 'flour'],
+  cookie:       ['',       'sugar',  '',
+                 'choc',   'choc',   'choc',
+                 'butter', 'flour',  'butter'],
+  pudding:      ['honey',  'honey',  'honey',
+                 'milk',   'sugar',  'milk',
+                 'egg',    'egg',    'egg'],
+  sparkling:    ['burp',   'burp',   'burp',
+                 'ice',    'ice',    'ice',
+                 'alcohol','alcohol','alcohol'],
+};
+
+/* 食材区显示哪些东西：
+   **所有在九宫格菜谱里出现过的食材**，一个不多一个不少。
+   —— 小麦🌾 / 甘蔗🎋 / 花生🥜 不在任何菜谱里（它们是工坊原料），所以不出现。
+
+   自动生成的好处：以后往 RECIPES 里加新菜、用了新食材，
+   食材区会自动多一个 icon，不用手动维护第二张表。
+   🍯 蜂蜜要手动补 —— 它不在 GOODS 里，是单独存在 S.honey 的。 */
+var PANTRY = (function(){
+  var used = {};
+  for(var k in RECIPES){
+    RECIPES[k].forEach(function(id){ if(id) used[id]=1; });
+  }
+  var list = GOODS.filter(function(g){ return used[g.id]; })
+                  .map(function(g){ return g.id; });
+  list.push('honey');
+  return list;
+})();
+
+/* ☠︎ 黑暗料理（2026-09-22 新增）
+   ------------------------------------------------------------
+   锅里摆的东西跟【任何】菜谱都对不上时，做出来的就是它。
+
+   ⚠️ 它【故意不是】DISHES 里的成员，因为它不该：
+        · 进背包的菜肴仓库（玩家不把它拖走就做不了下一道菜，这正是设计意图）
+        · 进订单（订单只会出现真正的菜）
+        · 被「全部散卖」卖掉（散卖读的是 S.dish，它根本不在里面）
+      它只活在一个地方：锅下面的成品格。
+
+   ⚠️ 喂给小京【不加饱食度】—— 这是作者亲自抓出来的漏洞：
+      如果加饱食度，玩家只要往锅里丢一个食材、提交、刷出黑暗料理，
+      就能反复喂小京无限刷饱食度。所以它只有「被小京吃掉」这一个下场，
+      什么也不给。 */
+var DARK_DISH = { id:'dark', n:'黑暗料理', e:'☠︎' };
+
+/* 拿一个食材的显示信息（icon / 名字）。
+   为什么需要它：蜂蜜不在 GOODS 表里，byGood('honey') 会返回 null。 */
+function ingInfo(id){
+  if(id === 'honey') return { id:'honey', n:'蜂蜜', e:'🍯' };
+  return byGood(id);
+}
+
+/* 前 8 块开局解锁（免费）；剩下 8 块要买。
+   价格沿用原来后 8 档的阶梯：500 / 780 / 1200 / 1800 / 2700 / 4000 / 6000 / 9000
+   —— 觉得贵或便宜，改这一行就行。 */
+var PLOT_PRICE=[0,0,0,0,0,0,0,0, 500,780,1200,1800, 2700,4000,6000,9000];
 
 function byGood(id){ for(var i=0;i<GOODS.length;i++){ if(GOODS[i].id===id) return GOODS[i]; } return null; }
 function byId(id){ for(var i=0;i<CROPS.length;i++){ if(CROPS[i].id===id) return CROPS[i]; } return null; }
@@ -451,18 +1345,30 @@ function byAnimal(id){ for(var i=0;i<ANIMALS.length;i++){ if(ANIMALS[i].id===id)
 
 /* ---------- 存档 ---------- */
 function fresh(){
-  var p=[],st={},dy={},sv=[];
-  for(var i=0;i<N;i++) p.push({u:i<4?1:0,c:null,t:0});
+  var p=[],st={},dy={},pot=[];
+  for(var i=0;i<N;i++) p.push({u:i<8?1:0,c:null,t:0});   /* 开局送 8 块地 */
   GOODS.forEach(function(g){ st[g.id]=0; });
   DISHES.forEach(function(d){ dy[d.id]=0; });
-  for(var k=0;k<STOVES;k++) sv.push(null);
+  for(var k=0;k<POT_N;k++) pot.push(null);              /* 锅：开局九格全空 */
   return {
-    coins:20, honey:0, gems:0, bears:0, sel:0, auto:1,
-    plots:p, store:st, dish:dy, stoves:sv, seen:{berry:1}, orders:[],
+    /* 初始金 500（2026-09-22 从 100 提上来的 —— 100 开局买不了几颗种子） */
+    coins:500, honey:0, gems:0, bears:0, sel:CROPS_SORTED[0].id, auto:1,
+    plots:p, store:st, dish:dy, seen:{berry:1}, orders:[],
     animals:{hen:0,cow:0,pig:0}, anT:{hen:0,cow:0,pig:0},
     poops:[], dung:0, poopT:0,
     full:0, fullT:0,
-    expedition:null
+    expedition:null,
+    /* 工坊：craftT[i] = 开始加工的时间戳；craftReady[i] = 1 表示做好了、等着收 */
+    craftT:{}, craftReady:{},
+    /* 厨房九宫格（2026-09-22 加）：
+         pot    —— 锅里 9 格，每格是 null 或者食材 id
+         potSel —— 当前在菜肴列表里选中的菜。
+                   ⚠️ 它只决定「右边显示哪道菜的提示」，**不参与判定**。
+                      提交的时候是拿锅去跟所有菜谱比对，跟选没选无关。
+         potOut —— 成品格：null，或者
+                   {kind:'dish', id:'salad'} = 一道正常的菜
+                   {kind:'dark'}             = ☠︎ 黑暗料理 */
+    pot:pot, potSel:null, potOut:null
   };
 }
 
@@ -483,7 +1389,13 @@ else{
   while(S.plots.length<N) S.plots.push({u:0,c:null,t:0});
   if(S.plots.length>N) S.plots.length=N;
   if(typeof S.auto==='undefined') S.auto=1;
-  if(typeof S.sel!=='number') S.sel=0;
+  /* S.sel 的语义在 2026-09-24 改过：
+     以前存的是「在 CROPS 里的下标」，现在存的是「作物 id」。
+     原因：种子列表加了自动排序、又删掉了南瓜 ——
+           下标会随着数据表的增删而漂移（旧存档里的 3 可能已经不是同一颗种子了）。
+           存 id 就永远不会错位。
+     旧存档里那个 number 型的 sel 一律作废，重置成排在第一位的种子。 */
+  if(typeof S.sel!=='string' || !byId(S.sel)) S.sel = CROPS_SORTED[0].id;
   if(typeof S.gems!=='number') S.gems=0;
   if(typeof S.dung!=='number') S.dung=0;
   if(typeof S.poopT!=='number') S.poopT=0;
@@ -491,22 +1403,56 @@ else{
   GOODS.forEach(function(g){ if(typeof S.store[g.id]!=='number') S.store[g.id]=0; });
   if(!S.dish) S.dish={};
   DISHES.forEach(function(d){ if(typeof S.dish[d.id]!=='number') S.dish[d.id]=0; });
-  S.stoves = S.stoves || [];
-  while(S.stoves.length<STOVES) S.stoves.push(null);
-  if(S.stoves.length>STOVES) S.stoves.length=STOVES;
   if(!S.seen) S.seen={berry:1};
+
+  /* ---------- 厨房九宫格：旧存档迁移（2026-09-22）----------
+     旧存档里根本没有这三个字段，补上一个空锅就行，不会丢档。
+     顺手把没用的 S.stoves（三口灶台）扔掉 —— 它已经没有任何代码读它了。 */
+  /* ---------- 2026-09-24：南瓜整条线都被删掉了，清掉存档里的残留 ----------
+     删东西要删干净（总纲第 6 条）——不光代码里没有，
+     玩家存档里那些「已经不存在的东西」也要一起扫掉，否则
+     地块上会永远长着一颗没有名字的南瓜、仓库里会永远躺着一个卖不掉的南瓜。 */
+  delete S.store.pumpkin;
+  delete S.dish.pie;
+  delete S.seen.pumpkin;
+  delete S.seen.pie;
+  S.plots.forEach(function(p){
+    if(p.c && !byId(p.c)){ p.c=null; p.t=0; }   /* 种着的作物如果已经不存在了，清空这块地 */
+  });
+
+  delete S.stoves;
+  if(!S.pot || !S.pot.length) S.pot = [];
+  while(S.pot.length<POT_N) S.pot.push(null);
+  if(S.pot.length>POT_N) S.pot.length=POT_N;
+  for(var pi=0; pi<POT_N; pi++){
+    /* 存档里可能残留一个已经不存在的食材 id（比如以后删了某种食材），
+       清掉它，免得缩略图和判定出怪事 */
+    if(S.pot[pi] && S.pot[pi]!=='honey' && !byGood(S.pot[pi])) S.pot[pi]=null;
+  }
+  if(typeof S.potSel==='undefined') S.potSel=null;
+  if(S.potSel && !byDish(S.potSel)) S.potSel=null;
+  if(typeof S.potOut==='undefined') S.potOut=null;
+  if(S.potOut && S.potOut.kind==='dish' && !byDish(S.potOut.id)) S.potOut=null;
   if(!S.animals) S.animals={hen:0,cow:0,pig:0};
   ANIMALS.forEach(function(a){ if(typeof S.animals[a.id]!=='number') S.animals[a.id]=0; });
   if(!S.anT) S.anT={hen:0,cow:0,pig:0};
   ANIMALS.forEach(function(a){ if(typeof S.anT[a.id]!=='number') S.anT[a.id]=0; });
+  if(!S.craftT) S.craftT={};
+  if(!S.craftReady) S.craftReady={};
   if(!S.poops || !S.poops.length) S.poops=[];
   S.poops = S.poops.filter(function(x){ return x>=0 && x<N && S.plots[x] && S.plots[x].u; });
   delete S.house; delete S.own; delete S.walls; delete S.floors;
 }
 
-/* 订单结构迁移：旧单条结构→新三条结构 */
+/* 订单结构迁移（2026-09-22）：
+   旧订单是「一个订单凑三样货」→ {items:[三样货], pay}
+   新订单是「一个订单只要一道菜」→ {id, price, pay}
+   两者结构差太多，没法原地转换，所以旧订单一律丢掉，
+   下面会照新结构重新生成三个。 */
 if(!S.orders || !Array.isArray(S.orders)) S.orders=[];
-S.orders = S.orders.filter(function(o){ return o && Array.isArray(o.items) && o.items.length>0; });
+S.orders = S.orders.filter(function(o){
+  return o && typeof o.id === 'string' && byDish(o.id);
+});
 
 function money(x){ return Math.round(x*(1+S.bears*BEAR_BONUS)); }
 function haveMat(k){ return k==='honey' ? S.honey : (S.store[k]||0); }
@@ -514,74 +1460,85 @@ function takeMat(k,n){ if(k==='honey') S.honey-=n; else S.store[k]=(S.store[k]||
 function animalTotal(){ return S.animals.hen+S.animals.cow+S.animals.pig; }
 function animalsAngry(){ return S.poops.length>=POOP_LIMIT; }
 
-/* ---------- 订单：每个订单要三样货 ---------- */
-function makeOrder(){
-  var pool=[];
-  CROPS.forEach(function(c,i){
-    if(!S.seen[c.id]) return;
-    var w=[6,5,4,3,2,1][i]||1;
-    for(var k=0;k<w;k++) pool.push({id:c.id,kind:'good',isCrop:true,price:c.price});
-  });
-  GOODS.forEach(function(g){
-    if(g.kind==='crop') return;
-    if(!S.seen[g.id]) return;
-    for(var k=0;k<2;k++) pool.push({id:g.id,kind:'good',isCrop:false,price:g.price});
-  });
+/* ============================================================
+   订单（2026-09-22 大改）
+   ------------------------------------------------------------
+   改之前：一个订单要凑齐三样货，农作物 / 材料 / 菜肴都可能被要。
+   改之后：**一个订单 = 一道菜肴**，只要一道，
+          其他任何东西（农作物、材料、纪念品）一律不出现在订单里。
+
+   怎么交付：把锅下面成品格里的菜【拖】到左边导航栏的订单槽上，
+             对得上就付钱，那个槽自己变成下一道菜 —— 全自动。
+
+   ⚠️「用蜂蜜刷新订单」已经整块删掉（连按钮一起），
+      所以订单只会「交付之后自己换」，玩家没法手动刷。
+   ============================================================ */
+
+/* 订单池：只挑「玩家已经成功做出来过」的菜（看 S.seen）。
+   排除 bear（小熊料理只喂小京）和 noCook（丸子串串靠探险拿）。
+
+   ⚠️ 新手兜底：新存档一道菜都没做成功过，池子会是空的。
+      这时候固定用「蔬菜沙拉」顶上。
+      （作者计划做新手指引，指引里用到的那道菜就暂时定为蔬菜沙拉；
+        等新手指引真的做出来，把下面的 'salad' 换成指引要求的那道菜即可。） */
+function orderPool(){
+  var list=[];
   DISHES.forEach(function(d){
+    if(d.bear) return;
+    if(d.noCook) return;
     if(!S.seen[d.id]) return;
-    var w = d.bear ? 0 : 2;
-    if(d.special) w = 0;
-    for(var k=0;k<w;k++) pool.push({id:d.id,kind:'dish',isCrop:false,price:d.price});
+    list.push(d);
   });
-  if(!pool.length) pool=[{id:'berry',kind:'good',isCrop:true,price:12}];
-
-  var chosen=[], used={}, tries=0, maxTries=pool.length*4;
-  while(chosen.length<3 && tries<maxTries){
-    tries++;
-    var o=pool[Math.floor(Math.random()*pool.length)];
-    var key=o.kind+':'+o.id;
-    if(used[key]) continue;
-    used[key]=1;
-    var maxNeed = o.kind==='dish' ? 1 : (o.isCrop ? 3 : 2);
-    var need = 1+Math.floor(Math.random()*maxNeed);
-    chosen.push({id:o.id, kind:o.kind, need:need, price:o.price});
-  }
-  var fb=pool[0];
-  while(chosen.length<3){
-    chosen.push({id:fb.id, kind:fb.kind, need:2, price:fb.price});
-  }
-  var base=0;
-  chosen.forEach(function(it){ base += it.price*it.need; });
-  var pay = Math.round(base*(1.5+Math.random()*0.5));
-  return {items:chosen, pay:pay};
+  if(!list.length) list=[byDish('salad')];
+  return list;
 }
 
-function orderItemOf(it){ return it.kind==='good' ? byGood(it.id) : byDish(it.id); }
-function orderItemHave(it){ return it.kind==='good' ? (S.store[it.id]||0) : (S.dish[it.id]||0); }
-function orderReady(o){
-  for(var i=0;i<o.items.length;i++){
-    if(orderItemHave(o.items[i]) < o.items[i].need) return false;
-  }
-  return true;
-}
-function orderTake(o){
-  o.items.forEach(function(it){
-    if(it.kind==='good') S.store[it.id]=(S.store[it.id]||0)-it.need;
-    else S.dish[it.id]=(S.dish[it.id]||0)-it.need;
+/* 生成一个订单：结构很浅，就是一道菜 {id, price, pay}
+     price 是这道菜这一次的单价（特殊料理 ×1.5）
+     pay   是交付时真正到手的钱（再乘 1.5~2.0 的随机浮动）
+   ⚠️ pay 只能生成一次就定下来 —— 不然每次重画订单金额都在跳。 */
+function makeOrder(){
+  var pool = orderPool();
+
+  /* 特殊料理只有 20% 概率进入这一轮的候选（价格 ×1.5）——
+     规则和以前一样，只是从「混进一个大池子」变成「混进这一轮的候选」。 */
+  var cand=[];
+  pool.forEach(function(d){
+    if(d.special){ if(Math.random() < 0.2) cand.push(d); }
+    else cand.push(d);
   });
+  if(!cand.length) cand = pool;   /* 特殊菜全被骰子刷掉了 → 拿普通菜兜底 */
+
+  /* 尽量避开另外两个槽已经在要的菜。
+     但如果池子里就那么一两道（新手期只有蔬菜沙拉），允许重复。 */
+  var taken={};
+  S.orders.forEach(function(o){ if(o && o.id) taken[o.id]=1; });
+  var fresh = cand.filter(function(d){ return !taken[d.id]; });
+  var use = fresh.length ? fresh : cand;
+
+  var d = use[Math.floor(Math.random()*use.length)];
+  var price = d.special ? Math.round(d.price*1.5) : d.price;
+  return { id:d.id, price:price, pay:Math.round(price*(1.5+Math.random()*0.5)) };
 }
+
+/* 订单槽要显示哪种菜（拿不到就返回 null，渲染时会跳过） */
+function orderDish(o){ return (o && byDish(o.id)) || null; }
 
 while(S.orders.length<ORDER_SLOTS) S.orders.push(makeOrder());
 if(S.orders.length>ORDER_SLOTS) S.orders.length=ORDER_SLOTS;
 
 /* ---------- DOM 搭建 ---------- */
 function $(id){return document.getElementById(id);}
-var field=$('field'), seedsBox=$('seeds'), ordersFull=$('ordersFull'),
-    storeBox=$('store'), trayBox=$('tray'), stoveBox=$('stoves'), recipeBox=$('recipes'),
+var field=$('field'), seedsBox=$('seeds'),
+    storeBox=$('store'), trayBox=$('tray'), recipeBox=$('recipes'),
     craftBox=$('crafts'), anBox=$('anBox'), shopBox=$('shop'),
-    feedGrid=$('feedGrid');
-var plotEls=[], cellState=[], storeEls=[], trayEls=[], stoveEls=[], stoveState=[],
-    orderEls=[], bearNext=[];
+    feedGrid=$('feedGrid'),
+    /* 厨房（九宫格）那一块 */
+    pantryBox=$('pantry'), potBox=$('pot'), potPickEl=$('potPick'),
+    potRefBox=$('potRef'), outSlot=$('outSlot'), potGoBtn=$('potGo'),
+    railOrders=$('railOrders');
+var plotEls=[], cellState=[], storeEls=[], trayEls=[], dishEls=[],
+    orderEls=[], bearNext=[], pantryEls=[], potCells=[];
 
 for(var i=0;i<N;i++){
   (function(i){
@@ -589,7 +1546,8 @@ for(var i=0;i<N;i++){
     b.className='plot';
     b.innerHTML='<span class="em"></span>';
     b.addEventListener('click',function(){ tapPlot(i); });
-    b.addEventListener('pointerdown',function(e){ dragStart(e,i); });
+    /* 地块上的💩可以拖走 —— payload 告诉拖拽骨架「我拖的是哪块地的粑粑」 */
+    b.addEventListener('pointerdown',function(e){ dragStart(e,{kind:'poop',i:i}); });
     field.appendChild(b);
     plotEls.push(b);
   })(i);
@@ -599,14 +1557,23 @@ GOODS.forEach(function(g,i){
   var s=document.createElement('div'); s.className='slot'; storeBox.appendChild(s); storeEls.push(s);
 });
 
-CROPS.forEach(function(c,i){
+/* 种子按钮：按生长时间从短到长排（见 CROPS_SORTED 那里的说明）。
+   点一下 = 选中这种种子，之后再点空地就种它。
+   ⚠️ S.sel 存的是【作物 id】，不是下标 —— 下标会随数据表增删而漂移。 */
+CROPS_SORTED.forEach(function(c){
   var b=document.createElement('button');
   b.className='seed';
   b.innerHTML='<span class="e">'+c.e+'</span><span class="info"><span class="n">'+c.n+'</span><span class="p">🪙'+c.cost+' · '+c.grow+'秒</span></span>';
-  b.addEventListener('click',function(){ S.sel=i; save(); paint(); });
+  b.addEventListener('click',function(){ S.sel=c.id; save(); paint(); });
   seedsBox.appendChild(b);
 });
 
+/* 背包抽屉里「🍲 菜肴仓库」的格子：**纯显示，不是拖拽源**。
+
+   ⚠️ 能拖出去交订单的是【厨房最下面那排菜肴 ui】，不是这里。
+      2026-09-24 我一度把拖拽源挂在了这一块，用户专门纠正过：
+      "不是从背包里面拖拽，是拖拽九宫格下面的菜肴的 ui！"
+      别再挂回来了。 */
 DISHES.forEach(function(d){
   var s=document.createElement('div'); s.className='slot d'; trayBox.appendChild(s); trayEls.push(s);
 });
@@ -618,32 +1585,103 @@ CRAFTS.forEach(function(c,i){
   craftBox.appendChild(b);
 });
 
+/* 菜肴列表：**只有 icon，没有名字**，每行 5 个（用户 2026-09-24 要求）。
+   点一下 = 选中它，左上角会显示它的名字、左下角显示它的九宫格菜谱。
+   ⚠️ 丸子串串（noCook）也照样显示 —— 它是菜谱，只是做不出来而已。
+   ⚠️ 没有名字之后，认菜全靠 emoji，所以 icon 不能做小。 */
 DISHES.forEach(function(d,i){
   var b=document.createElement('button');
-  b.className='seed recipe';
-  b.addEventListener('click',function(){ cook(i); });
-  if(d.noCook) b.style.display = 'none';
+  b.className='dishBtn';
+  b.textContent=d.e;
+
+  /* 点一下 = 选中它（左上角显示名字、左下角显示它的九宫格菜谱） */
+  b.addEventListener('click',function(){
+    if(Date.now()<dragBlock) return;   /* 刚拖完这一下，别把松手当点击 */
+    S.potSel=d.id; save(); paint();
+  });
+
+  /* 【2026-09-24】拖 = 把它交给订单槽去结算。
+     ⚠️⚠️ 拖拽源就是【这里】 —— 用户原话：
+         "我们把菜肴的 ui 也变成可拖拽，可以直接拖拽到订单去结算。"
+         他还专门纠正过一次（我一度做到了背包抽屉里去）：
+         "不是从背包里面拖拽，是拖拽九宫格下面的菜肴的 ui！"
+     ⚠️ 只有背包里【真有的】才拖得动 —— dragStart 会拦掉数量为 0 的。
+        哪个有货一眼就能看出来：格子是粉色的（.have 那个样式）。 */
+  b.addEventListener('pointerdown',function(e){
+    if((S.dish[d.id]||0)>0) dragStart(e,{kind:'bagdish', id:d.id});
+  });
+
   recipeBox.appendChild(b);
+  dishEls.push(b);
 });
 
-for(var k=0;k<STOVES;k++){
-  (function(){
-    var s=document.createElement('div');
-    s.className='stove';
-    s.innerHTML='<div class="fill"></div><div class="txt">闲着</div>';
-    stoveBox.appendChild(s);
-    stoveEls.push(s);
-  })();
+/* 食材区：只有 icon，没有名字也没有数量 —— 格子太小放不下。
+   有货 = 正常显示，没货 = 变灰且不让放。 */
+PANTRY.forEach(function(id){
+  var info=ingInfo(id);
+  var b=document.createElement('button');
+  b.className='pantryItem';
+  b.textContent=info.e;
+  b.setAttribute('data-ing',id);
+  b.addEventListener('pointerdown',function(e){ dragStart(e,{kind:'ing',id:id}); });
+  b.addEventListener('click',function(){ tapPantry(id); });
+  pantryBox.appendChild(b);
+  pantryEls.push(b);
+});
+
+/* 锅：九宫格。每一格本身就是一个投放区（data-drop="pot"）。
+   一个格子 = 一个食材，要几个就占几个格子。 */
+for(var pk=0;pk<POT_N;pk++){
+  (function(pk){
+    var c=document.createElement('button');
+    c.className='potCell';
+    c.setAttribute('data-drop','pot');
+    c.setAttribute('data-i',pk);
+    /* 从锅里往外拖 = 把这格拿掉，库存会还回来（见 dragEnd） */
+    c.addEventListener('pointerdown',function(e){
+      if(S.pot[pk]) dragStart(e,{kind:'pot',i:pk});
+    });
+    potBox.appendChild(c);
+    potCells.push(c);
+  })(pk);
 }
+
+/* 订单槽：挂在左侧导航栏底部。
+   它们【不是按钮】—— 点不开抽屉、也不是抽屉。它们做两件事：
+     ① 接住拖上来的东西（成品格里的菜 / 背包里的菜）   data-drop="order"
+     ② 【2026-09-24 新增】点一下 = 选中这道菜，
+        等于在下面那片菜肴列表里点了它一下。
+        用户原话：「点击订单图标可以直接起到点击菜肴的效果
+                   （这样就不用上下翻找菜肴了）」 */
 for(var k2=0;k2<ORDER_SLOTS;k2++){
   (function(k2){
-    var b=document.createElement('button');
-    b.className='orderCard';
-    b.addEventListener('click',function(){ deliver(k2); });
-    ordersFull.appendChild(b);
-    orderEls.push(b);
+    var s=document.createElement('div');
+    s.className='oslot';
+    s.setAttribute('data-drop','order');
+    s.setAttribute('data-i',k2);
+    s.addEventListener('click',function(){
+      if(Date.now()<dragBlock) return;   /* 刚拖完这一下，别把松手当点击 */
+      var o=S.orders[k2];
+      var d=o?byDish(o.id):null;
+      if(!d) return;
+      S.potSel=d.id;
+      save(); paint();
+      toast('已经帮你选中 '+d.e+d.n);
+    });
+    railOrders.appendChild(s);
+    orderEls.push(s);
   })(k2);
 }
+
+/* 成品格：里面那道菜可以【拖走】——
+   拖给左边的订单槽 = 交货收钱；
+   拖给熊头垃圾桶 = 小京吃掉（如果它是小熊料理，还真的会喂饱它）；
+   拖给左边的「🧸 小京」按钮 = 收进菜肴仓库。
+   ⚠️ 它自己有东西的时候不许被覆盖，「提交」是灰的（见 paintKitchen）。 */
+outSlot.addEventListener('pointerdown',function(e){
+  if(S.potOut) dragStart(e,{kind:'out'});
+});
+
 ANIMALS.forEach(function(a){
   var b=document.createElement('button');
   b.className='buyb';
@@ -660,14 +1698,12 @@ BEAR_DISHES.forEach(function(d,i){
   feedGrid.appendChild(b);
 });
 
-function needText(d){
-  var a=[];
-  for(var k in d.need){
-    var e = k==='honey' ? '🍯' : (byGood(k)?byGood(k).e:'?');
-    a.push(e+'×'+d.need[k]);
-  }
-  return a.join(' ');
-}
+/* 【已删除 · 2026-09-22】needText(d) 本来在这里。
+   它的作用是「把 d.need 拼成『🍅×2 🥚×1』这样的配菜提示」，
+   挂在厨房的菜谱卡片上。
+   菜谱卡片改成「只显示 icon + 名字」之后它没人用了，所以删掉。
+   现在想知道一道菜要什么材料，看右边那个九宫格缩略图。 */
+
 function cropOf(p){ return p.c?byId(p.c):null; }
 function prog(p){ var c=cropOf(p); if(!c) return 0; return Math.min(1,(Date.now()-p.t)/(c.grow*1000)); }
 function isReady(p){ var c=cropOf(p); return !!(p.c&&c&&(Date.now()-p.t)>=c.grow*1000); }
@@ -679,17 +1715,33 @@ function paint(){
   $('honey').textContent=S.honey;
   $('bears').textContent=S.bears;
 
-  var line1 = S.bears===0
+  /* ---------- 农场页里的两行小提示（2026-09-24 从页面顶部拆下来）----------
+     ① 「×N 让卖出去的东西多赚 X%」→ 挂在「小京的朋友」按钮下面
+     ② 「地上有 X 坨💩……」        → 挂在田地下面、种子上面
+     ② 只在有粑粑时才出现，没粑粑就整个藏起来（一点都不占地方）。
+
+     ⚠️ ② 光靠一行小字不够 —— 粑粑攒够 6 坨动物就全体罢工，
+        玩家要是不点农场页，可能半小时都发现不了。
+        所以下面还会同步点亮【顶部「🌱 农场」标签上的小叹号】。 */
+  var bearLine = S.bears===0
     ? '还没有小熊，价钱都是原价'
     : '×'+S.bears+' 让卖出去的东西多赚 '+Math.round(S.bears*BEAR_BONUS*100)+'%';
-  var line2='';
-  if(S.poops.length>=POOP_LIMIT){
-    line2='<span style="color:#d06060">地上 '+S.poops.length+' 坨💩，动物全都罢工了！快拖到右下角桶里</span>';
-  }else if(S.poops.length>0){
-    line2='<span style="color:#d0885f">地上有 '+S.poops.length+' 坨💩，拖到右下角的桶里</span>';
+  if($('buff').textContent !== bearLine) $('buff').textContent = bearLine;
+
+  var poopEl = $('poopWarn');
+  var poopBad = S.poops.length >= POOP_LIMIT;
+  if(S.poops.length > 0){
+    var pooTxt = poopBad
+      ? '地上 '+S.poops.length+' 坨💩，动物全都罢工了！快拖到左边的桶里'
+      : '地上有 '+S.poops.length+' 坨💩，拖到左边的桶里';
+    if(poopEl.textContent !== pooTxt) poopEl.textContent = pooTxt;
+    poopEl.className = 'poopWarn' + (poopBad ? ' bad' : '');
+    poopEl.style.display = '';
+  }else{
+    poopEl.style.display = 'none';
   }
-  var buffHtml = line1 + (line2?'<br>'+line2:'');
-  if($('buff').innerHTML!==buffHtml) $('buff').innerHTML=buffHtml;
+  /* 顶部「🌱 农场」标签上的小叹号（跟工坊/小京那两个是一套东西） */
+  $('farmBadge').classList.toggle('is-on', poopBad);
 
   GOODS.forEach(function(g,i){
     var n=S.store[g.id]||0;
@@ -742,15 +1794,56 @@ function paint(){
   });
 
   Array.prototype.forEach.call(seedsBox.children,function(b,i){
-    b.classList.toggle('on', i===S.sel);
-    b.classList.toggle('poor', S.coins<CROPS[i].cost);
+    var sc=CROPS_SORTED[i];
+    if(!sc) return;
+    b.classList.toggle('on', sc.id===S.sel);
+    b.classList.toggle('poor', S.coins<sc.cost);
   });
 
+  /* ---------- 工坊卡片：三种状态 ---------- */
   CRAFTS.forEach(function(c,i){
     var b=craftBox.children[i];
     var og=byGood(c.out);
+    var ready=!!S.craftReady[i];
+    var started=S.craftT[i]||0;
+    var key;
+
+    b.classList.toggle('done', ready);
+    b.classList.toggle('working', !ready && !!started);
+
+    /* 状态三：做好了，等着收 */
+    if(ready){
+      key='ready|'+c.out;
+      if(b.getAttribute('data-k')!==key){
+        b.innerHTML='<span class="e">'+og.e+'</span><span class="info">'+
+          '<span class="n">'+og.n+' 好了！</span>'+
+          '<span class="p">点一下收进仓库</span></span>';
+        b.setAttribute('data-k',key);
+      }
+      b.classList.remove('poor');
+      return;
+    }
+
+    /* 状态二：正在加工，显示进度条和剩余秒数 */
+    if(started){
+      var left=Math.max(0, Math.ceil((started + c.time*1000 - Date.now())/1000));
+      var pct=Math.min(100, Math.round((Date.now()-started)/(c.time*10)));
+      key='work|'+started+'|'+left;
+      if(b.getAttribute('data-k')!==key){
+        b.innerHTML='<span class="e">'+og.e+'</span><span class="info">'+
+          '<span class="n">'+og.n+'</span>'+
+          '<span class="p">加工中 · 还要 '+left+' 秒</span>'+
+          '<span class="cprog"><i style="width:'+pct+'%"></i></span></span>';
+        b.setAttribute('data-k',key);
+      }
+      b.classList.remove('poor');
+      return;
+    }
+
+    /* 状态一：闲着，显示配方 + 材料够不够 */
     if(c.multi){
-      var parts=[], canMake=true, key='m|'+c.out;
+      var parts=[], canMake=true;
+      key='m|'+c.out;
       for(var k in c.multi){
         var gg=byGood(k);
         var haveN=S.store[k]||0;
@@ -759,54 +1852,25 @@ function paint(){
         if(haveN<c.multi[k]) canMake=false;
       }
       if(b.getAttribute('data-k')!==key){
-        b.innerHTML='<span class="e">'+og.e+'</span><span class="info"><span class="n">蛋黄酱</span><span class="p">需要 '+parts.join(' ')+'</span></span>';
+        b.innerHTML='<span class="e">'+og.e+'</span><span class="info"><span class="n">蛋黄酱</span><span class="p">需要 '+parts.join(' ')+' · '+c.time+'秒</span></span>';
         b.setAttribute('data-k',key);
       }
       b.classList.toggle('poor', !canMake);
     } else {
       var fg=byGood(c.from);
       var have=S.store[c.from]||0;
-      var key2=have+'|'+c.from;
-      if(b.getAttribute('data-k')!==key2){
-        b.innerHTML='<span class="e">'+og.e+'</span><span class="info"><span class="n">'+fg.n+' → '+og.n+'</span><span class="p">需要 '+c.need+' 个 · 有 '+have+'</span></span>';
-        b.setAttribute('data-k',key2);
+      key='s|'+have+'|'+c.from;
+      if(b.getAttribute('data-k')!==key){
+        b.innerHTML='<span class="e">'+og.e+'</span><span class="info"><span class="n">'+fg.n+' → '+og.n+'</span><span class="p">需要 '+c.need+' 个 · 有 '+have+' · '+c.time+'秒</span></span>';
+        b.setAttribute('data-k',key);
       }
       b.classList.toggle('poor', have<c.need);
     }
   });
 
-  var anyFree=false;
-  S.stoves.forEach(function(x){ if(!x) anyFree=true; });
-  Array.prototype.forEach.call(recipeBox.children,function(b,i){
-    var d=DISHES[i], ok=true;
-    for(var k in d.need){ if(haveMat(k)<d.need[k]) ok=false; }
-    b.classList.toggle('poor', !(ok&&anyFree));
-    var key=(d.bear?'🐻|':'')+needText(d)+'|'+d.time;
-    if(b.getAttribute('data-rk')!==key){
-      var tag = d.bear ? ' <span class="bearFoodTag">小熊料理</span>' : '';
-      b.innerHTML='<span class="e">'+d.e+'</span><span class="info"><span class="n">'+d.n+tag+'</span><span class="p">'+needText(d)+' · '+d.time+'秒</span></span>';
-      b.setAttribute('data-rk',key);
-    }
-  });
-
-  S.stoves.forEach(function(st,i){
-    var el=stoveEls[i], fill=el.querySelector('.fill'), txt=el.querySelector('.txt');
-    if(!st){
-      if(!stoveState[i]||stoveState[i].key!=='idle'){
-        fill.style.width='0%'; txt.innerHTML='闲着';
-        stoveState[i]={key:'idle'};
-      }
-      return;
-    }
-    var d=byDish(st.d);
-    if(!d){ S.stoves[i]=null; return; }
-    var r=Math.min(1,(Date.now()-st.t)/(d.time*1000));
-    if(!stoveState[i]||stoveState[i].key!=='cook'+d.id){
-      txt.innerHTML='🔥 '+d.e+d.n;
-      stoveState[i]={key:'cook'+d.id};
-    }
-    fill.style.width=(r*100)+'%';
-  });
+  /* 厨房整块（食材区 / 锅 / 成品格 / 菜肴列表）交给独立函数画，
+     paint() 才不会被撑得又长又乱。 */
+  paintKitchen();
 
   paintOrders();
   paintAnimals();
@@ -830,34 +1894,124 @@ function paint(){
   ab.textContent = S.auto ? '小京顺手替你补种：开着' : '小京顺手替你补种：关着';
 
   $('tip').textContent = S.auto && S.bears>0 ? '小京替你种地，你负责看锅' : '点土地种下去，熟了再收';
+
+  /* 导航栏「工坊」上的小叹号：有东西加工好了还没收，就亮起来 */
+  $('craftBadge').classList.toggle('is-on', anyCraftReady());
+  /* 导航栏「小京」上的小叹号：探险回来了、有礼物待领 */
+  $('bearBadge').classList.toggle('is-on', !!S.lootPending);
+
+  if(isDrawerOpen()) filterDrawer(currentCat);
 }
 
+/* ============================================================
+   厨房：九宫格锅的渲染（2026-09-22 新增 · 2026-09-24 左右翻面）
+   ------------------------------------------------------------
+   画五样东西：
+     ① 食材区    —— 只显示 icon。仓库里没有的变灰
+     ② 锅        —— 9 格，在【右边】（右手大拇指够得着）；有东西的格子加 .has
+     ③ 左边两块  —— 上：菜谱缩略图；下：当前选中的菜（icon + 名字）
+     ④ 成品格    —— 提交之前留空；有东西时「提交」变灰
+     ⑤ 菜肴列表  —— 背包里有货的标粉底（.have），当前选中的标描边（.on）
+   ============================================================ */
+function paintKitchen(){
+  /* ① 食材区：有货正常显示，没货变灰。
+     ⚠️ 一律走 haveMat() —— 蜂蜜存在 S.honey 里，不在 S.store，
+        直接写 S.store['honey'] 会永远是 0。 */
+  PANTRY.forEach(function(id,i){
+    var el=pantryEls[i];
+    if(!el) return;
+    el.classList.toggle('zero', haveMat(id)<=0);
+  });
+
+  /* ② 锅：哪一格有东西 */
+  for(var i=0;i<POT_N;i++){
+    var cell=potCells[i];
+    var id=S.pot[i];
+    var info=id?ingInfo(id):null;
+    cell.classList.toggle('has', !!id);
+    cell.textContent = info ? info.e : '';
+  }
+
+  /* ③ 左下：当前选中的菜（icon + 名字）
+     （2026-09-24 之前它在右上，现在挪到左边、而且在缩略图【下面】了） */
+  var sel = S.potSel ? byDish(S.potSel) : null;
+  if(sel){
+    potPickEl.className='potPick';
+    potPickEl.innerHTML='<span class="pe">'+sel.e+'</span>'+sel.n;
+  }else{
+    potPickEl.className='potPick empty';
+    potPickEl.innerHTML='先选一道菜';
+  }
+
+  /* ③ 左上：菜谱缩略图（2026-09-24 挪到左边，并且挪到名字【上面】了）。
+     故意做得很小 —— 用户原话：「大小要小，不要把九宫格挤没了」。
+
+     ⚠️ 这里就是【故意剧透】的地方：选了哪道菜，就把它该摆什么告诉他。
+        以后要做真正的「探索式烹饪」，改法是在这里换成剪影 / 问号，
+        而不是把整张菜谱藏起来。 */
+  var refKey = sel ? sel.id : 'none';
+  if(potRefBox.getAttribute('data-k') !== refKey){
+    var r = sel ? RECIPES[sel.id] : null;
+    var mini='<div class="mini">';
+    for(var k=0;k<POT_N;k++){
+      var ing = (r && r[k]) ? ingInfo(r[k]) : null;
+      mini+='<i>'+(ing?ing.e:'')+'</i>';
+    }
+    mini+='</div>';
+    potRefBox.innerHTML=mini;
+    potRefBox.setAttribute('data-k', refKey);
+  }
+
+  /* ④ 成品格。
+     ⚠️ 它有东西的时候【绝对不许被下一道菜覆盖】——
+        所以「提交」这时候是灰的，玩家必须先把成品处理掉。
+
+     三种成品的出路（2026-09-24 定稿）：
+       · 正常的菜     → 拖给左侧「要它的那个订单槽」结算；或者拖给「🧸 小京」按钮进背包
+                        ⚠️ 拖给熊头会被拒绝：「小京才不要吃这个呢！」
+       · ☠︎ 黑暗料理 → 只能拖给熊头（小京吃掉它，但不加饱食度）
+       · 小熊料理     → 拖给熊头直接喂（+feed 饱食度），或者拖给「🧸 小京」按钮进背包
+     —— 也就是说，每一种成品都至少有一条出路，不会出现卡死的局面。 */
+  var out=S.potOut;
+  if(!out){
+    outSlot.className='outSlot empty';
+    outSlot.textContent='·';
+  }else{
+    var od = out.kind==='dark' ? DARK_DISH : byDish(out.id);
+    outSlot.className='outSlot';
+    outSlot.textContent = od ? od.e : '?';
+  }
+  potGoBtn.disabled = !!out;
+  potGoBtn.textContent = out ? '先处理成品' : '提交';
+
+  /* ⑤ 菜肴列表的两种高亮（2026-09-24 加）。
+     ⚠️ 只做「有货 = 粉底」，**绝对不做「没货 = 灰」** ——
+        大部分菜背包里本来就没有存货，全灰会很难看，
+        而且玩家也没法一眼看出哪道是自己有料的。
+        （用户先说要加灰色，五分钟后又自己收回了：「我感觉变灰会好难看啊」） */
+  DISHES.forEach(function(d,i){
+    var b=dishEls[i];
+    if(!b) return;
+    b.classList.toggle('have', (S.dish[d.id]||0)>0);
+    b.classList.toggle('on', d.id===S.potSel);
+  });
+}
+
+/* 订单槽的渲染：只画一个菜肴 icon，**一个字都不写**。
+   —— 用户原话：「显示的 icon 是当前所需菜肴，不显示名字。无名。」
+       所以别往这里加文字，连 tooltip 也别加。
+   （后期要在下面加进度条 / 时间条 / 叹号时，往 .oslot 里再塞元素就行，
+     外面那圈粉色虚线框不受影响。） */
 function paintOrders(){
   S.orders.forEach(function(o,i){
     var el=orderEls[i];
     if(!el) return;
-    var ready=orderReady(o);
-    var key = JSON.stringify(o) + '|' + S.bears + '|' + Math.floor(S.coins);
-    if(el.getAttribute('data-k')!==key){
-      var html='<div class="orderItems">';
-      o.items.forEach(function(it){
-        var g=orderItemOf(it);
-        if(!g) return;
-        var have=orderItemHave(it);
-        var done=have>=it.need;
-        html+='<div class="orderItem'+(done?' done':'')+'">'+
-          '<span class="oe">'+g.e+'</span>'+
-          '<span class="on">'+g.n+'</span>'+
-          '<span class="oc">'+have+' / '+it.need+'</span></div>';
-      });
-      html+='</div>';
-      html+='<div class="orderBottom">'+
-        '<span class="pay">🪙'+money(o.pay)+'</span>'+
-        '<span class="go">'+(ready?'交付':'还没凑齐')+'</span></div>';
-      el.innerHTML=html;
-      el.setAttribute('data-k',key);
+    var d=orderDish(o);
+    if(!d){ el.textContent=''; el.removeAttribute('data-k'); return; }
+    if(el.getAttribute('data-k')!==d.id){
+      el.textContent=d.e;
+      el.setAttribute('data-k',d.id);
     }
-    el.disabled = !ready;
   });
 }
 
@@ -918,6 +2072,14 @@ function paintBear(){
     else txt='肚子空空的 0% · 喂点小熊料理给它吧';
     if(ft.textContent!==txt) ft.textContent=txt;
   }
+
+  /* 小京探险回来的叹号：现在挂在左侧导航栏的「小京」按钮上 */
+  var bearBadge = $('bearBadge');
+  if(bearBadge) bearBadge.classList.toggle('is-on', !!S.lootPending);
+
+  var lootBtn = $('lootBtn');
+  if(lootBtn) lootBtn.style.display = S.lootPending ? 'block' : 'none';
+
   var bf=$('bearFace');
   if(bf) bf.classList.toggle('happy', S.bears>0 && S.full>=BEAR_FULL_OK);
 
@@ -952,6 +2114,76 @@ function paintBear(){
   });
 }
 
+/* ============================================================
+   吃东西的特殊效果表
+   ------------------------------------------------------------
+   分工是这样的：
+     · 菜品表（DISHES）里只写「哪个效果」→  onEat:'fullBelly'
+     · 具体这个效果做什么，写在这张表里 ↓
+
+   好处：以后有 20 道菜带效果，也**不用把菜品表改成一堆开关**，
+        只需要往下面这张表里加一条，然后在菜上写个名字。
+        加效果 = 加一行，不用动别的任何东西。
+
+   要加新效果，照抄这个格式：
+     effectName: function(d){ ... }
+   d 就是这道菜本身（d.n 名字、d.e 图标、d.feed 饱食度……）
+   ============================================================ */
+var EAT_EFFECTS = {
+
+  /* 超级起泡酒：饱食度直接拉满，并且 3 分钟不掉 */
+  fullBelly: function(d){
+    S.bubbleBuffT = Date.now() + 3*60*1000;
+    S.full = BEAR_FULL_MAX;
+    toast(d.e+' 小京把'+d.n+'喝光了，饱食度瞬间回满，3分钟不掉！');
+  }
+
+};
+
+/* 跑一道菜的 onEat 效果。返回 true 表示"有特殊效果，已经处理过了" */
+function runEatEffect(d){
+  if(!d.onEat) return false;
+  var fx = EAT_EFFECTS[d.onEat];
+  if(!fx){
+    /* 名字写错了不静默失败 —— 直接在控制台吼一声，方便排查 */
+    console.warn('菜品 '+d.id+' 的 onEat 写了不存在的效果："'+d.onEat+'"，请在 EAT_EFFECTS 里补上');
+    return false;
+  }
+  fx(d);
+  return true;
+}
+
+/* ============================================================
+   小京吃掉一道菜
+   ------------------------------------------------------------
+   （2026-09-22 抽出来的）
+   以前这段逻辑写在 feedBear() 里，只有「抽屉里点投喂」这一条路能走到。
+   现在厨房里「把熊料理拖给熊头垃圾桶」也要喂小京，
+   所以把它单独拎出来 —— **两条路走同一份规则**，
+   以后改饱食度、改打嗝概率，只改这一个地方，不会两边不一致。
+   ============================================================ */
+function eatDish(d){
+  /* ⚠️ `(d.feed || 0)` 那个保护不能去掉：
+     2026-09-24 之后，普通菜在笔记里是【不写 feed 的】（只有小熊料理才需要它），
+     所以普通菜的 d.feed 是 undefined。虽然按设计只有 bear 菜会走到这里，
+     但万一哪天有人在别处调了这个函数，没有这个兜底就会变成 NaN。 */
+  S.full=Math.min(BEAR_FULL_MAX,(S.full||0)+(d.feed||0));
+  S.fullT=Date.now();
+  var hadEffect = runEatEffect(d);   /* 有特殊效果就让它自己提示，不再说普通台词 */
+  if(!hadEffect){
+    if(S.full>=BEAR_FULL_OK) toast('小京吃得饱饱的，开始帮你捡粑粑啦 🧸');
+    else toast('小京吃掉了'+d.e+d.n+'，肚子暖暖的');
+  }
+  if(S.full >= BEAR_FULL_MAX && Math.random() < 0.2){
+    setTimeout(burpEvent, 500);
+  }
+}
+
+/* 抽屉里「投喂小京」：从仓库里扣掉一份小熊料理，然后喂下去。
+   小熊料理是唯一能加饱食度的东西 ——
+   厨房里拖给熊头的普通菜和黑暗料理都不加（原因见 feedToBear）。
+   而且 2026-09-24 之后，普通菜连「被熊头吃掉」都不行了，
+   拖上去只会被拒绝：小京才不要吃这个呢。 */
 function feedBear(id){
   var d=byDish(id);
   if(!d||!d.bear){ toast('这个不是小熊料理，小京不吃哦'); return; }
@@ -959,19 +2191,8 @@ function feedBear(id){
   var n=S.dish[d.id]||0;
   if(n<=0){ toast('还没有'+d.n+'呢，先去厨房做一份吧'); return; }
   S.dish[d.id]=n-1;
-  S.full=Math.min(BEAR_FULL_MAX,(S.full||0)+d.feed);
-  S.fullT=Date.now();
-  if(d.special==='full'){
-    S.bubbleBuffT = Date.now() + 3*60*1000;
-    S.full = BEAR_FULL_MAX;
-    toast('🍾 小京喝下超级起泡酒，饱食度瞬间回满，3分钟不掉！');
-  }
+  eatDish(d);
   save(); paint();
-  if(S.full>=BEAR_FULL_OK && d.special!=='full') toast('小京吃得饱饱的，开始帮你捡粑粑啦 🧸');
-  else if(d.special!=='full') toast('小京吃掉了'+d.e+d.n+'，肚子暖暖的');
-  if(S.full >= BEAR_FULL_MAX && Math.random() < 0.1){
-    setTimeout(burpEvent, 500);
-  }
 }
 
 var tempPack = {honey:0, dishes:{}};
@@ -995,14 +2216,20 @@ function renderPackUI(){
     '🍩 总饱食度：'+totalFeed+' / 100</div>'+
     '<div class="seeds" style="max-height:180px;overflow-y:auto;margin-bottom:12px">';
 
-  html += '<button class="seed'+(tempPack.honey >= S.honey ? ' poor' : '')+'" id="packHoney">'+
-    '<span class="e">🍯</span><span class="info"><span class="n">蜂蜜</span><span class="p">有 '+S.honey+' 罐 · 装 1 罐</span></span></button>';
+  // 蜂蜜：只要装满了1个，就变灰不能再点
+  var honeyFull = tempPack.honey >= 1;
+  html += '<button class="seed'+(honeyFull ? ' poor' : '')+'" id="packHoney">'+
+    '<span class="e">🍯</span><span class="info"><span class="n">蜂蜜</span><span class="p">'+(honeyFull ? '已经装好啦' : '点击装 1 罐')+'</span></span></button>';
 
   BEAR_DISHES.forEach(function(d){
     var n = S.dish[d.id] || 0;
     var packed = tempPack.dishes[d.id] || 0;
     if(n <= 0) return;
-    var canPack = packed < n;
+
+    // 判断加上这个料理会不会超过100
+    var willExceed = (totalFeed >= 100);
+    var canPack = (packed < n) && !willExceed;
+
     html += '<button class="seed'+(canPack ? '' : ' poor')+'" id="pack_'+d.id+'">'+
       '<span class="e">'+d.e+'</span><span class="info"><span class="n">'+d.n+'</span><span class="p">有 '+n+' 份 · 装了 '+packed+' · 饱食 +'+d.feed+'</span></span></button>';
   });
@@ -1016,21 +2243,40 @@ function renderPackUI(){
   panel.innerHTML = html;
   overlay.classList.add('on');
 
+  // 蜂蜜的点击逻辑：最多只能装1个
   var bh = $('packHoney');
   if(bh) bh.addEventListener('click', function(){
-    if(tempPack.honey < S.honey) tempPack.honey++;
-    renderPackUI();
+    if(honeyFull){
+      toast('蜂蜜只需要 1 罐就够啦，不能再装啦');
+      return;
+    }
+    if(S.honey >= 1){
+      tempPack.honey = 1;
+      renderPackUI();
+    } else {
+      toast('仓库里没有蜂蜜啦，先去种地收集一点吧');
+    }
   });
 
+  // 料理的点击逻辑：达到100饱食度就锁定，不让手滑多塞
   BEAR_DISHES.forEach(function(d){
     var b = $('pack_'+d.id);
     if(b) b.addEventListener('click', function(){
       var packed = tempPack.dishes[d.id] || 0;
       var have = S.dish[d.id] || 0;
-      if(packed < have){
-        tempPack.dishes[d.id] = packed + 1;
-        renderPackUI();
+
+      if(packed >= have){
+        toast('仓库里没有多余的'+d.n+'啦');
+        return;
       }
+
+      if(totalFeed >= 100){
+        toast('呜……带不下那么多啦，吃多了要走不动了……');
+        return;
+      }
+
+      tempPack.dishes[d.id] = packed + 1;
+      renderPackUI();
     });
   });
 
@@ -1066,6 +2312,10 @@ function getSeasonName(season){
 }
 
 function startExpedition(season){
+  if(S.lootPending){
+    toast('小京还有礼物没领呢，先领了再出发吧 🧸');
+    return;
+  }
   overlay.classList.remove('on');
   panel.innerHTML='';
 
@@ -1088,6 +2338,7 @@ function finishExpedition(){
   if(!S.expedition) return;
   var season = S.expedition.season;
   S.expedition = null;
+  S.lootPending = true; // 标记有待领取的战利品
 
   var loot = {};
   var total = 12;
@@ -1102,13 +2353,17 @@ function finishExpedition(){
     loot[id] = (loot[id]||0) + n;
   }
 
-  for(var i=0;i<total;i++){
+  for(var i=0;i<10;i++){
     var r = Math.random();
-    if(r < 0.5){
+    if(r < 0.3){
       addLoot('meat', 1);
-    } else if(r < 0.9){
+    } else if(r < 0.5){
       var crop = CROPS[Math.floor(Math.random()*CROPS.length)];
       addLoot(crop.id, 1);
+    } else if(r < 0.7){
+      var craftGoods = ['sugar','flour','butter','ketchup','oil','jam','mayo'];
+      var cg = craftGoods[Math.floor(Math.random()*craftGoods.length)];
+      addLoot(cg, 1);
     } else {
       var seasonRoll = Math.random();
       if(season==='spring'){
@@ -1118,7 +2373,7 @@ function finishExpedition(){
         if(seasonRoll < 0.5) addLoot('alcohol', 1);
         else addLoot('shrimp', 1);
       } else if(season==='autumn'){
-        if(seasonRoll < 0.5) addLoot('onion', 1);
+        if(seasonRoll < 0.3) addLoot('honey', 1);
         else addLoot('cheese', 1);
       } else if(season==='winter'){
         if(seasonRoll < 0.9) addLoot('ice', 1);
@@ -1134,21 +2389,7 @@ function finishExpedition(){
     summary.push(g.e + g.n + ' ×' + loot[k2]);
   }
 
-  panel.innerHTML='<div class="ttl">🧸 小京探险回来啦！</div>'+
-    '<div style="font-size:42px;margin:10px 0">🧸</div>'+
-    '<div style="font-size:13px;line-height:1.8;color:#7d6558;font-weight:700">'+
-    '它带着满满一篮子东西跑回来了：<br><br>'+
-    summary.join('，')+'<br><br>'+
-    '小京蹭了蹭你的手，把篮子递给你，眼睛亮亮的。'+
-    '</div>'+
-    '<button class="catb" id="outOk" style="margin-top:14px">摸摸它</button>';
-  overlay.classList.add('on');
-
-  $('outOk').addEventListener('click', function(){
-    overlay.classList.remove('on');
-    panel.innerHTML='';
-    save(); paint();
-  });
+  S.lootSummary = summary.join('，');
   save(); paint();
 }
 
@@ -1214,7 +2455,9 @@ function toast(msg){
 function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
 
 var dishPopTimer=null;
-function dishNotice(d, got, msg){
+/* 右上角的料理小提示条。
+   （2026-09-22 顺手清理：本来还有个 got 参数，但从来没被用过，删掉了。） */
+function dishNotice(d, msg){
   var el=$('dishPop');
   if(!el) return;
   el.innerHTML='<span class="de">'+d.e+'</span><span>'+msg+'</span>';
@@ -1224,9 +2467,16 @@ function dishNotice(d, got, msg){
 }
 
 var CHATTER=['这颗看起来有点像你，圆圆的','小熊说它很满意','泥土的味儿真好啊','又长胖了一点'];
-var GOOD=['漂亮，火候刚好','这一下很稳','闻着就香'];
-var SAVED=['小京伸爪子帮你救了一下','差点糊了，小京给翻了个面','小京替你盯着呢'];
-var BURNT=['焦了…小京闭着眼睛吃掉了','糊成一团，小京说它吃','锅底黑了一块，小京去刷'];
+
+/* 【已删除 · 2026-09-22】这里有三个台词数组，本来是给火候小游戏用的：
+     GOOD  —— 火候卡准了
+     SAVED —— 没卡准，但小京替你救了一下
+     BURNT —— 糊了
+   小游戏删掉之后它们再没有任何引用，跟着一起走了。
+   —— 以后想复活火候玩法，这三句在这儿等着（我把内容留在这行注释里）：
+     GOOD  = ['漂亮，火候刚好','这一下很稳','闻着就香']
+     SAVED = ['小京伸爪子帮你救了一下','差点糊了，小京给翻了个面','小京替你盯着呢']
+     BURNT = ['焦了…小京闭着眼睛吃掉了','糊成一团，小京说它吃','锅底黑了一块，小京去刷'] */
 
 /* ---------- 收地 ---------- */
 function harvest(i,byBear){
@@ -1240,7 +2490,7 @@ function harvest(i,byBear){
   if(!byBear && Math.random()<0.03) toast(pick(CHATTER));
   p.c=null; p.t=0;
   if(byBear && S.auto){
-    var seed=CROPS[S.sel];
+    var seed=byId(S.sel);
     if(S.coins>=seed.cost){ S.coins-=seed.cost; p.c=seed.id; p.t=Date.now(); }
   }
   save(); paint();
@@ -1258,7 +2508,7 @@ function tapPlot(i){
     return;
   }
   if(!p.c){
-    var c=CROPS[S.sel];
+    var c=byId(S.sel);
     if(S.coins<c.cost){ toast('金币还不够买 '+c.n+' 的种子呢'); return; }
     S.coins-=c.cost; p.c=c.id; p.t=Date.now();
     save(); paint();
@@ -1271,64 +2521,240 @@ function tapPlot(i){
   }
 }
 
-/* ---------- 粑粑拖拽 ---------- */
-var dragIdx=-1, dragGhost=null, dragMoved=false, dragSX=0, dragSY=0, dragBlock=0;
+/* ============================================================
+   统一拖拽骨架（2026-09-22 泛化）
+   ------------------------------------------------------------
+   以前这套骨架是专为「把💩拖进垃圾桶」长出来的，
+   里面把 💩 和 #trash 写死在了逻辑里。
+   现在打通过之后，四种拖拽共用同一套骨架（没有抄第二份）：
 
-function dragStart(e,i){
-  if(S.poops.indexOf(i)<0) return;
-  dragIdx=i; dragMoved=false; dragSX=e.clientX; dragSY=e.clientY;
+     ① 💩 → 🗑️            payload = {kind:'poop', i:地块号}
+     ② 食材 → 锅           payload = {kind:'ing',  id:'tomato'}
+     ③ 成品 → 订单/熊头/小京按钮
+                           payload = {kind:'out'}
+     ④ 锅里那格 → 别处      payload = {kind:'pot',  i:格子号}
+        拖到别的空格 = 挪位置；拖出锅外 = 拿掉（库存还回来）
+
+   怎么找到「手指底下那个投放区」：
+     每个能接东西的元素上都写了 data-drop="xxx"。
+     拖拽替身是 pointer-events:none，所以 elementFromPoint
+     直接就能拿到它底下的元素，然后顺着 parentElement 往上找。
+
+   为什么不用「比层级」那一套：
+     跟当初解决「导航栏 vs 抽屉」是同一个思路 —— 不重叠就不用比火候。
+     熊头垃圾桶那个写死的 999，就是被这一条干掉的。
+
+   ⚠️ 以后要加第五种拖拽 / 新的投放区，只需要：
+        在元素上写 data-drop="你的名字"，
+        然后到 zoneAccepts 和 doDrop 里各加一行。
+        骨架本身一个字都不用改。
+   ============================================================ */
+var dragPayload=null, dragGhost=null, dragMoved=false, dragSX=0, dragSY=0, dragBlock=0;
+
+function dragStart(e, payload){
+  if(!payload) return;
+  /* 不该拖的东西直接拦掉，别让玩家白拖一趟 */
+  if(payload.kind==='poop'    && S.poops.indexOf(payload.i)<0) return;
+  if(payload.kind==='ing'     && haveMat(payload.id)<=0) return;      /* 仓库里没有这个食材 */
+  if(payload.kind==='pot'     && !S.pot[payload.i]) return;
+  if(payload.kind==='bagdish' && (S.dish[payload.id]||0)<=0) return;  /* 背包里没有这道菜 */
+  dragPayload=payload; dragMoved=false; dragSX=e.clientX; dragSY=e.clientY;
   document.addEventListener('pointermove',dragMove);
   document.addEventListener('pointerup',dragEnd);
   document.addEventListener('pointercancel',dragEnd);
 }
-function dragMove(e){
-  if(dragIdx<0) return;
-  var dx=e.clientX-dragSX, dy=e.clientY-dragSY;
-  if(!dragMoved){
-    if(Math.abs(dx)+Math.abs(dy)<9) return;
-    dragMoved=true;
-    dragGhost=document.createElement('div');
-    dragGhost.className='poopGhost';
-    dragGhost.textContent='💩';
-    document.body.appendChild(dragGhost);
-    var t0=$('trash'); if(t0) t0.classList.add('hot');
+
+/* 跟手的那个替身该显示什么 icon */
+function dragIconOf(p){
+  if(p.kind==='poop')    return '💩';
+  if(p.kind==='ing')     return (ingInfo(p.id)||{}).e || '?';
+  if(p.kind==='pot')     return (ingInfo(S.pot[p.i])||{}).e || '?';
+  if(p.kind==='bagdish') return (byDish(p.id)||{}).e || '?';     /* 从厨房菜肴列表拖出来的菜 */
+  if(p.kind==='out'){
+    var o=S.potOut;
+    if(!o) return '?';
+    return o.kind==='dark' ? DARK_DISH.e : ((byDish(o.id)||{}).e || '?');
   }
-  dragGhost.style.left=e.clientX+'px';
-  dragGhost.style.top=e.clientY+'px';
+  return '?';
+}
+
+/* 手指底下是哪个投放区（都不是就返回 null） */
+function dropZoneAt(x,y){
+  var el=document.elementFromPoint(x,y);
+  while(el && el!==document.body){
+    if(el.getAttribute && el.getAttribute('data-drop')) return el;
+    el=el.parentElement;
+  }
+  /* 🗑️ 垃圾桶的兜底判定。
+     ⚠️ 这段代码是【历史遗留的保险】，2026-09-24 之后其实已经用不上了 ——
+        它当初固定在屏幕右下角、装着 pointer-events:none（怕挡住页脚按钮），
+        所以 elementFromPoint 找不到它，只能靠算坐标。
+        现在它搬进导航栏了、也改成 pointer-events:auto，
+        上面那圈 while 循环就能正常找到它。
+     **留着不删**：万一以后有人又给它加回 pointer-events:none，
+     这里还有一层保险，不至于"拖到桶上却没反应"。
+     多花的那点开销可以忽略（只在松手的那一瞬间算一次）。 */
   var tr=$('trash');
   if(tr){
     var r=tr.getBoundingClientRect();
-    var near = e.clientX>=r.left-22 && e.clientX<=r.right+22 &&
-               e.clientY>=r.top-22  && e.clientY<=r.bottom+22;
-    tr.classList.toggle('over', near);
+    if(x>=r.left-22 && x<=r.right+22 && y>=r.top-22 && y<=r.bottom+22) return tr;
   }
+  return null;
+}
+
+/* 这个投放区接不接得住手上这件东西。
+   接得住 → 一拖起来它就亮粉圈，玩家一眼知道该往哪拖。 */
+function zoneAccepts(zone, p){
+  var t=zone.getAttribute('data-drop');
+  if(t==='trash')   return p.kind==='poop';
+
+  /* 锅只接食材：放新的进去、或者在锅里换位置。
+     （锅里的食材拖到【别的格子】上就是交换，拖到【锅外】就是拿掉还回仓库） */
+  if(t==='pot')     return p.kind==='ing' || p.kind==='pot';
+
+  /* 熊头 / 订单槽 / 「🧸 小京」按钮，都接两种来源：
+       out     = 锅里刚做好、正躺在成品格里的
+       bagdish = 从【厨房最下面那排菜肴 ui】拖出来的（背包里得有货）
+     —— 用户 2026-09-24 要求："我们把菜肴的 ui 也变成可拖拽，可以直接拖拽到订单去结算。"
+        ⚠️ 他说的「菜肴的 ui」就是厨房那排菜肴图标，
+           不是背包抽屉里的「🍲 菜肴仓库」—— 他专门纠正过一次。 */
+  if(t==='bear')    return p.kind==='out' || p.kind==='bagdish';
+  if(t==='order')   return p.kind==='out' || p.kind==='bagdish';
+  if(t==='bearbtn') return p.kind==='out' || p.kind==='bagdish';
+
+  return false;
+}
+
+/* 把「接得住我」的投放区全点亮 */
+function markDropZones(p){
+  Array.prototype.forEach.call(document.querySelectorAll('[data-drop]'), function(z){
+    z.classList.toggle('drop-hot', zoneAccepts(z,p));
+  });
+}
+function clearDropZones(){
+  Array.prototype.forEach.call(document.querySelectorAll('[data-drop]'), function(z){
+    z.classList.remove('drop-hot');
+    z.classList.remove('drop-over');
+  });
+}
+
+function dragMove(e){
+  if(!dragPayload) return;
+  var dx=e.clientX-dragSX, dy=e.clientY-dragSY;
+  if(!dragMoved){
+    if(Math.abs(dx)+Math.abs(dy)<9) return;      /* 小抖动不算拖，防止误触 */
+    dragMoved=true;
+    dragGhost=document.createElement('div');
+    dragGhost.className='dragGhost';
+    dragGhost.textContent=dragIconOf(dragPayload);
+    document.body.appendChild(dragGhost);
+    markDropZones(dragPayload);
+  }
+  dragGhost.style.left=e.clientX+'px';
+  dragGhost.style.top=e.clientY+'px';
+
+  /* 高亮「手指正悬在上面的那一个」 */
+  var zone=dropZoneAt(e.clientX,e.clientY);
+  Array.prototype.forEach.call(document.querySelectorAll('[data-drop].drop-hot'), function(z){
+    z.classList.toggle('drop-over', z===zone);
+  });
+
   if(e.cancelable) e.preventDefault();
 }
+
 function dragEnd(e){
   document.removeEventListener('pointermove',dragMove);
   document.removeEventListener('pointerup',dragEnd);
   document.removeEventListener('pointercancel',dragEnd);
   if(dragGhost){ dragGhost.remove(); dragGhost=null; }
-  var tr=$('trash');
-  if(tr){ tr.classList.remove('hot'); tr.classList.remove('over'); }
-  if(dragMoved){
-    dragBlock=Date.now()+350;
-    var r=tr.getBoundingClientRect();
-    if(e.clientX>=r.left-26 && e.clientX<=r.right+26 &&
-       e.clientY>=r.top-26  && e.clientY<=r.bottom+26){
-      collectPoop(dragIdx);
+
+  var p=dragPayload;
+  if(dragMoved && p){
+    dragBlock=Date.now()+350;    /* 拖完这一下，别顺手又把下面那格点了 */
+    var zone=dropZoneAt(e.clientX,e.clientY);
+    if(zone && zoneAccepts(zone,p)){
+      doDrop(zone,p);
     }else{
-      toast('没对准，要把粑粑拖到右下角那个桶里');
+      /* 哪儿都没落上 */
+      if(p.kind==='pot'){
+        /* 从锅里拖出锅外 = 拿掉这一格。
+           放进去的时候已经扣过库存，所以这里要还回去 —— 玩家不亏东西。 */
+        S.pot[p.i]=null;
+        sfx('ingPick');              /* 轻轻一下"嗒" —— 把食材拿出来了 */
+        toast('把食材拿出来了，还回仓库');
+        save(); paint();
+      }else if(p.kind==='poop'){
+        toast('没对准，要把粑粑拖到左边导航栏那个桶里');
+      }else if(p.kind==='out'){
+        toast('可以拖给左边的订单交货，也可以拖给熊头或者 🧸 按钮');
+      }else if(p.kind==='bagdish'){
+        toast('拖到左边要它的那个订单上，就能交货啦');
+      }
     }
   }
-  dragIdx=-1; dragMoved=false;
+  clearDropZones();
+  dragPayload=null; dragMoved=false;
 }
-function collectPoop(i){
+
+/* 真正落地：哪个投放区 + 拖的是什么 */
+function doDrop(zone, p){
+  var t=zone.getAttribute('data-drop');
+
+  /* ---------- 💩 丢进垃圾桶 ---------- */
+  if(t==='trash'){ collectPoop(p.i); return; }
+
+  /* ---------- 放进锅里 / 在锅里挪位置 / 两格交换 ---------- */
+  if(t==='pot'){
+    var i=parseInt(zone.getAttribute('data-i'),10);
+    if(p.kind==='ing'){
+      if(S.pot[i]){ toast('这一格已经有东西啦'); return; }
+      if(haveMat(p.id)<=0){ toast('仓库里没有这个食材哦'); return; }
+      /* ⚠️ 放进去的瞬间就扣库存（拿掉会还回来）。
+         这样背包里看到的数字永远是真的，
+         不会出现「锅里摆着一个、仓库里也还留着一个」的幽灵食材。 */
+      S.pot[i]=p.id;
+      takeMat(p.id,1);
+      sfx('ingDrop');                 /* 木头的"嗒" —— 食材落进锅 */
+      save(); paint();
+      return;
+    }
+    if(p.kind==='pot'){
+      if(i===p.i) return;
+      /* 目标格空着 → 挪过去；目标格有东西 → **两个交换位置**。
+         用户 2026-09-24 原话："我希望已经放进九宫格里的食物，可以交换，
+         例如 1 放了蜂蜜，2 放了糖。我把蜂蜜拖到糖上，它们就可以交换位置。"
+         ⚠️ 所以这里【绝对不能再拦】「这一格已经有东西啦」——
+            拦了就没法交换了。（以前就是那么拦的，这次改掉了。） */
+      var tmp=S.pot[i];
+      S.pot[i]=S.pot[p.i];
+      S.pot[p.i]=tmp;
+      sfx('ingSwap');                 /* 连着两下"嗒嗒" —— 两格换位置 */
+      save(); paint();
+      return;
+    }
+    return;
+  }
+
+  /* ---------- 交给熊头垃圾桶（小京吃） ---------- */
+  if(t==='bear'){ feedToBear(p); return; }
+
+  /* ---------- 交给订单槽（交货结算） ---------- */
+  if(t==='order'){ deliverToOrder(parseInt(zone.getAttribute('data-i'),10), p); return; }
+
+  /* ---------- 交给左侧「🧸 小京」按钮（收进菜肴仓库） ---------- */
+  if(t==='bearbtn'){ storeToBag(p); return; }
+}
+/* 把一块地上的💩收进桶里。
+   ⚠️ silent 参数是【小京自动捡】用的 —— 他干活是不出声的（用户特别要求，
+      原话："小京种菜收菜收粑粑都是没声音的（不然会很吵）"）。
+      只有玩家自己拖着扔进去的那一下，才会响「吧唧」。 */
+function collectPoop(i, silent){
   var k=S.poops.indexOf(i);
   if(k<0) return;
   S.poops.splice(k,1);
   S.dung++;
   S.coins+=5;
+  if(!silent) sfx('poopPick');        /* "吧唧" —— 玩家手动拖进去的 */
   pop(i,'🪙+5 🪣+1');
   save(); paint();
 }
@@ -1396,9 +2822,17 @@ setInterval(function(){
 },1000);
 
 /* ---------- 工坊 ---------- */
+/* 点工坊卡片，分三种情况：
+   ① 已经加工好了 → 收进仓库
+   ② 正在加工中   → 提示再等等
+   ③ 闲着         → 扣掉材料，开始计时 */
 function craft(i){
   var c=CRAFTS[i];
   var og=byGood(c.out);
+
+  if(S.craftReady[i]){ collectCraft(i); return; }
+  if(S.craftT[i]){ toast('还在加工中，再等等～'); return; }
+
   if(c.multi){
     for(var k in c.multi){
       if((S.store[k]||0)<c.multi[k]){
@@ -1413,206 +2847,276 @@ function craft(i){
     if((S.store[c.from]||0)<c.need){ toast(fg.n+'还不够，要 '+c.need+' 个'); return; }
     S.store[c.from]-=c.need;
   }
-  S.store[c.out]=(S.store[c.out]||0)+1;
-  S.seen[c.out]=1;
-  toast('做好了一份 '+og.e+og.n);
+
+  S.craftT[i]=Date.now();
+  toast('开始加工 '+og.e+og.n+'，要 '+c.time+' 秒');
   save(); paint();
 }
 
-/* ---------- 做饭小游戏 ---------- */
-var overlay=$('overlay'), panel=$('panel'), activeEvent=null, eventLock=false;
-
-function genPts(){
-  var pts=[], guard=0;
-  while(pts.length<4 && guard<600){
-    guard++;
-    var p={x:18+Math.random()*64, y:18+Math.random()*64};
-    var ok=true;
-    for(var i=0;i<pts.length;i++){
-      var dx=(pts[i].x-p.x)*2.9, dy=(pts[i].y-p.y)*1.5;
-      if(Math.sqrt(dx*dx+dy*dy)<46){ ok=false; break; }
-    }
-    if(ok) pts.push(p);
-  }
-  while(pts.length<4) pts.push({x:14+Math.random()*72, y:14+Math.random()*72});
-  return pts;
+/* 把加工好的东西收进仓库 */
+function collectCraft(i){
+  var c=CRAFTS[i], og=byGood(c.out);
+  S.store[c.out]=(S.store[c.out]||0)+1;
+  S.seen[c.out]=1;
+  S.craftT[i]=0;
+  S.craftReady[i]=0;
+  toast('收到了一份 '+og.e+og.n);
+  save(); paint();
 }
 
-function triggerEvent(si){
-  var st=S.stoves[si];
-  if(!st) return;
-  var type = Math.random()<0.5 ? 'bar' : 'line';
-  activeEvent={si:si, type:type, start:Date.now(),
-               limit: type==='bar'?6000:4500, down:false, last:null};
-  buildEventUI();
-}
-
-function buildEventUI(){
-  var ev=activeEvent;
-  if(!ev) return;
-  if(ev.type==='bar'){
-    var zs=0.10+Math.random()*0.48;
-    ev.zoneStart=zs;
-    panel.innerHTML='<div class="ttl">🔥 火候！指针进绿区时点一下</div>'+
-      '<div class="gbar" id="gbar"><div class="zone" style="left:'+(zs*100)+'%;width:32%"></div>'+
-      '<div class="needle" id="needle"></div></div>'+
-      '<div class="hintline">只有一次机会，稳稳点</div>';
-    overlay.classList.add('on');
-    $('gbar').addEventListener('pointerdown',function(){
-      if(!activeEvent||activeEvent.type!=='bar') return;
-      var p=needlePos();
-      endEvent(p>=ev.zoneStart-0.015 && p<=ev.zoneStart+0.32+0.015);
-    });
-  } else {
-    var pts=genPts();
-    ev.pts=pts; ev.k=0;
-    var html='<div class="ttl">✍️ 按 1→2→3→4 划过去</div><div class="gline" id="gline">';
-    for(var i=0;i<pts.length;i++){
-      html+='<i style="left:'+pts[i].x+'%;top:'+pts[i].y+'%"><b>'+(i+1)+'</b></i>';
-    }
-    html+='</div><div class="hintline">按住别松手，划到亮的那个点</div>';
-    panel.innerHTML=html;
-    overlay.classList.add('on');
-    var gl=$('gline');
-    ev.box=gl.getBoundingClientRect();
-    gl.children[0].classList.add('target');
-    gl.addEventListener('pointerdown',function(e){ ev.down=true; ev.last=null; hitPoint(e); });
-    gl.addEventListener('pointermove',function(e){ if(ev.down) hitPoint(e); });
-    gl.addEventListener('pointerup',function(){ ev.down=false; ev.last=null; });
-    gl.addEventListener('pointercancel',function(){ ev.down=false; ev.last=null; });
-  }
-}
-
-function checkHit(x,y){
-  var ev=activeEvent;
-  if(!ev||ev.k>=ev.pts.length) return false;
-  var b=ev.box, p=ev.pts[ev.k];
-  var dx=x-(p.x/100*b.width), dy=y-(p.y/100*b.height);
-  if(Math.sqrt(dx*dx+dy*dy)<40){
-    var gl=$('gline');
-    if(gl&&gl.children[ev.k]){
-      gl.children[ev.k].classList.remove('target');
-      gl.children[ev.k].classList.add('on');
-    }
-    ev.k++;
-    if(ev.k>=ev.pts.length){ endEvent(true); return true; }
-    if(gl&&gl.children[ev.k]) gl.children[ev.k].classList.add('target');
-  }
+/* 有没有「加工好了还没收」的东西 —— 给导航栏的小叹号用 */
+function anyCraftReady(){
+  for(var i=0;i<CRAFTS.length;i++){ if(S.craftReady[i]) return true; }
   return false;
 }
 
-function hitPoint(e){
-  var ev=activeEvent;
-  if(!ev||ev.type!=='line') return;
-  var b=ev.box;
-  var x=e.clientX-b.left, y=e.clientY-b.top;
-  if(ev.last){
-    var dx=x-ev.last.x, dy=y-ev.last.y;
-    var dist=Math.sqrt(dx*dx+dy*dy);
-    var steps=Math.max(1,Math.ceil(dist/12));
-    for(var s=1;s<=steps;s++){
-      if(checkHit(ev.last.x+dx*s/steps, ev.last.y+dy*s/steps)) break;
+/* ---------- 工坊：计时推进 + 到点标记为「待收获」 ---------- */
+setInterval(function(){
+  var busy=false, done=false;
+  CRAFTS.forEach(function(c,i){
+    if(!S.craftT[i] || S.craftReady[i]) return;
+    if(Date.now() - S.craftT[i] >= c.time*1000){ S.craftReady[i]=1; done=true; }
+    else busy=true;
+  });
+  if(done){
+    save();
+    toast('工坊里有东西做好啦，记得去收 🏭');
+    paint();
+    return;
+  }
+  if(busy) paint();   /* 加工中 → 每半秒重画一次，进度条才会动 */
+},500);
+
+/* ---------- 弹窗底层（overlay / panel） ----------
+   注意：这套弹窗原来是和「做饭小游戏」一起写的。
+   小游戏被删掉了，但弹窗本身还要用 ——
+   金库、探险、导入导出、菜谱一览，全都靠它。 */
+var overlay=$('overlay'), panel=$('panel');
+
+/* ============================================================
+   九宫格做菜（2026-09-22 全新）
+   ------------------------------------------------------------
+   玩法：把食材从上面的食材区拖进锅里摆好 → 点「提交」。
+         摆得跟某一道菜的九宫格【一模一样】才做得出来（位置算数）；
+         摆得不对 → 做出一份 ☠︎ 黑暗料理。
+
+   有三件事已经在别处保证好了，这里只负责判定：
+     · 食材放进去的瞬间就扣了库存（doDrop）
+     · 成品格堵着的时候「提交」是灰的（paintKitchen）
+     · 黑暗料理只能喂小京，而且不给饱食度（feedToBear）
+   ============================================================ */
+
+/* 拿锅里现在的 9 格去跟所有菜谱比对，返回做出来的那道菜；没对上返回 null。
+   ⚠️ 必须跳过 noCook 的菜 —— 丸子串串的九宫格是全空的，
+      不跳过的话「空锅提交」会直接刷出一份丸子串串。 */
+function potMatch(){
+  for(var i=0;i<DISHES.length;i++){
+    var d=DISHES[i];
+    if(d.noCook) continue;
+    var r=RECIPES[d.id];
+    if(!r) continue;
+    var ok=true;
+    for(var k=0;k<POT_N;k++){
+      if((r[k]||'') !== (S.pot[k]||'')){ ok=false; break; }
     }
-  } else {
-    checkHit(x,y);
+    if(ok) return d;
   }
-  ev.last={x:x,y:y};
+  return null;
 }
 
-function needlePos(){
-  var ev=activeEvent;
-  if(!ev) return 0;
-  var period=2200;
-  var ph=((Date.now()-ev.start)%period)/period;
-  return ph<0.5 ? ph*2 : 2-ph*2;
-}
+function submitPot(){
+  /* 成品格还堵着 → 不许做下一道（用户原话：成品格「不可覆盖」） */
+  if(S.potOut){ toast('先把成品处理掉，才能做下一道哦'); return; }
 
-function endEvent(ok){
-  var ev=activeEvent;
-  if(!ev) return;
-  activeEvent=null;
-  eventLock=true;
-  var st=S.stoves[ev.si];
-  var saved=false;
-  if(!ok && st && S.bears>0 && Math.random() < 0.3*S.bears){ ok=true; saved=true; }
-  if(st && ok) st.s++;
-  panel.innerHTML='<div class="ttl big">'+(ok?(saved?'🧸 小京救了你':'✨ 刚好'):'😿 差一点')+'</div>';
-  setTimeout(function(){
-    overlay.classList.remove('on');
-    panel.innerHTML='';
-    eventLock=false;
-  },460);
-  if(ok) toast(saved?pick(SAVED):pick(GOOD));
-  paint();
-}
+  var any=false;
+  for(var i=0;i<POT_N;i++){ if(S.pot[i]) any=true; }
+  if(!any){ toast('锅里空空的，先把食材拖进去'); return; }
 
-function rafLoop(){
-  if(activeEvent && activeEvent.type==='bar'){
-    var n=$('needle');
-    if(n) n.style.left=(needlePos()*100)+'%';
+  var got=potMatch();
+  if(got){
+    S.potOut={kind:'dish', id:got.id};
+    S.seen[got.id]=1;                    /* 做成功过 → 以后才会出现在订单里 */
+    sfx('cookOk');                       /* 上行三音"叮—咚—叮"：成了！ */
+    dishNotice(got, got.e+' 做好啦！');
+    toast('成功做出'+got.n+'，把它拖到左边要它的那个订单上吧');
+  }else{
+    S.potOut={kind:'dark'};
+    sfx('cookBad');                      /* 下行二音"呜—呃"：砸了 */
+    dishNotice(DARK_DISH, '这锅东西的颜色……有点不对劲……');
+    toast('做成了 ☠︎ 黑暗料理，只能拖给熊头让小京吃掉');
   }
-  if(activeEvent && Date.now()-activeEvent.start > activeEvent.limit){
-    endEvent(false);
-  }
-  requestAnimationFrame(rafLoop);
-}
-requestAnimationFrame(rafLoop);
 
-function cook(i){
-  var d=DISHES[i], slot=-1;
-  S.stoves.forEach(function(st,k){ if(!st && slot<0) slot=k; });
-  if(slot<0){ toast('灶台都占着呢，等一下'); return; }
-  for(var k in d.need){ if(haveMat(k)<d.need[k]){ toast('材料还不够呀，先去种'); return; } }
-  for(var k2 in d.need){ takeMat(k2,d.need[k2]); }
-  S.stoves[slot]={d:d.id, t:Date.now(), total:d.ev, fired:0, s:0, next:0.25};
-  toast('小京系上围裙了，给你做'+d.n);
+  /* 锅清空。食材在放进去的时候就已经扣掉了，这里不用再扣一次。 */
+  for(var k=0;k<POT_N;k++) S.pot[k]=null;
   save(); paint();
 }
 
-setInterval(function(){
-  var now=Date.now(), changed=false;
-  var hidden=document.hidden;
-  S.stoves.forEach(function(st,i){
-    if(!st) return;
-    var d=byDish(st.d);
-    if(!d){ S.stoves[i]=null; stoveState[i]=null; changed=true; return; }
-    var r=(now-st.t)/(d.time*1000);
-    if(!hidden && !activeEvent && !eventLock && st.fired<st.total && r>=st.next && r<0.93){
-      st.fired++;
-      st.next += 0.6/st.total;
-      triggerEvent(i);
-      changed=true;
-    }
-    if(r>=1){
-      if(activeEvent && activeEvent.si===i){
-        activeEvent=null; overlay.classList.remove('on'); panel.innerHTML='';
-      }
-      var got=1, msg='出锅啦 '+d.e+d.n;
-      if(st.fired===st.total && st.s===st.total && st.total>0){ got=2; msg='完美出锅！多得一份 '+d.e+d.n; }
-      else if(st.fired>0 && st.s===0){ got=0; msg=pick(BURNT)+' '+d.e+d.n; }
-      if(got>0) S.dish[d.id]=(S.dish[d.id]||0)+got;
-      S.seen[d.id]=1;
-      S.stoves[i]=null;
-      stoveState[i]=null;
-      dishNotice(d, got, msg);
-      changed=true;
-    }
-  });
-  if(changed){ save(); paint(); }
-},150);
+/* ============================================================
+   成品 / 手上的菜，往哪儿去（2026-09-24 大改）
+   ------------------------------------------------------------
+   现在有两种「手上拿着菜」的情况，共用同一套出口：
+     p.kind === 'out'     锅里刚做好、正躺在成品格里的
+     p.kind === 'bagdish' 从【厨房最下面那排菜肴 ui】拖出来的（背包里得有货）
 
-/* ---------- 订单交付 ---------- */
-function deliver(i){
+   三条出口：
+     ① 拖给熊头垃圾桶     → 喂小京
+     ② 拖给订单槽         → 交货收钱
+     ③ 拖给「🧸 小京」按钮 → 收进背包
+   ============================================================ */
+
+/* ① 拖给熊头垃圾桶 = 让小京吃它。
+
+   ⚠️⚠️ 规则在 2026-09-24 收紧过一次，现在的版本是：
+        熊头【只吃】小熊料理和黑暗料理。
+        普通的菜拖上去 → 提示「小京才不要吃这个呢！」，而且什么都不消耗。
+        用户原话："熊头只吃小熊料理和黑暗料理，其他的拖拽了没反应，
+                  会提示小京才不要吃这个呢！"
+
+   为什么黑暗料理不加饱食度：这是作者亲自抓出来的漏洞 ——
+     往锅里随便丢一个食材提交就能刷出黑暗料理，
+     要是加饱食度，玩家就能无限刷小京的饱食度。
+
+   为什么普通菜连吃都不给吃：喂小京有专门的正规入口
+     （抽屉里的投喂界面，只有小熊料理能喂）。
+     熊头在这里的角色是「小京伸到厨房里的那张嘴」，不是垃圾桶 ——
+     普通菜的出路是拖给「🧸 小京」按钮收进背包，再从背包拖给订单卖掉。 */
+function feedToBear(p){
+  if(!p) return;
+
+  /* ---- 从成品格拖来的 ---- */
+  if(p.kind==='out'){
+    var out=S.potOut;
+    if(!out) return;
+
+    if(out.kind==='dark'){
+      S.potOut=null;
+      sfx('bearEat');                /* 小京吃黑暗料理：闷闷的"啊呜" */
+      toast('小京把 ☠︎ 黑暗料理吞了下去，皱着脸说：“味道……很复杂。”');
+      save(); paint();
+      return;
+    }
+
+    var d=byDish(out.id);
+    if(!d) return;
+    if(d.bear){
+      /* 小熊料理本来就是给小京的 —— 走和抽屉里投喂完全一样的逻辑 */
+      S.potOut=null;
+      sfx('bearEat');                /* 小京吃掉了 */
+      eatDish(d);
+      save(); paint();
+      return;
+    }
+    toast('小京才不要吃这个呢！');
+    return;
+  }
+
+  /* ---- 从背包抽屉拖来的 ---- */
+  if(p.kind==='bagdish'){
+    var d2=byDish(p.id);
+    if(!d2) return;
+    if((S.dish[d2.id]||0)<=0){ toast('背包里已经没有'+d2.n+'了'); return; }
+    if(d2.bear){
+      S.dish[d2.id]=(S.dish[d2.id]||0)-1;
+      sfx('bearEat');                /* 小京吃掉了 */
+      eatDish(d2);
+      save(); paint();
+      return;
+    }
+    toast('小京才不要吃这个呢！');
+    return;
+  }
+}
+
+/* ② 拖到订单槽 = 交货结算。
+   对得上就付钱、这个槽自己换成下一道菜；对不上就什么都不发生。
+   ⚠️ 两个来源都要支持：成品格里的（out）和厨房菜肴列表拖出来的（bagdish）。 */
+function deliverToOrder(i, p){
   var o=S.orders[i];
-  if(!o) return;
-  if(!orderReady(o)){ toast('还没凑齐三样货呢'); return; }
-  orderTake(o);
+  if(!o || !p) return;
+
+  var d=null, fromOut=false;
+
+  if(p.kind==='out'){
+    var out=S.potOut;
+    if(!out) return;
+    if(out.kind!=='dish'){ toast('黑暗料理不能交订单哦'); return; }
+    d=byDish(out.id);
+    fromOut=true;
+  }else if(p.kind==='bagdish'){
+    d=byDish(p.id);
+    if(!d) return;
+    if((S.dish[d.id]||0)<=0){ toast('背包里已经没有'+d.n+'了'); return; }
+  }else{
+    return;
+  }
+  if(!d) return;
+
+  if(d.id!==o.id){
+    toast('这个订单要的不是它哦');
+    return;
+  }
+
   var gain=money(o.pay);
   S.coins+=gain;
+  if(fromOut) S.potOut=null;                   /* 从成品格拿走 */
+  else S.dish[d.id]=(S.dish[d.id]||0)-1;       /* 从背包里扣掉 */
+  S.orders[i]=makeOrder();                     /* 交付完立刻变成下一道菜 —— 全自动 */
+  sfx('pay');                                  /* 钱的声音：收银机 + 一串金币落下 */
   toast('交付成功，+'+gain+' 🪙');
-  S.orders[i]=makeOrder();
   save(); paint();
 }
+
+/* ③ 拖到左侧「🧸 小京」按钮 = 收进背包（菜肴仓库）。
+   用户 2026-09-24 原话：功能不用改，"只改弹窗信息『小京先帮你放到包包里』"。
+   普通菜的出路就是这一条 —— 收进背包之后，再从背包拖给订单卖钱。 */
+function storeToBag(p){
+  if(!p) return;
+
+  if(p.kind==='bagdish'){
+    /* 它本来就在背包里，拖回背包当然什么都不用做 */
+    toast('它本来就在包包里呀');
+    return;
+  }
+  if(p.kind!=='out') return;
+
+  var out=S.potOut;
+  if(!out) return;
+  if(out.kind!=='dish'){
+    toast('黑暗料理进不了背包，拖给熊头让小京吃掉吧');
+    return;
+  }
+  var d=byDish(out.id);
+  if(!d) return;
+  S.dish[d.id]=(S.dish[d.id]||0)+1;
+  S.seen[d.id]=1;
+  S.potOut=null;
+  toast('小京先帮你把 '+d.e+d.n+' 放到包包里');
+  save(); paint();
+}
+
+/* 点一下食材 icon（不是拖）。
+   手机上光靠拖容易漏掉，所以点一下也给一个反馈。
+   ⚠️ 不自动丢进锅：位置算数，自动塞进去的位置八成是错的，
+      还不如让玩家自己拖到想去的那一格。 */
+function tapPantry(id){
+  if(Date.now()<dragBlock) return;   /* 刚拖完这一下，别把松手当点击 */
+  if(haveMat(id)<=0){ toast('仓库里没有这个食材哦'); return; }
+  var info=ingInfo(id);
+  toast('把 '+info.e+info.n+' 拖进锅里吧');
+}
+
+/* 【已删除 · 2026-09-22】
+   这里原本有三块东西，现在全没了：
+
+   ① cook(i)                —— 点菜谱直接做菜：占一个灶台、扣材料、进入倒计时
+   ② setInterval(...,150)   —— 灶台计时推进：到点了就把火候小游戏弹出来
+   ③ deliver(i)             —— 点订单卡片交付（那时候一个订单要凑齐三样货）
+
+   现在对应的是：
+     · 做菜 = 摆好九宫格 + 点「提交」    → submitPot()      （在上面）
+     · 交付 = 把成品拖到左边的订单槽      → deliverToOrder() （在上面）
+
+   两件事都不再需要任何计时器 —— 用户明确要求「取消做菜时间」。 */
 
 /* ---------- 金库 ---------- */
 function openWallet(){
@@ -1638,7 +3142,6 @@ function openWallet(){
 
 overlay.addEventListener('click',function(e){
   if(e.target!==overlay) return;
-  if(activeEvent||eventLock) return;
   overlay.classList.remove('on');
   panel.innerHTML='';
 });
@@ -1660,25 +3163,176 @@ $('sellall').addEventListener('click',function(){
   save(); paint();
 });
 
-$('refreshOrders').addEventListener('click', function(){
-  if(S.honey < 1){ toast('蜂蜜不够呀，去收地攒一点吧'); return; }
-  S.honey--;
-  for(var i=0;i<ORDER_SLOTS;i++) S.orders[i] = makeOrder();
-  toast('订单刷新啦，用掉 1 🍯');
-  save(); paint();
+/* 【已删除 · 2026-09-22】「🍯 用 1 蜂蜜刷新订单」的按钮和它的监听都没了。
+   用户原话：「蜂蜜不再可以刷新订单（直接取消那些代码和渲染）」。
+   订单现在只会「交付之后自己换」。按钮的 HTML 也一起删了。 */
+
+/* 「提交」按钮：把锅里摆好的东西做成菜 */
+$('potGo').addEventListener('click', submitPot);
+
+/* 📖 菜谱：列出「已经成功做出来过」的菜（看 S.seen）。
+   为什么不是全部菜谱：厨房页最下面已经把全部菜谱摊开了，
+   这个按钮再做一次「全部」就重复了 ——
+   所以它改成图鉴：记录你真正做成功过哪些。 */
+$('recipeBtn').addEventListener('click', function(){
+  var got=[];
+  DISHES.forEach(function(d){ if(S.seen[d.id]) got.push(d); });
+
+  var body;
+  if(!got.length){
+    body='<div style="font-size:13px;line-height:1.75;color:#7d6558;font-weight:700">'+
+         '还一道菜都没做成过呢。<br><br>'+
+         '去厨房，把食材拖进九宫格摆好，摆对了再点「提交」——<br>'+
+         '每做成功一道，它就会记在这里。</div>';
+  }else{
+    body='<div style="font-size:12px;color:#b09a8d;font-weight:700;margin-bottom:8px">'+
+         '已经做成功过 '+got.length+' / '+DISHES.length+' 道</div>'+
+         '<div class="guideGrid">';
+    got.forEach(function(d){
+      body+='<div class="guideItem"><span class="e">'+d.e+'</span>'+d.n+
+            (d.bear?'<br><span style="font-size:10px;color:#e2789f">小熊料理</span>':'')+
+            '</div>';
+    });
+    body+='</div>';
+  }
+
+  panel.innerHTML='<div class="ttl">📖 菜谱图鉴</div>'+body+
+    '<button class="catb" id="recipeOk" style="margin-top:14px">知道啦</button>';
+  overlay.classList.add('on');
+  $('recipeOk').addEventListener('click', function(){
+    overlay.classList.remove('on');
+    panel.innerHTML='';
+  });
 });
 
-$('drawerBtn').addEventListener('click', function(){
-  $('drawer').classList.add('on');
-  $('drawerMask').classList.add('on');
+/* ============================================================
+   左侧导航栏 + 仓库抽屉
+   ------------------------------------------------------------
+   一张表管到底：一个标签 = 一个区块。
+   以后要加新分类（比如厨房大改时的「已探索配方」），
+   只要往 DRAWER_TABS 里加一行、并在 HTML 里加一个 .dsec 区块，
+   不用碰任何层级、也不用再写一个 if。
+   ============================================================ */
+var DRAWER_TABS = [
+  { cat:'crop',     label:'🌱 农作物',   sec:'goods' },
+  { cat:'material', label:'🥩 特殊食材', sec:'goods' },
+  { cat:'craft',    label:'🍬 工坊产品', sec:'goods' },
+  { cat:'dish',     label:'🍲 菜肴',     sec:'dish'  },
+  { cat:'souvenir', label:'⛄ 纪念品',   sec:'goods' }
+];
+var currentCat = 'crop';
+var drawerTabEls = document.querySelectorAll('.dtab');
+var drawerSecEls = document.querySelectorAll('.dsec');
+
+/* 一件货物显示在抽屉的哪个标签下。
+   就是它的 kind，一一对应 —— **里面一个 id 特判都没有了**。
+
+   2026-09-21 清掉了两个 id 特判（都搬回数据里去了）：
+     · 小雪人：以前靠 if(g.id==='snowman') 硬认成纪念品 → 数据里写 kind:'souvenir'
+     · 饱嗝  ：以前靠 if(g.id==='burp')   硬认成特殊食材 → 数据里写 kind:'material' */
+function goodsCatOf(g){
+  if(g.kind === 'material') return 'material';
+  if(g.kind === 'craft')    return 'craft';
+  if(g.kind === 'souvenir') return 'souvenir';
+  if(g.kind === 'crop')     return 'crop';
+
+  /* 【遗留行为】kind 是 'animal' 的（牛奶 / 鸡蛋 / 巧克力）没有自己的标签，
+     跟在"农作物"里 —— 这是原本就有的行为，原样保留。 */
+  return 'crop';
+}
+
+function tabOf(cat){
+  for(var i = 0; i < DRAWER_TABS.length; i++){
+    if(DRAWER_TABS[i].cat === cat) return DRAWER_TABS[i];
+  }
+  return DRAWER_TABS[0];
+}
+
+function filterDrawer(cat){
+  var tab = tabOf(cat);
+  currentCat = tab.cat;
+
+  /* 1) 标签高亮 */
+  Array.prototype.forEach.call(drawerTabEls, function(b){
+    b.classList.toggle('is-on', b.getAttribute('data-cat') === tab.cat);
+  });
+
+  /* 2) 只留下这个标签对应的区块 —— 标题和内容一起进出，
+        所以不会再出现「空标题孤零零挂着」那种事 */
+  Array.prototype.forEach.call(drawerSecEls, function(s){
+    s.classList.toggle('is-hidden', s.getAttribute('data-sec') !== tab.sec);
+  });
+
+  /* 3) 物品仓库内部再按分类筛格子 */
+  GOODS.forEach(function(g, i){
+    var el = storeEls[i];
+    if(!el) return;
+    el.classList.toggle('is-hidden', tab.sec === 'goods' && goodsCatOf(g) !== tab.cat);
+  });
+}
+
+/* ---------- 抽屉：一个抽屉，三个视图 ----------
+     bag   = 背包（仓库分类）
+     craft = 工坊
+     bear  = 小京
+   左侧导航栏点哪个按钮 → 抽屉就切到哪个视图。
+   再点一次当前这个按钮 = 收起来。
+   以后要加第四个视图，就是：加一个 rail-btn(data-view) + 加一个 .dview。 */
+var currentView = 'bag';
+var railViewBtns = document.querySelectorAll('.rail-btn[data-view]');
+var drawerViews  = document.querySelectorAll('.dview');
+
+function showView(view){
+  currentView = view;
+  Array.prototype.forEach.call(drawerViews, function(v){
+    v.classList.toggle('is-hidden', v.getAttribute('data-view') !== view);
+  });
+}
+function isDrawerOpen(){ return $('drawer').classList.contains('is-on'); }
+function setDrawer(open){
+  $('drawer').classList.toggle('is-on', open);
+  $('drawerMask').classList.toggle('is-on', open);
+  Array.prototype.forEach.call(railViewBtns, function(b){
+    b.classList.toggle('is-on', open && b.getAttribute('data-view') === currentView);
+  });
+}
+function goDrawer(view){
+  if(isDrawerOpen() && currentView === view){ setDrawer(false); return; }
+  showView(view);
+  setDrawer(true);
+}
+
+Array.prototype.forEach.call(railViewBtns, function(b){
+  b.addEventListener('click', function(){ goDrawer(b.getAttribute('data-view')); });
 });
-$('drawerClose').addEventListener('click', function(){
-  $('drawer').classList.remove('on');
-  $('drawerMask').classList.remove('on');
+$('drawerMask').addEventListener('click', function(){ setDrawer(false); });
+
+Array.prototype.forEach.call(drawerTabEls, function(btn){
+  btn.addEventListener('click', function(){ filterDrawer(btn.getAttribute('data-cat')); });
 });
-$('drawerMask').addEventListener('click', function(){
-  $('drawer').classList.remove('on');
-  $('drawerMask').classList.remove('on');
+
+// 默认显示农作物
+filterDrawer('crop');
+
+$('lootBtn').addEventListener('click', function(){
+  if(!S.lootPending) return;
+  panel.innerHTML='<div class="ttl">🧸 小京探险回来啦！</div>'+
+    '<div style="font-size:42px;margin:10px 0">🧸</div>'+
+    '<div style="font-size:13px;line-height:1.8;color:#7d6558;font-weight:700">'+
+    '它带着满满一篮子东西跑回来了：<br><br>'+
+    (S.lootSummary || '')+'<br><br>'+
+    '小京蹭了蹭你的手，把篮子递给你，眼睛亮亮的。'+
+    '</div>'+
+    '<button class="catb" id="outOk" style="margin-top:14px">摸摸它</button>';
+  overlay.classList.add('on');
+
+  $('outOk').addEventListener('click', function(){
+    overlay.classList.remove('on');
+    panel.innerHTML='';
+    S.lootPending = false;
+    S.lootSummary = '';
+    save(); paint();
+  });
 });
 
 $('goOut').addEventListener('click', function(){
@@ -1708,6 +3362,7 @@ $('fertb').addEventListener('click',function(){
   });
   if(n<=0){ toast('地里没有正在长的东西呀'); return; }
   S.dung-=3;
+  sfx('fert');                    /* 倒东西的"沙沙沙"——把堆肥撒出去 */
   toast('哗——'+n+' 块地一下子全熟了');
   save(); paint();
 });
@@ -1719,30 +3374,27 @@ $('auto').addEventListener('click',function(){
   save(); paint();
 });
 
+/* 顶部两个标签：农场 / 厨房
+   （小京原本是顶部标签，已经搬进左侧抽屉；
+     订单原本也是，2026-09-22 也搬走了 —— 变成左侧导航栏里的三个订单槽） */
 function showPane(t){
   $('paneFarm').classList.toggle('hide', t!=='farm');
   $('paneKitchen').classList.toggle('hide', t!=='kitchen');
-  $('paneOrder').classList.toggle('hide', t!=='order');
-  $('paneBear').classList.toggle('hide', t!=='bear');
   $('tabFarm').classList.toggle('on', t==='farm');
   $('tabKitchen').classList.toggle('on', t==='kitchen');
-  $('tabOrder').classList.toggle('on', t==='order');
-  $('tabBear').classList.toggle('on', t==='bear');
 }
 $('tabFarm').addEventListener('click',function(){ showPane('farm'); });
 $('tabKitchen').addEventListener('click',function(){ showPane('kitchen'); });
-$('tabOrder').addEventListener('click',function(){ showPane('order'); });
-$('tabBear').addEventListener('click',function(){ showPane('bear'); });
 
 $('reset').addEventListener('click',function(){
   if(confirm('要把小农场清空重来吗？')){
     S=fresh();
     while(S.orders.length<ORDER_SLOTS) S.orders.push(makeOrder());
     save();
+    /* 缓存的「上次画成什么样」全部清空，免得新旧状态串味 */
     for(var i=0;i<N;i++) cellState[i]=null;
-    for(var k=0;k<STOVES;k++) stoveState[k]=null;
     bearNext=[];
-    activeEvent=null; eventLock=false; overlay.classList.remove('on'); panel.innerHTML='';
+    overlay.classList.remove('on'); panel.innerHTML='';
     paint();
   }
 });
@@ -1782,7 +3434,7 @@ setInterval(function(){
 
   if(S.full>=BEAR_FULL_OK && S.poops.length>0 && now-lastAutoPick>900){
     lastAutoPick=now;
-    collectPoop(S.poops[0]);
+    collectPoop(S.poops[0], true);   /* true = 小京自动捡，不出声 */
     return;
   }
     if(S.expedition && Date.now() >= S.expedition.endTime){
