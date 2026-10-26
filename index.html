@@ -98,6 +98,9 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .row.dish{grid-template-columns:repeat(4,1fr);margin-bottom:8px}
 .slot{background:#fff;border-radius:13px;padding:7px 2px;text-align:center;
   box-shadow:0 3px 0 #f2dfd4;font-size:15px;font-weight:700;color:#7d6558;line-height:1.15}
+.farmIcon{display:inline-block;width:1em;height:1em;object-fit:contain;vertical-align:-.12em;
+  flex:none;user-select:none;-webkit-user-drag:none}
+.seed .farmIcon{width:21px;height:21px;vertical-align:middle}
 .slot .n{font-size:11px;margin-left:2px;color:#b09a8d}
 .slot.zero{opacity:.35}
 .slot.d{background:#fffbf0}
@@ -132,6 +135,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 @keyframes bob{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
 .plot.locked{background:#efe7dc;color:#b6a498;font-size:11px;font-weight:700;
   flex-direction:column;gap:3px}
+.plot .farmIcon{width:1em;height:1em}
 .plot .poop{position:absolute;right:1px;bottom:1px;font-size:19px;line-height:1;z-index:2;
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
 .prog{position:absolute;left:9px;right:9px;bottom:7px;height:6px;border-radius:8px;
@@ -228,6 +232,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
   box-shadow:0 4px 0 #f2dfd4;font-size:11px;font-weight:800;color:#7d6558;line-height:1.25;
   flex:1;display:flex;flex-direction:column;justify-content:center}
 .potPick .pe{display:block;font-size:26px;line-height:1.1;margin-bottom:2px}
+.potPick .farmIcon{width:1em;height:1em}
 .potPick.empty{color:#c4ae95;font-weight:700}
 
 /* 提交行：成品格（左）· 提交（中）· 熊头垃圾桶（右）。
@@ -368,6 +373,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
    共用同一套拖拽骨架，不再只是粑粑了。 */
 .dragGhost{position:fixed;transform:translate(-50%,-50%);font-size:30px;
   pointer-events:none;z-index:var(--z-drag);filter:drop-shadow(0 3px 3px rgba(0,0,0,.2))}
+.dragGhost .farmIcon{width:1em;height:1em}
 
 /* ---------- 投放区的高亮 ----------
    每个能接东西的元素都带一个 data-drop 属性（见 JS 的「统一拖拽骨架」）。
@@ -768,7 +774,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
   <div class="bar">
     <div class="pill">🪙 <span id="coins">0</span></div>
     <div class="pill tap" id="gemsPill">💎 <span id="gems">0</span></div>
-    <div class="pill">🍯 <span id="honey">0</span></div>
+    <div class="pill"><img class="farmIcon" src="图标/material/honey.png" alt=""> <span id="honey">0</span></div>
     <div class="pill">🧸 <span id="bears">0</span></div>
   </div>
   <!-- 【2026-09-24 搬走】提示区原来在这儿（货币栏下面），白占一行地方。
@@ -1469,6 +1475,30 @@ var PLOT_PRICE=[0,0,0,0,0,0,0,0, 500,780,1200,1800, 2700,4000,6000,9000];
 function byGood(id){ for(var i=0;i<GOODS.length;i++){ if(GOODS[i].id===id) return GOODS[i]; } return null; }
 function byId(id){ for(var i=0;i<CROPS.length;i++){ if(CROPS[i].id===id) return CROPS[i]; } return null; }
 function byDish(id){ for(var i=0;i<DISHES.length;i++){ if(DISHES[i].id===id) return DISHES[i]; } return null; }
+
+/* 物品图标：已有 PNG 的物品使用独立图片；没有图片的物品保留原显示符号。 */
+var ITEM_ICON_FILES={
+  berry:'crop/berry.png', rice:'crop/rice.png', carrot:'crop/carrot.png', cane:'crop/cane.png',
+  corn:'crop/corn.png', tomato:'crop/tomato.png', greens:'crop/greens.png', potato:'crop/potato.png',
+  milk:'animal/milk.png', egg:'animal/egg.png', choc:'animal/choc.png',
+  sugar:'craft/sugar.png', flour:'craft/flour.png', butter:'craft/butter.png',
+  ketchup:'craft/ketchup.png', oil:'craft/corn_oil.png', jam:'craft/strawberry_jam.png',
+  burp:'material/burp.png', honey:'material/honey.png', ice:'material/ice.png',
+  alcohol:'material/alcohol.png', lemon:'material/lemon.png', meat:'material/meat.png',
+  shrimp:'material/shrimp.png', brine:'material/brine.png',
+  salad:'dish/salad.png', cocoa:'dish/cocoa.png', pasta_shrimp:'dish/pasta_shrimp.png',
+  noodle:'dish/noodle.png', taco:'dish/taco.png', toast:'dish/toast.png', fries:'dish/fries.png',
+  pot:'dish/pot.png', burger:'dish/burger.png', ice3:'dish/ice3.png', smoothie:'dish/smoothie.png',
+  icecream:'dish/icecream.png', tempura:'dish/tempura.png', mojito:'dish/mojito.png',
+  cake:'dish/cake.png', baguette:'dish/baguette.png', fried_egg:'dish/fried_egg.png',
+  donut:'dish/donut.png', cookie:'dish/cookie.png', pudding:'dish/pudding.png',
+  skewer:'dish/skewer.png', sparkling:'dish/sparkling.png'
+};
+function itemIcon(id,fallback,className){
+  var file=ITEM_ICON_FILES[id];
+  if(!file) return fallback||'';
+  return '<img class="farmIcon'+(className?' '+className:'')+'" src="图标/'+file+'" alt="" draggable="false" loading="lazy" decoding="async">';
+}
 function byAnimal(id){ for(var i=0;i<ANIMALS.length;i++){ if(ANIMALS[i].id===id) return ANIMALS[i]; } return null; }
 
 /* ---------- 存档 ---------- */
@@ -1768,7 +1798,7 @@ GOODS.forEach(function(g,i){
 CROPS_SORTED.forEach(function(c){
   var b=document.createElement('button');
   b.className='seed';
-  b.innerHTML='<span class="e">'+c.e+'</span><span class="info"><span class="n">'+c.n+'</span><span class="p">🪙'+c.cost+' · '+c.grow+'秒</span></span>';
+  b.innerHTML='<span class="e">'+itemIcon(c.id,c.e)+'</span><span class="info"><span class="n">'+c.n+'</span><span class="p">🪙'+c.cost+' · '+c.grow+'秒</span></span>';
   b.addEventListener('click',function(){ S.sel=c.id; save(); paint(); });
   seedsBox.appendChild(b);
 });
@@ -1793,11 +1823,11 @@ CRAFTS.forEach(function(c,i){
 /* 菜肴列表：**只有 icon，没有名字**，每行 5 个（用户 2026-09-24 要求）。
    点一下 = 选中它，左上角会显示它的名字、左下角显示它的九宫格菜谱。
    ⚠️ 丸子串串（noCook）也照样显示 —— 它是菜谱，只是做不出来而已。
-   ⚠️ 没有名字之后，认菜全靠 emoji，所以 icon 不能做小。 */
+   ⚠️ 没有名字之后，认菜全靠图标，所以图标不能做小。 */
 DISHES.forEach(function(d,i){
   var b=document.createElement('button');
   b.className='dishBtn';
-  b.textContent=d.e;
+  b.innerHTML=itemIcon(d.id,d.e);
 
   /* 【2026-09-27】菜肴格子现在也是【投放区】：
      锅下面的成品直接拖到下面任意一个菜肴格上，就收进菜肴仓库（背包）。
@@ -1834,7 +1864,7 @@ PANTRY.forEach(function(id){
   var info=ingInfo(id);
   var b=document.createElement('button');
   b.className='pantryItem';
-  b.textContent=info.e;
+  b.innerHTML=itemIcon(info.id,info.e);
   b.setAttribute('data-ing',id);
   b.addEventListener('pointerdown',function(e){ dragStart(e,{kind:'ing',id:id}); });
   b.addEventListener('click',function(){ tapPantry(id); });
@@ -1879,7 +1909,7 @@ for(var k2=0;k2<ORDER_SLOTS;k2++){
       if(!d) return;
       S.potSel=d.id;
       save(); paint();
-      toast('已经帮你选中 '+d.e+d.n);
+      toast('已经帮你选中 '+d.n);
     });
     railOrders.appendChild(s);
     orderEls.push(s);
@@ -1960,7 +1990,7 @@ function paint(){
     var n=S.store[g.id]||0;
     if(storeEls[i].getAttribute('data-n')!==String(n)){
       storeEls[i].className='slot'+(n?'':' zero');
-      storeEls[i].innerHTML='<span>'+g.e+'</span><span class="n">'+n+'</span>';
+      storeEls[i].innerHTML='<span>'+itemIcon(g.id,g.e)+'</span><span class="n">'+n+'</span>';
       storeEls[i].setAttribute('data-n',n);
     }
   });
@@ -1968,7 +1998,7 @@ function paint(){
     var n=S.dish[d.id]||0;
     if(trayEls[i].getAttribute('data-n')!==String(n)){
       trayEls[i].className='slot d'+(n?'':' zero');
-      trayEls[i].innerHTML='<span>'+d.e+'</span><span class="n">'+n+'</span>';
+      trayEls[i].innerHTML='<span>'+itemIcon(d.id,d.e)+'</span><span class="n">'+n+'</span>';
       trayEls[i].setAttribute('data-n',n);
     }
   });
@@ -1996,8 +2026,8 @@ function paint(){
       var inner='';
       if(kind==='locked') inner='<span class="em" style="font-size:18px">🔒</span><span>'+PLOT_PRICE[i]+'</span>';
       else if(kind==='empty') inner='<span class="em">＋</span>';
-      else if(kind==='ready') inner='<span class="em">'+c.e+'</span>';
-      else inner='<span class="em">'+c.e+'</span><div class="prog"><i></i></div>';
+      else if(kind==='ready') inner='<span class="em">'+itemIcon(c.id,c.e)+'</span>';
+      else inner='<span class="em">'+itemIcon(c.id,c.e)+'</span><div class="prog"><i></i></div>';
       if(hasPoop) inner+='<span class="poop">💩</span>';
       el.innerHTML=inner;
       cellState[i]={key:key, fill:el.querySelector('.prog i')};
@@ -2027,10 +2057,14 @@ function paint(){
 
   var cb=$('bearb');
   cb.disabled = !(S.bears<BEAR_MAX && S.honey>=BEAR_HONEY);
-  var ct = S.bears>=BEAR_MAX ? '小京的朋友已经够多了 🧸'
-    : (S.bears===0 ? '请小京来帮忙收地 · 🍯'+BEAR_HONEY
-    : '再请一只小熊 · 🍯'+BEAR_HONEY+'（'+S.bears+'/'+BEAR_MAX+'）');
-  if(cb.textContent!==ct) cb.textContent=ct;
+  var bearKey=S.bears+'/'+BEAR_MAX+'/'+S.honey;
+  if(cb.getAttribute('data-k')!==bearKey){
+    var bearHtml=S.bears>=BEAR_MAX ? '小京的朋友已经够多了 🧸'
+      : (S.bears===0 ? '请小京来帮忙收地 · '+itemIcon('honey','🍯')+BEAR_HONEY
+      : '再请一只小熊 · '+itemIcon('honey','🍯')+BEAR_HONEY+'（'+S.bears+'/'+BEAR_MAX+'）');
+    cb.innerHTML=bearHtml;
+    cb.setAttribute('data-k',bearKey);
+  }
 
   var fb=$('fertb');
   fb.disabled = S.dung<3;
@@ -2077,7 +2111,7 @@ function paintKitchen(){
     var id=S.pot[i];
     var info=id?ingInfo(id):null;
     cell.classList.toggle('has', !!id);
-    cell.textContent = info ? info.e : '';
+    cell.innerHTML = info ? itemIcon(info.id,info.e) : '';
   }
 
   /* ③ 左下：当前选中的菜（icon + 名字）
@@ -2085,7 +2119,7 @@ function paintKitchen(){
   var sel = S.potSel ? byDish(S.potSel) : null;
   if(sel){
     potPickEl.className='potPick';
-    potPickEl.innerHTML='<span class="pe">'+sel.e+'</span>'+sel.n;
+    potPickEl.innerHTML='<span class="pe">'+itemIcon(sel.id,sel.e)+'</span>'+sel.n;
   }else{
     potPickEl.className='potPick empty';
     potPickEl.innerHTML='先选一道菜';
@@ -2103,7 +2137,7 @@ function paintKitchen(){
     var mini='<div class="mini">';
     for(var k=0;k<POT_N;k++){
       var ing = (r && r[k]) ? ingInfo(r[k]) : null;
-      mini+='<i>'+(ing?ing.e:'')+'</i>';
+      mini+='<i>'+(ing?itemIcon(ing.id,ing.e):'')+'</i>';
     }
     mini+='</div>';
     potRefBox.innerHTML=mini;
@@ -2128,7 +2162,7 @@ function paintKitchen(){
   }else{
     var od = out.kind==='dark' ? DARK_DISH : byDish(out.id);
     outSlot.className='outSlot';
-    outSlot.textContent = od ? od.e : '?';
+    outSlot.innerHTML = od ? itemIcon(od.id,od.e) : '?';
   }
   potGoBtn.disabled = !!out;
   potGoBtn.textContent = out ? '先处理成品' : '提交';
@@ -2178,9 +2212,14 @@ function paintCrafts(){
 
     var txtEl = nowBox.querySelector('.txt');
     var barEl = nowBox.querySelector('.cq i');
-    var txt = '正在做 '+(cg?cg.e+cg.n:'?')+' · 还要 '+left+' 秒'+
+    var txt = '正在做 '+(cg?cg.n:'?')+' · 还要 '+left+' 秒'+
               (rest>0 ? ' · 后面还排着 '+rest+' 件' : '');
-    if(txtEl && txtEl.textContent !== txt) txtEl.textContent = txt;
+    var txtHTML = '正在做 '+(cg?itemIcon(cg.id,cg.e)+cg.n:'?')+' · 还要 '+left+' 秒'+
+                  (rest>0 ? ' · 后面还排着 '+rest+' 件' : '');
+    if(txtEl && txtEl.getAttribute('data-k') !== txt){
+      txtEl.innerHTML = txtHTML;
+      txtEl.setAttribute('data-k',txt);
+    }
     if(barEl) barEl.style.width = pct+'%';
   }else{
     if(nowBox.getAttribute('data-mode') !== 'idle'){
@@ -2219,11 +2258,11 @@ function paintCrafts(){
       if(c.multi){
         var hp=[];
         for(var k2 in c.multi){ hp.push((S.store[k2]||0)+'/'+c.multi[k2]); }
-        haveTxt='要 '+craftCostText(c)+' · 有 '+hp.join(' ');
+        haveTxt='要 '+craftCostIcons(c)+' · 有 '+hp.join(' ');
       }else{
-        haveTxt='要 '+craftCostText(c)+' · 有 '+(S.store[c.from]||0);
+        haveTxt='要 '+craftCostIcons(c)+' · 有 '+(S.store[c.from]||0);
       }
-      b.innerHTML='<span class="e">'+(og?og.e:'?')+'</span>'+
+      b.innerHTML='<span class="e">'+(og?itemIcon(og.id,og.e):'?')+'</span>'+
         '<span class="info">'+
           '<span class="n">'+(og?og.n:c.out)+'</span>'+
           '<span class="p">'+haveTxt+' · '+CRAFT_TIME+'秒</span>'+
@@ -2261,7 +2300,7 @@ function paintOrders(){
     var d=orderDish(o);
     if(!d){ el.textContent=''; el.removeAttribute('data-k'); return; }
     if(el.getAttribute('data-k')!==d.id){
-      el.textContent=d.e;
+        el.innerHTML=itemIcon(d.id,d.e);
       el.setAttribute('data-k',d.id);
     }
   });
@@ -2282,7 +2321,7 @@ function paintAnimals(){
       var st, bad=false;
       if(angry){ st='罢工中（地上太脏了）'; bad=true; }
       else if(feed<=0){ st='饿着，没有'+a.fname; bad=true; }
-      else st=a.time+'秒一个'+og.e+((a.per||1)>1?' ×'+a.per:'');
+      else st=a.time+'秒一个'+itemIcon(og.id,og.e)+((a.per||1)>1?' ×'+a.per:'');
       html+='<div class="anrow'+(bad?' bad':'')+'" data-a="'+a.id+'">'+
         '<span class="em">'+a.e+'</span>'+a.n+' ×'+num+
         ' · 吃'+fg.e+a.fname+' ×'+feed+' · '+st+'</div>';
@@ -2359,7 +2398,7 @@ function paintBear(){
     var n=S.dish[d.id]||0;
     var key=d.id+'|'+n;
     if(b.getAttribute('data-k')!==key){
-      b.innerHTML='<span class="e">'+d.e+'</span><span class="info"><span class="n">'+d.n+'</span><span class="p">有 '+n+' 份 · 饱食 +'+d.feed+'</span></span>';
+      b.innerHTML='<span class="e">'+itemIcon(d.id,d.e)+'</span><span class="info"><span class="n">'+d.n+'</span><span class="p">有 '+n+' 份 · 饱食 +'+d.feed+'</span></span>';
       b.setAttribute('data-k',key);
     }
     b.classList.toggle('poor', n<=0);
@@ -2387,7 +2426,7 @@ var EAT_EFFECTS = {
   fullBelly: function(d){
     S.bubbleBuffT = Date.now() + 3*60*1000;
     S.full = BEAR_FULL_MAX;
-    toast(d.e+' 小京把'+d.n+'喝光了，饱食度瞬间回满，3分钟不掉！');
+    toast(d.n+' 小京把它喝光了，饱食度瞬间回满，3分钟不掉！');
   }
 
 };
@@ -2424,7 +2463,7 @@ function eatDish(d){
   var hadEffect = runEatEffect(d);   /* 有特殊效果就让它自己提示，不再说普通台词 */
   if(!hadEffect){
     if(S.full>=BEAR_FULL_OK) toast('小京吃得饱饱的，开始帮你捡粑粑啦 🧸');
-    else toast('小京吃掉了'+d.e+d.n+'，肚子暖暖的');
+    else toast('小京吃掉了'+d.n+'，肚子暖暖的');
   }
   if(S.full >= BEAR_FULL_MAX && Math.random() < 0.2){
     setTimeout(burpEvent, 500);
@@ -2464,14 +2503,14 @@ function renderPackUI(){
   var html = '<div class="ttl">🎒 小京的旅行背包</div>'+
     '<div class="hintline" style="margin-bottom:14px">需要：总饱食度 ≥ 100 的小熊料理 + 1 罐蜂蜜</div>'+
     '<div style="font-size:14px;font-weight:700;color:#e2789f;margin-bottom:12px">'+
-    '🍯 蜂蜜：'+tempPack.honey+' / 1<br>'+
-    '🍩 总饱食度：'+totalFeed+' / 100</div>'+
+    itemIcon('honey','🍯')+' 蜂蜜：'+tempPack.honey+' / 1<br>'+
+    itemIcon('donut','🍩')+' 总饱食度：'+totalFeed+' / 100</div>'+
     '<div class="seeds" style="max-height:180px;overflow-y:auto;margin-bottom:12px">';
 
   // 蜂蜜：只要装满了1个，就变灰不能再点
   var honeyFull = tempPack.honey >= 1;
   html += '<button class="seed'+(honeyFull ? ' poor' : '')+'" id="packHoney">'+
-    '<span class="e">🍯</span><span class="info"><span class="n">蜂蜜</span><span class="p">'+(honeyFull ? '已经装好啦' : '点击装 1 罐')+'</span></span></button>';
+    '<span class="e">'+itemIcon('honey','🍯')+'</span><span class="info"><span class="n">蜂蜜</span><span class="p">'+(honeyFull ? '已经装好啦' : '点击装 1 罐')+'</span></span></button>';
 
   BEAR_DISHES.forEach(function(d){
     var n = S.dish[d.id] || 0;
@@ -2483,7 +2522,7 @@ function renderPackUI(){
     var canPack = (packed < n) && !willExceed;
 
     html += '<button class="seed'+(canPack ? '' : ' poor')+'" id="pack_'+d.id+'">'+
-      '<span class="e">'+d.e+'</span><span class="info"><span class="n">'+d.n+'</span><span class="p">有 '+n+' 份 · 装了 '+packed+' · 饱食 +'+d.feed+'</span></span></button>';
+      '<span class="e">'+itemIcon(d.id,d.e)+'</span><span class="info"><span class="n">'+d.n+'</span><span class="p">有 '+n+' 份 · 装了 '+packed+' · 饱食 +'+d.feed+'</span></span></button>';
   });
 
   html += '</div>';
@@ -2638,7 +2677,7 @@ function finishExpedition(){
   var summary = [];
   for(var k2 in loot){
     var g = byGood(k2);
-    summary.push(g.e + g.n + ' ×' + loot[k2]);
+    summary.push(itemIcon(g.id,g.e)+' '+g.n+' ×'+loot[k2]);
   }
 
   S.lootSummary = summary.join('，');
@@ -2667,7 +2706,7 @@ function pop(i,text){
   if(!r.width) return;
   var d=document.createElement('div');
   d.className='pop';
-  d.textContent=text;
+  d.innerHTML=text;
   d.style.left=(r.left+r.width/2)+'px';
   d.style.top=(r.top+r.height*0.35)+'px';
   document.body.appendChild(d);
@@ -2712,7 +2751,7 @@ var dishPopTimer=null;
 function dishNotice(d, msg){
   var el=$('dishPop');
   if(!el) return;
-  el.innerHTML='<span class="de">'+d.e+'</span><span>'+msg+'</span>';
+  el.innerHTML='<span class="de">'+itemIcon(d.id,d.e)+'</span><span>'+msg+'</span>';
   el.classList.add('on');
   clearTimeout(dishPopTimer);
   dishPopTimer=setTimeout(function(){ el.classList.remove('on'); },3200);
@@ -2736,9 +2775,9 @@ function harvest(i,byBear){
   if(!c) return;
   S.store[c.id]=(S.store[c.id]||0)+1;
   S.seen[c.id]=1;
-  pop(i,'+1 '+c.e);
+  pop(i,'+1 '+itemIcon(c.id,c.e));
   if(byBear) bearFly(i);
-  if(Math.random()<0.25){ S.honey++; pop(i,'🍯'); }
+  if(Math.random()<0.25){ S.honey++; pop(i,itemIcon('honey','🍯')); }
   if(!byBear && Math.random()<0.03) toast(pick(CHATTER));
   p.c=null; p.t=0;
   if(byBear && S.auto){
@@ -2819,13 +2858,20 @@ function dragStart(e, payload){
 /* 跟手的那个替身该显示什么 icon */
 function dragIconOf(p){
   if(p.kind==='poop')    return '💩';
-  if(p.kind==='ing')     return (ingInfo(p.id)||{}).e || '?';
-  if(p.kind==='pot')     return (ingInfo(S.pot[p.i])||{}).e || '?';
-  if(p.kind==='bagdish') return (byDish(p.id)||{}).e || '?';     /* 从厨房菜肴列表拖出来的菜 */
+  if(p.kind==='ing'){
+    var ing=ingInfo(p.id); return ing ? itemIcon(ing.id,ing.e) : '?';
+  }
+  if(p.kind==='pot'){
+    var potIng=ingInfo(S.pot[p.i]); return potIng ? itemIcon(potIng.id,potIng.e) : '?';
+  }
+  if(p.kind==='bagdish'){
+    var dish=byDish(p.id); return dish ? itemIcon(dish.id,dish.e) : '?';
+  }     /* 从厨房菜肴列表拖出来的菜 */
   if(p.kind==='out'){
     var o=S.potOut;
     if(!o) return '?';
-    return o.kind==='dark' ? DARK_DISH.e : ((byDish(o.id)||{}).e || '?');
+    if(o.kind==='dark') return DARK_DISH.e;
+    var outDish=byDish(o.id); return outDish ? itemIcon(outDish.id,outDish.e) : '?';
   }
   return '?';
 }
@@ -2908,7 +2954,7 @@ function dragMove(e){
     dragMoved=true;
     dragGhost=document.createElement('div');
     dragGhost.className='dragGhost';
-    dragGhost.textContent=dragIconOf(dragPayload);
+    dragGhost.innerHTML=dragIconOf(dragPayload);
     document.body.appendChild(dragGhost);
     markDropZones(dragPayload);
   }
@@ -3071,7 +3117,7 @@ setInterval(function(){
     S.store[a.out]=(S.store[a.out]||0)+made;
     S.seen[a.out]=1;
     changed=true;
-    flyFromEl(anBox.querySelector('[data-a="'+a.id+'"]'), '+'+made+' '+byGood(a.out).e);
+    flyFromEl(anBox.querySelector('[data-a="'+a.id+'"]'), '+'+made+' '+byGood(a.out).n);
   });
   if(changed){ save(); paint(); }
 },300);
@@ -3108,10 +3154,22 @@ setInterval(function(){
 function craftCostText(c){
   var parts=[];
   if(c.multi){
-    for(var k in c.multi){ var g=byGood(k); parts.push((g?g.e:'?')+'×'+c.multi[k]); }
+    for(var k in c.multi){ var g=byGood(k); parts.push((g?g.n:'?')+'×'+c.multi[k]); }
   }else{
     var fg=byGood(c.from);
-    parts.push((fg?fg.e:'?')+'×'+c.need);
+    parts.push((fg?fg.n:'?')+'×'+c.need);
+  }
+  return parts.join(' ');
+}
+
+/* 工坊卡片上的原料图标；提示文字仍使用 craftCostText()。 */
+function craftCostIcons(c){
+  var parts=[];
+  if(c.multi){
+    for(var k in c.multi){ var g=byGood(k); parts.push((g?itemIcon(g.id,g.e):'?')+'×'+c.multi[k]); }
+  }else{
+    var fg=byGood(c.from);
+    parts.push((fg?itemIcon(fg.id,fg.e):'?')+'×'+c.need);
   }
   return parts.join(' ');
 }
@@ -3144,7 +3202,7 @@ function craft(i){
   if(wasIdle) S.craftQStart=Date.now();   /* 队伍本来空着 → 这一件立刻开工 */
 
   var ahead = S.craftQ.length-1;
-  toast('已排进队伍：'+og.e+og.n+(ahead>0 ? '（前面还有 '+ahead+' 件）' : '，马上开工'));
+  toast('已排进队伍：'+og.n+(ahead>0 ? '（前面还有 '+ahead+' 件）' : '，马上开工'));
   save(); paint();
 }
 
@@ -3158,7 +3216,7 @@ function collectCraft(){
     S.store[id]=(S.store[id]||0)+1;
     S.seen[id]=1;
     count++;
-    parts.push(g.e+g.n);
+    parts.push(g.n);
   });
   S.craftDone=[];
   toast('收到 '+count+' 件：'+parts.join('、'));
@@ -3189,7 +3247,7 @@ setInterval(function(){
     S.craftQ.shift();
     S.craftQStart = S.craftQ.length ? Date.now() : 0;   /* 后面还有 → 接着做下一件 */
     save();
-    toast('工坊做好了一件：'+(og?og.e+og.n:c.out));
+  toast('工坊做好了一件：'+(og?og.n:c.out));
     paint();
     return;
   }
@@ -3246,7 +3304,7 @@ function submitPot(){
     S.potOut={kind:'dish', id:got.id};
     S.seen[got.id]=1;                    /* 做成功过 → 以后才会出现在订单里 */
     sfx('cookOk');                       /* 上行三音"叮—咚—叮"：成了！ */
-    dishNotice(got, got.e+' 做好啦！');
+    dishNotice(got, got.n+' 做好啦！');
     toast('成功做出'+got.n+'，把它拖到左边要它的那个订单上吧');
   }else{
     S.potOut={kind:'dark'};
@@ -3444,7 +3502,7 @@ function storeToBag(p){
   S.dish[d.id]=(S.dish[d.id]||0)+1;
   S.seen[d.id]=1;
   S.potOut=null;
-  toast('小京先帮你把 '+d.e+d.n+' 放到包包里');
+  toast('小京先帮你把 '+d.n+' 放到包包里');
   save(); paint();
 }
 
@@ -3456,7 +3514,7 @@ function tapPantry(id){
   if(Date.now()<dragBlock) return;   /* 刚拖完这一下，别把松手当点击 */
   if(haveMat(id)<=0){ toast('仓库里没有这个食材哦'); return; }
   var info=ingInfo(id);
-  toast('把 '+info.e+info.n+' 拖进锅里吧');
+  toast('把 '+info.n+' 拖进锅里吧');
 }
 
 /* 【已删除 · 2026-09-22】
@@ -3546,7 +3604,7 @@ $('recipeBtn').addEventListener('click', function(){
          '已经做成功过 '+got.length+' / '+DISHES.length+' 道</div>'+
          '<div class="guideGrid">';
     got.forEach(function(d){
-      body+='<div class="guideItem"><span class="e">'+d.e+'</span>'+d.n+
+      body+='<div class="guideItem"><span class="e">'+itemIcon(d.id,d.e)+'</span>'+d.n+
             (d.bear?'<br><span style="font-size:10px;color:#e2789f">小熊料理</span>':'')+
             '</div>';
     });
