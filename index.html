@@ -175,7 +175,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 /* 食材区：**只有 icon，没有名字也没有数量** —— 格子太小放不下字。
    有没有货靠「灰不灰」区分，不靠数字。 */
 /* 食材区：**每排 7 个**（用户 2026-09-27 要求："厨房食材区改成七个食材一排"）。 */
-.pantry{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px}
+.pantry{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px}
 /* ⚠️ 下面这些「要被拖着走的东西」，必须关掉浏览器的默认触摸手势。
    不关的话，手指一滑页面就先滚起来了，浏览器会直接把这次拖动 cancel 掉，
    表现就是「拖到一半突然松手」。
@@ -187,10 +187,10 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
    方块之间有 6~7px 的缝，想滚页面从缝里滑、或者从别的地方滑都行。 */
 .pantryItem,.potCell,.outSlot,.dishBtn{touch-action:none}
 .pantryItem{border:0;cursor:pointer;border-radius:13px;aspect-ratio:1/1;padding:0;
-  background:#fff;box-shadow:0 3px 0 #f2dfd4;font-size:22px;line-height:1;font-family:inherit;
+  background:transparent;box-shadow:none;font-size:32px;line-height:1;font-family:inherit;
   display:flex;align-items:center;justify-content:center;
-  transition:transform .12s,box-shadow .12s,opacity .12s}
-.pantryItem:active{transform:translateY(2px);box-shadow:0 1px 0 #f2dfd4}
+  transition:transform .12s,opacity .12s}
+.pantryItem:active{transform:scale(.94)}
 .pantryItem.zero{opacity:.3}   /* 仓库里没有这个食材 → 变灰 */
 
 /* 锅 + 左边那一栏。
@@ -207,13 +207,12 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
    左边两块（缩略图 / 菜名）各自 flex:1，把多出来的高度平分掉。 */
 .potWrap{display:flex;gap:10px;align-items:stretch;margin-bottom:12px}
 .pot{flex:none;width:58%;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
-  padding:10px;border-radius:24px;background:#fff;
-  box-shadow:0 5px 0 #f2dfd4,0 0 0 3px #ffeef5 inset}
-.potCell{border:0;padding:0;aspect-ratio:1/1;border-radius:14px;background:#fdf6ef;
-  box-shadow:inset 0 -3px 0 rgba(0,0,0,.05);font-size:24px;line-height:1;color:#c4ae95;
+  padding:0;background:transparent;box-shadow:none;border-radius:0}
+.potCell{border:2px dashed #dcc4ad;padding:0;aspect-ratio:1/1;border-radius:14px;
+  background:transparent;box-shadow:none;font-size:30px;line-height:1;color:#c4ae95;
   font-family:inherit;display:flex;align-items:center;justify-content:center;
   transition:transform .12s,background .12s}
-.potCell.has{background:#fff0f6;box-shadow:inset 0 -3px 0 rgba(226,120,159,.15)}
+.potCell.has{background:rgba(255,240,246,.45);box-shadow:none}
 .potSide{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
 
 /* 左上那一格：菜谱缩略图（2026-09-24 挪到左边，而且挪到名字【上面】了）。
@@ -222,8 +221,8 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .potRef{background:#fff;border-radius:16px;padding:7px;box-shadow:0 4px 0 #f2dfd4;
   flex:1;display:flex;flex-direction:column;justify-content:center}
 .potRef .mini{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
-.potRef .mini i{aspect-ratio:1/1;border-radius:7px;background:#fdf6ef;font-style:normal;
-  font-size:13px;line-height:1;color:#c4ae95;
+.potRef .mini i{aspect-ratio:1/1;border-radius:7px;background:transparent;font-style:normal;
+  font-size:16px;line-height:1;color:#c4ae95;
   display:flex;align-items:center;justify-content:center}
 
 /* 左下那一格：当前选中的菜（icon + 名字）。
