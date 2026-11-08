@@ -1311,6 +1311,13 @@ h1{border-radius:10px;background:linear-gradient(180deg,#904c73,#713c5b)}
 
 /* 手机上让主画面占满左侧导航栏右边的可用宽度，避免按高度限制而缩窄。 */
 @media(max-width:700px){body{width:100vw;overflow-x:hidden}.wrap{width:calc(100vw - var(--rail-w) - 12px);max-width:none;margin:0}.field{width:100%;grid-template-columns:repeat(4,minmax(0,1fr));min-width:0}.bar,.tabs,#seeds{width:100%;min-width:0}.bar .pill{min-width:0;overflow:hidden}}
+.loot-bear{font-size:42px;line-height:1;margin:8px 0 12px}
+.loot-intro,.loot-text{font-size:13px;font-weight:800;line-height:1.5;color:#62375c}
+.loot-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;max-height:26vh;overflow:auto;margin:8px 0 12px;padding:6px;border:6px solid transparent;border-image:url("图标/ui/y2k-counter.png") 20 fill/6px/0 stretch;background:#fff4fa}
+.loot-item{display:flex;align-items:center;justify-content:flex-start;gap:5px;min-width:0;padding:3px 4px;border:1px solid #d77eaa;background:#f9e7f1;color:#4b2145;font-size:12px;font-weight:800;line-height:1.2;white-space:nowrap}
+.loot-item .farmIcon{width:22px;height:22px;object-fit:contain;image-rendering:pixelated}
+.loot-summary-legacy{display:block;line-height:1.6;overflow-wrap:anywhere}
+.loot-empty{margin:8px 0 12px;padding:10px;border:6px solid transparent;border-image:url("图标/ui/y2k-counter.png") 20 fill/6px/0 stretch;background:#fff4fa;color:#62375c;font-size:13px;font-weight:800;line-height:1.5}
 </style>
 </head>
 <body>
@@ -3167,6 +3174,24 @@ function startExpedition(season){
   save(); paint();
 }
 
+function lootInfo(id){
+  return byGood(id) || byDish(id) || byId(id) || ingInfo(id) || {id:id,n:'神秘礼物',e:'🎁'};
+}
+
+function renderLootSummary(){
+  var saved=S.lootSummary;
+  if(Array.isArray(saved) && saved.length){
+    var rows=saved.map(function(item){
+      var info=lootInfo(item.id);
+      var amount=Math.max(1,Math.round(Number(item.count)||1));
+      return '<div class="loot-item">'+itemIcon(info.id,info.e)+'<span>'+info.n+' ×'+amount+'</span></div>';
+    }).join('');
+    return '<div class="loot-summary">'+rows+'</div>';
+  }
+  /* 旧存档可能只有待领取标记，没有奖励清单；明确告诉玩家礼物已进包。 */
+  if(typeof saved==='string' && saved.trim()) return '<div class="loot-summary loot-summary-legacy">'+saved+'</div>';
+  return '<div class="loot-empty">这次带回的东西已经放进背包啦，打开背包就能看到。</div>';
+}
 function finishExpedition(){
   if(!S.expedition) return;
   var season = S.expedition.season;
@@ -3179,6 +3204,8 @@ function finishExpedition(){
   function addLoot(id, n){
     if(id === 'skewer'){
       S.dish[id] = (S.dish[id]||0) + n;
+    } else if(id === 'honey'){
+      S.honey = (S.honey||0) + n;
     } else {
       S.store[id] = (S.store[id]||0) + n;
     }
@@ -3218,11 +3245,9 @@ function finishExpedition(){
 
   var summary = [];
   for(var k2 in loot){
-    var g = byGood(k2);
-    summary.push(itemIcon(g.id,g.e)+' '+g.n+' ×'+loot[k2]);
+    summary.push({id:k2,count:loot[k2]});
   }
-
-  S.lootSummary = summary.join('，');
+  S.lootSummary = summary;
   save(); paint();
 }
 
@@ -4275,12 +4300,10 @@ filterDrawer('crop');
 $('lootBtn').addEventListener('click', function(){
   if(!S.lootPending) return;
   panel.innerHTML='<div class="ttl">🧸 小京探险回来啦！</div>'+
-    '<div style="font-size:42px;margin:10px 0">🧸</div>'+
-    '<div style="font-size:13px;line-height:1.8;color:#7d6558;font-weight:700">'+
-    '它带着满满一篮子东西跑回来了：<br><br>'+
-    (S.lootSummary || '')+'<br><br>'+
-    '小京蹭了蹭你的手，把篮子递给你，眼睛亮亮的。'+
-    '</div>'+
+    '<div class="loot-bear">🧸</div>'+
+    '<div class="loot-intro">它带着满满一篮子东西跑回来了：</div>'+
+    renderLootSummary()+
+    '<div class="loot-text">小京蹭了蹭你的手，把篮子递给你，眼睛亮亮的。</div>'+
     '<button class="catb" id="outOk" style="margin-top:14px">摸摸它</button>';
   overlay.classList.add('on');
 
