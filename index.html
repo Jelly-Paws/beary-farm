@@ -780,7 +780,9 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
  --ui-soil:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGdSURBVHhe7ZsxTgQxEATvKTyJf/AkvsEH+AEBMSEhMRnoVuzJFH1uWz6SnT6pgtkZ2+tSSxvd6fTze7i7/6rGfnd5+Y+n18PBO24Sjn7pa/wRwIEKDAn4fHnf4POdt8fnDT6/1nf7kdV5nt9SXsCZTQAfVuGSADaqIAW4yKzC/RlZB9c7evMRoARUIgKUgF5k/gN33mq/RwQoAZWIgBEBs58pByPrarLab4mAEQFHJgKUgNnIu3nXdzDSrAnP681HgBJQiQhQAhgh0ovULXDnO2beLwKUgEpEgBIwG0FGjuvZd3A9YZ/1zHkRoARUIgJGBDBirBk59le59X4tETAi4MhEgBLASLN2rEbWrWffvR/nWyJACahEBCgBjBQjxJq4voPnE/Zd3SMClIBKRIASwAixdhF3fcL9iduPfbdfSwQoAZWIACWAEWLECPtuPWvOu5rrCedZt0SAElCJCFACepFRuPnVvsOt7/UjQAmoRASMCOhFaITZ9W7e9d1nsiUCRgQcmYuAyhJKCyifgF8CqknY73z13+NHpL34zjdVWIcAlMqTawAAAABJRU5ErkJggg==");
 }
 body{padding:8px 8px 40px calc(var(--rail-w) + 7px);background:var(--px-bg);color:var(--px-ink);display:block;font-family:"Courier New","Microsoft YaHei",monospace}
-.wrap{width:min(100%,max(0px,calc(50dvh - var(--rail-w) - 15px)));max-width:none;margin:0 auto}
+.wrap{width:min(100%,max(0px,calc(50vh - var(--rail-w) - 15px)));max-width:none;margin:0 auto}
+/* 锁定浏览器工具栏展开时的可视高度，地址栏收起后主画面宽度与缩进保持不变。 */
+@supports(height:100svh){.wrap{width:min(100%,max(0px,calc(50svh - var(--rail-w) - 15px)))}}
 h1{position:relative;min-height:34px;display:flex;align-items:center;margin:0 0 7px;padding:4px 84px 4px 38px;text-align:left;font-size:17px;letter-spacing:1px;color:#fff0f8;background:var(--px-plum);border:2px solid var(--px-pink);box-shadow:3px 3px 0 var(--px-shadow)}
 h1::before{content:"";position:absolute;left:7px;top:50%;width:24px;height:24px;transform:translateY(-50%);background:var(--ui-sprout) center/contain no-repeat;image-rendering:pixelated}
 h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform:translateY(-50%);font:700 13px/1 "Courier New",monospace;letter-spacing:0;color:#ffe7f3}
