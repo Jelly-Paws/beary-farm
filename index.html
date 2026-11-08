@@ -802,14 +802,51 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 /* 标题栏：2026-11-09 种子和商店合并成一个框，所以这里只剩一条标题，写「🛒 商店」。
    order:-1 让它永远排在第一行（商品按钮带 order，见下面的 #shop .buyb 和 #fertb）。 */
 #seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:24px;padding:2px 6px;color:#fff1f8;background:var(--px-plum);font-size:13px;font-weight:800;letter-spacing:1px}
-/* Seed cards: put price and growing time in the purple footer and enlarge the crop icon. */
-#seeds .seed{position:relative;min-width:0;min-height:86px;padding:4px 2px 23px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;text-align:center;color:var(--px-ink);background:#fff4fa;border:6px solid transparent;border:1px solid var(--px-outline);border-radius:0;box-shadow:none;font-family:inherit;overflow:hidden}
-#seeds .seed.on{background:#ffe1ef;border:1px solid var(--px-outline);box-shadow:inset 0 0 0 1px var(--px-pink2)}
-#seeds .seed .e{font-size:36px;line-height:1.05}
-#seeds .seed .farmIcon{width:36px;height:36px;image-rendering:pixelated}
-#seeds .seed .info{display:contents;width:100%;min-width:0;line-height:1.05}
-#seeds .seed .n{position:absolute;left:0;right:0;bottom:19px;font-size:10px;line-height:1.1;white-space:nowrap}
-#seeds .seed .p{position:absolute;left:0;right:0;bottom:0;min-height:17px;display:flex;align-items:center;justify-content:center;font-size:8px;line-height:1.1;white-space:nowrap;color:#fff1f8;background:var(--px-plum2)}
+/* ============================================================
+   12 个格子统一规格（8 个种子 + 施肥桶 + 小鸡 / 牛 / 猪）
+   —— 2026-11-09 用户要求：「这 12 个 UI 框统一一下，都要下面那四个的框，都要正方形」
+   ------------------------------------------------------------
+   ① 框：12 格全部用 图标/ui/store-product-frame.png 那张浅上深下的物品框。
+   ② 正方形：靠 aspect-ratio:1/1 —— 高度跟着列宽走，屏幕变宽变窄都还是方的。
+   ③ 底栏：**画在卡片内部**，不再借用素材自带的底栏。
+      原因：素材的底栏是切在边框区域里的，字进去之后和那条浅粉长条对不齐，
+      价格文字会贴到卡片下边框上、被切掉下半截。所以底部那一圈切片改成 23
+      （和上、左、右一样），素材的底栏就不画了，改由下面 .p / .bp 自己画一条。
+   ⚠️ 不要再给这几种格子写 min-height，一写就立刻变回长方形。 */
+#seeds .seed,
+#shop .buyb,
+#fertb{
+  position:relative;
+  min-width:0;min-height:0;width:100%;aspect-ratio:1/1;
+  margin:0;padding:6px 3px 17px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;text-align:center;line-height:1.05;
+  color:var(--px-ink);background:#fff4fa;
+  border:6px solid transparent;
+  border-image:url("图标/ui/store-product-frame.png") 23 23 23 23 fill/6px/0 stretch;
+  border-radius:0;box-shadow:none;font-family:inherit;font-size:9px;
+}
+/* 种子的选中态：border-image 会把背景色盖住，所以改成往内收一圈的 outline */
+#seeds .seed.on{background:#ffe1ef;box-shadow:none;outline:2px solid var(--px-plum2);outline-offset:-2px}
+/* 底栏：卡片内部最下面那一条浅粉长条，颜色和描边照着素材里的底栏抄。
+   位置用 bottom 钉死，字永远在条的中间，不会再错位。 */
+#seeds .seed .p,
+#shop .buyb .bp,
+#fertb .fertilizer-price{
+  position:absolute;left:3px;right:3px;bottom:2px;height:13px;
+  display:flex;align-items:center;justify-content:center;gap:2px;
+  font-size:8px;line-height:1;white-space:nowrap;color:var(--px-plum2);
+  background:#fce3ef;box-shadow:inset 0 0 0 1px #f4b6d2;border-radius:2px;
+}
+/* 三种图标用同一套尺寸，看上去一般大 */
+#seeds .seed .e{font-size:30px;line-height:1}
+#seeds .seed .farmIcon{width:30px;height:30px;image-rendering:pixelated}
+#shop .buyb .animal-icon{width:30px;height:30px}
+#fertb .fertilizer-icon{width:36px;height:36px}
+/* 名字：一行，不许换行，太长就省略 */
+#seeds .seed .info{display:contents;width:100%;min-width:0}
+#seeds .seed .n{font-size:10px;line-height:1.1;white-space:nowrap;max-width:100%}
+#shop .buyb .bn{flex:none;min-width:0;font-size:9px;line-height:1.1;white-space:nowrap;max-width:100%}
 .seed .cqbadge{border-radius:0}
 .rail{width:var(--rail-w);gap:6px;padding:8px 4px;background:var(--px-plum);border-right:2px solid var(--px-outline);box-shadow:2px 0 0 var(--px-shadow)}
 .rail-btn{width:42px;height:42px;gap:0;border:7px solid transparent;border-image:var(--ui-purple32) 8/7px/0 stretch;border-radius:0;color:#fff2f9;background:var(--px-plum2);box-shadow:none;font-family:inherit}
@@ -832,7 +869,8 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
    ⚠️ 不要把它改回 display:grid，也不要加回背景和边框 —— 那样会重新裂成第二个框。 */
 #shop{display:contents}
 #shop::before{content:none;display:none}
-#shop .buyb{min-width:0;min-height:76px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;font-size:9px;line-height:1.15}
+/* 商品卡的尺寸、边框、内部字号全部交给上面那段「12 个格子统一规格」，
+   这里不再单独定义 —— 单独定义会盖掉统一规格，格子就不方了。 */
 
 /* 鸡牛猪的64像素透明像素图，内嵌以保持游戏单文件。 */
 .animal-icon-hen{background-image:url("图标/animals/shop32/chicken.png")}
@@ -840,14 +878,10 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 .animal-icon-pig{background-image:url("图标/animals/shop32/pig.png")}
 .animal-icon{display:inline-block;width:24px;height:24px;background-position:center;background-size:contain;background-repeat:no-repeat;image-rendering:pixelated;vertical-align:middle}
 .anrow .animal-icon{width:16px;height:16px;margin-right:4px}
-#shop .buyb .animal-icon{width:24px;height:24px}
-@media(max-width:430px){#shop .buyb .animal-icon{width:20px;height:20px}.anrow .animal-icon{width:16px;height:16px}}
-#shop .buyb .bn{flex:none;min-width:0;font-size:9px;white-space:nowrap}
-#shop .buyb .bp{font-size:9px;white-space:nowrap}
+@media(max-width:430px){#shop .buyb .animal-icon{width:26px;height:26px}.anrow .animal-icon{width:16px;height:16px}}
 #shop .buyb,.buyb,.catb,.craftCollect,.potGo,.sellall,.toggle{border-radius:0}
 #shop .buyb,.buyb,.sellall,.toggle,.guideItem,.anbox,.anrow,.potRef,.dishBtn,.potCell,.outSlot,.craftNow,.panel{border-radius:0}
 .buyb,.sellall{background:#fff4fa;border:1px solid var(--px-outline);box-shadow:none;color:var(--px-ink)}
-#shop .buyb{border:6px solid transparent;border-image:url("图标/ui/store-product-frame.png") 23 23 58 23 fill/7px/0 stretch}
 .catb,.craftCollect{background:var(--px-plum);box-shadow:inset 0 0 0 2px #a65388,3px 3px 0 #321438;color:#fff1f8}
 .drawer{color:var(--px-ink);background:#fff2f8;border-left:3px solid var(--px-outline);border-radius:0;box-shadow:3px 0 0 var(--px-shadow)}
 .drawer-tabs .dtab,.potPick,.potRef,.potCell,.outSlot,.dishBtn{border-radius:0}
@@ -862,10 +896,15 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
  .bar{gap:3px}.bar .pill{font-size:10px;min-height:38px}
  .field{gap:4px;padding:34px 7px 8px}
  #seeds{gap:3px;padding:4px;border-width:6px}
- #seeds .seed{min-height:70px;padding:3px 1px;border-width:5px}
- #seeds .seed .e{font-size:23px}
- #seeds .seed .n{font-size:9px}
- #seeds .seed .p{font-size:7px}
+ /* 手机上的 12 格：边框收细、底栏降到 12px、图标和字各缩一档，但仍然是正方形 */
+ #seeds .seed,#shop .buyb,#fertb{padding:4px 2px 15px;border-width:5px;border-image:url("图标/ui/store-product-frame.png") 23 23 23 23 fill/5px/0 stretch}
+ #seeds .seed .p,#shop .buyb .bp,#fertb .fertilizer-price{left:2px;right:2px;bottom:2px;height:12px;font-size:7px}
+ #seeds .seed .e{font-size:26px}
+ #seeds .seed .farmIcon{width:26px;height:26px}
+ #seeds .seed .n,#shop .buyb .bn{font-size:9px}
+ #fertb .fertilizer-icon{width:30px;height:30px}
+ #fertb .fertilizer-name{font-size:8px}
+ #fertb .fertilizer-stock{font-size:7px}
 }
 /* End of pixel UI alignment with supplied sprite assets. */
 /* Fertilizer is a shop item paid for with collected manure. */
@@ -878,29 +917,22 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
    于是合并后的网格从上到下是「8 个种子 → 施肥桶 → 小鸡 / 牛 / 猪」。
    ⚠️ #shop 现在是 display:contents，列数由 #seeds 决定，不用在这里声明。 */
 #shop .buyb{order:2}
-#fertb{order:1;min-width:0;min-height:82px;width:100%;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:6px solid transparent;border-image:url("图标/ui/store-product-frame.png") 23 23 58 23 fill/7px/0 stretch;border-radius:0;background:#fff4fa;box-shadow:none;color:var(--px-ink);font-family:inherit;line-height:1.05}
-#fertb .fertilizer-icon{display:block;width:64px;height:64px;background:var(--ui-fertilizer-bucket64) center/contain no-repeat;image-rendering:pixelated}
-#fertb .fertilizer-name{font-size:9px;font-weight:800;white-space:nowrap}
-#fertb .fertilizer-price,#fertb .fertilizer-stock{display:flex;align-items:center;justify-content:center;gap:2px;font-size:8px;line-height:1.1;white-space:nowrap;color:var(--px-muted)}
+/* 施肥桶：尺寸、边框、底栏全部由上面「12 个格子统一规格」接管，
+   这里只留排序、排序见上、图标贴图和库存那一个小数字。
+   ⚠️ 不要在这里再写 min-height / border-image —— 会盖掉统一规格。 */
+#fertb{order:1}
+#fertb .fertilizer-icon{display:block;background:var(--ui-fertilizer-bucket64) center/contain no-repeat;image-rendering:pixelated}
+#fertb .fertilizer-name{font-size:9px;font-weight:800;white-space:nowrap;max-width:100%}
+#fertb .fertilizer-stock{display:flex;align-items:center;justify-content:center;gap:2px;font-size:8px;line-height:1.1;white-space:nowrap;color:var(--px-muted)}
 #fertb .poop-coin{display:inline-block;width:16px;height:16px;background:var(--ui-poop-coin16) center/16px 16px no-repeat;image-rendering:pixelated}
 #fertb .poop-mark{display:inline-block;width:16px;height:16px;background:var(--ui-poop-mark32) center/16px 16px no-repeat;image-rendering:pixelated}
 #fertb:disabled{opacity:.48;cursor:default}
 #anBox:empty{display:none}
 .plot .poop{width:24px;height:24px;font-size:0;line-height:0;background:var(--ui-poop-mark32) center/24px 24px no-repeat;image-rendering:pixelated;filter:none}
 @media(max-width:430px){
- #shop{gap:2px;padding:3px;border-width:6px}
- #shop .buyb{min-height:70px;padding:3px 1px}
- #shop .buyb .bn,#shop .buyb .bp{font-size:7px}
- #fertb{min-height:70px;padding:2px 0;border-width:5px}
- #fertb .fertilizer-icon{width:42px;height:42px}
- #fertb .fertilizer-name{font-size:7px}
- #fertb .fertilizer-price,#fertb .fertilizer-stock{font-size:7px}
+ /* 12 格的手机尺寸已经写在上面那段媒体查询里，这里只留屎图标的缩放。
+    ⚠️ 别再往这里加 min-height 或 border-image —— 会把正方形和统一框改坏。 */
  #fertb .poop-coin,#fertb .poop-mark{width:14px;height:14px;background-size:14px 14px}
- #seeds .seed{min-height:78px;padding:3px 1px 21px}
- #seeds .seed .e{font-size:31px}
- #seeds .seed .farmIcon{width:32px;height:32px}
- #seeds .seed .n{bottom:17px;font-size:9px}
- #seeds .seed .p{min-height:15px;font-size:7px}
 }
 </style>
 </head>
@@ -2464,8 +2496,10 @@ function paintShop(){
     b.disabled = num>=ANIMAL_MAX || S.coins<a.price;
     var key=num+'|'+S.coins;
     if(b.getAttribute('data-k')!==key){
-      b.innerHTML='<span class="animal-icon animal-icon-'+a.id+'" role="img" aria-label="'+a.n+'"></span>'+
-        '<span class="bn">请一只'+a.n+'（'+num+'/'+ANIMAL_MAX+'）</span>'+
+      /* 2026-11-09：卡片改成正方形之后宽度只有一百来像素，
+         「请一只小鸡（0/3）」会被挤爆，所以缩成「小鸡 0/3」，价格放进底栏。 */
+      b.innerHTML='<span class="animal-icon animal-icon-'+a.id+'" role="img" aria-label="请一只'+a.n+'"></span>'+
+        '<span class="bn">'+a.n+' '+num+'/'+ANIMAL_MAX+'</span>'+
         '<span class="bp">🪙'+a.price+'</span>';
       b.setAttribute('data-k',key);
     }
