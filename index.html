@@ -148,6 +148,8 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
      `.seeds` 这个类抽屉里的「投喂小京」也在用（#feedGrid），
      那边卡片更小，一起改成 3 列会挤成一团。 */
 #seeds{grid-template-columns:repeat(3,1fr)}
+/* 种子价格和生长时间保持同一行，避免窄卡片把秒数挤到下一行。 */
+#seeds .p{white-space:nowrap}
 .seed{border:0;cursor:pointer;border-radius:16px;padding:9px 8px;background:#fff;
   box-shadow:0 4px 0 #f2dfd4;font-family:inherit;color:#6b5145;display:flex;
   align-items:center;gap:7px;text-align:left;transition:transform .12s}
@@ -1797,7 +1799,7 @@ GOODS.forEach(function(g,i){
 CROPS_SORTED.forEach(function(c){
   var b=document.createElement('button');
   b.className='seed';
-  b.innerHTML='<span class="e">'+itemIcon(c.id,c.e)+'</span><span class="info"><span class="n">'+c.n+'</span><span class="p">🪙'+c.cost+' · '+c.grow+'秒</span></span>';
+  b.innerHTML='<span class="e">'+itemIcon(c.id,c.e)+'</span><span class="info"><span class="n">'+c.n+'</span><span class="p">🪙'+c.cost+'·'+c.grow+'秒</span></span>';
   b.addEventListener('click',function(){ S.sel=c.id; save(); paint(); });
   seedsBox.appendChild(b);
 });
