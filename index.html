@@ -799,7 +799,9 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 .plot .farmIcon{image-rendering:pixelated}
 .prog,.craftNow .cq,.fullBar{border-radius:0}
 #seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:0 0 10px;padding:6px;background:#fff0f7;border:8px solid transparent;border:2px solid var(--px-outline)}
-#seeds::before{content:"🌱 种子";grid-column:1/-1;min-height:24px;padding:2px 6px;color:#fff1f8;background:var(--px-plum);font-size:13px;font-weight:800;letter-spacing:1px}
+/* 标题栏：2026-11-09 种子和商店合并成一个框，所以这里只剩一条标题，写「🛒 商店」。
+   order:-1 让它永远排在第一行（商品按钮带 order，见下面的 #shop .buyb 和 #fertb）。 */
+#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:24px;padding:2px 6px;color:#fff1f8;background:var(--px-plum);font-size:13px;font-weight:800;letter-spacing:1px}
 /* Seed cards: put price and growing time in the purple footer and enlarge the crop icon. */
 #seeds .seed{position:relative;min-width:0;min-height:86px;padding:4px 2px 23px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;text-align:center;color:var(--px-ink);background:#fff4fa;border:6px solid transparent;border:1px solid var(--px-outline);border-radius:0;box-shadow:none;font-family:inherit;overflow:hidden}
 #seeds .seed.on{background:#ffe1ef;border:1px solid var(--px-outline);box-shadow:inset 0 0 0 1px var(--px-pink2)}
@@ -823,8 +825,13 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 .oslot{width:38px;height:38px;border:2px solid var(--px-pink2);border-radius:0;background:#fff1f8;box-shadow:2px 2px 0 var(--px-shadow);font-size:20px}
 .oslot.wait{border:2px dashed #a895a8;background:#eadde7;box-shadow:none}
 #trash{border-radius:0}
-#shop{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:0 0 10px;padding:6px;background:#fff0f7;border:8px solid transparent;border:2px solid var(--px-outline)}
-#shop::before{content:"🛒 商店";display:block;grid-column:1/-1;margin:0 0 2px;padding:4px 6px;color:#fff1f8;background:var(--px-plum);font-size:13px;font-weight:800;letter-spacing:1px}
+/* 🛒 商店：2026-11-09 用户要求「把种子和商店合并成一个框」。
+   做法是让它 display:contents —— 容器自己不上场，里面的施肥桶和三种动物按钮
+   直接变成 #seeds 那个 4 列网格里的格子。于是 8 个种子 2 行 + 4 件商品 1 行，
+   整块共用同一个粉色外框和一条标题栏，列宽和间距自动对齐。
+   ⚠️ 不要把它改回 display:grid，也不要加回背景和边框 —— 那样会重新裂成第二个框。 */
+#shop{display:contents}
+#shop::before{content:none;display:none}
 #shop .buyb{min-width:0;min-height:76px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;font-size:9px;line-height:1.15}
 
 /* 鸡牛猪的64像素透明像素图，内嵌以保持游戏单文件。 */
@@ -867,9 +874,11 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
  --ui-poop-coin16:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGTSURBVDhPzZLLahRBFIbPacir9MUsRLLQ6Us1BGY6+AyCYS5m7wv4CoJ42YhLV4oKjrqQUTu4zLiUZMKQqEs3BsYZq/4fqVnp0IOuxB9qVec/fF9RIv9tColgNKY/pSZYvV8bX1ycGtqvNzgfbcCNFO7zFmZDRSbRnxcZjeCco30tGPcVB12FfSVwJxeYa8jV+d9SarwsjwcB3KTD2ceKdb9Fe9zmuB/ADtVrNVNkEsKdtvhhWW6zkBj1nmHdbcFoRHfc4UFPYT9tIW9SySWmfaG0kw49idGQ90zEB2WCN7sptnWTnso+F+TSQFF4/JcKN6lYaMS3Vy9iv5vCE9w3MQqJ6CbbcENB3qRRaMyzWwHmXy7jXe8SCwlRD7KlwvXN86z7Kd8/LPntZgCvt9qXVEL4JXZa8U4aYt+XBylHvZT1tYx38wR2usMyOAez7l/kGtM9FnLa5uKww8VhxR9HO1wcVf4RcXZbm/1/TSYR50824J4q7Pcr4GIX7lmA2SOlJ1ydX5tSEhhJvC+NJH9f/Of5Cb5j/KK9qe5sAAAAAElFTkSuQmCC");
  --ui-poop-mark32:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAATeSURBVFhH7VZNTxtHGHZbdjeHniFl10BPDbtGahvh3Zk1SkPAa7v1em2DwcY09xCSe05VLwFsjPlQpZ5aSNJrf5Oh5/6CfabV+65dqVZyCCmRKuWVRuOdWe/zfj3PTCr1wf7vFug+8rrEqi4wvnfjltcESpqvzho5FHVf0Rh/58Ytrwt8Z+RwsiYRaAKrunz/mSgZPk42cupsTaKgi/eXhUCXKGqeKky46nTNBznQ37jhMuR1H8sfS9xPCZVLCRzXBf78/Zk6qQucrfvoN3I340BJ868o4uMNqbp1T12+3MHlxVN1XBM4XZM4qUt24OfNJfyVSn00/v93NqLbT+s+Li921OX5LgP36wInNQIXPE7XfTQd62YcuKffwwlHK3Ba83BKEa/JJHquvVRbGZOYoArGDTDhgbH0T53P6knU1HjkwOl6DlsZC23HVFSmg5pQBe0/ZENRlyr/qccOMCA7MAI20XIsbDkWVicE8kTJukD+lsvZGP/WW1tJk+rXh8vqh2UfRU2qpjONLcdEO2NyylsZM1FBTajgkyVFPXFckziKvHeXZxKVb259jX7DV1T/ou5jZULgPg3trnqg3cXKrbtqRc8qAqTGPKpK9KuCnVjRstd3gmoZTHjq6tUTXL0iyu2qqxdP1eDFzhDIS0Yk0B+CHkUSvapEL/LQnJ9W7Yylrl0GSjd1/NXLXfzx22P0Ki6Oq0mUFN1h1Yt7VS8+qkn067kEuCrwcCGtiIrNYW9cOwNUV6rnUdWNKbpk+DjkZ4k+7ZEjFQ+1Lz7D5ryJZsZi0NZwpuYNrnM2sMZTYxk+vv9qDs+Wv8TR0AmafywtYtNOozFvoTFvYnthlgWIwYkRC2kERg4F3Ve9mmA20Kk5jvNaI/CSIdVxVfDJVjJ8te3MKgJsOulhdDPY4t9ptJw02g6lPY28IREYyQWlYEjVq3joVYgRAoHuKbo/jOP9y1Y1CZLcPtc5GfuRUAVKpSbVqiZQNOjiIVloOFOGVEVdDNekOgw9dEIXnbLLwL3KaHhY1TwEunxzSQq6D4qcHOhFLga/7KrBxQ4uz5+owfljDM4f8YcIhOeKh25Is0CXQbM8dyOBvXAxpv3Dsodu5MXEjJY9zWI1jssWGJQ2X1GnE70GF48wON9VvUqWGUA8HwF2Kx46FYFOKHBQceODMBsflAX2yy72wmxM6+QA7e2H2ZicbdtW3M6kQVkirHF8vlo1HRN95rXAYZTlLNAzNd5hJDjS/TD56D4BlF12ZC90471ylsGflxfj5+Fi8k7Z4x5p2ia27XS8Tc05O8nNOY6fovo27TS2FiwWFoq2NwQndetELkfUoehDDwRwEGXjLmWiQs8uGneI+0ljbtoJHbdtK6bRckwU524jmJt8fR9Qh1IDshMZGhY3DzlAAtOJvJiAO1E2PghdbFJkThobtomWbcUsPraFTdtM2OJYaNsmr7eddEzfK8xNcQneeHHlLtfpXJ9hJygKBpk3sTFPAJROAk7W2QkCsU007kzzGu0TPemdUSCF2Sl8Ozel6DoXaP7rwUdGTlCKiMvkCNfQmeEoCZA0gCLlVNsz8QiU90gXGHCS0136/DaKc1PJJUVLaDqO90YjnpMa0pzXSBmJ7zQSHeDjlxVTslixVvC6VCRgyb5gQaL/j3//g43sb3yYU5dXrNncAAAAAElFTkSuQmCC");
 }
-#shop{grid-template-columns:repeat(4,minmax(0,1fr))}
-#shop .buyb{order:1}
-#fertb{order:2;min-width:0;min-height:82px;width:100%;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:6px solid transparent;border-image:url("图标/ui/store-product-frame.png") 23 23 58 23 fill/7px/0 stretch;border-radius:0;background:#fff4fa;box-shadow:none;color:var(--px-ink);font-family:inherit;line-height:1.05}
+/* 排序：种子格子没有 order（=0）排在最前；施肥桶 order:1，三种动物 order:2，
+   于是合并后的网格从上到下是「8 个种子 → 施肥桶 → 小鸡 / 牛 / 猪」。
+   ⚠️ #shop 现在是 display:contents，列数由 #seeds 决定，不用在这里声明。 */
+#shop .buyb{order:2}
+#fertb{order:1;min-width:0;min-height:82px;width:100%;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:6px solid transparent;border-image:url("图标/ui/store-product-frame.png") 23 23 58 23 fill/7px/0 stretch;border-radius:0;background:#fff4fa;box-shadow:none;color:var(--px-ink);font-family:inherit;line-height:1.05}
 #fertb .fertilizer-icon{display:block;width:64px;height:64px;background:var(--ui-fertilizer-bucket64) center/contain no-repeat;image-rendering:pixelated}
 #fertb .fertilizer-name{font-size:9px;font-weight:800;white-space:nowrap}
 #fertb .fertilizer-price,#fertb .fertilizer-stock{display:flex;align-items:center;justify-content:center;gap:2px;font-size:8px;line-height:1.1;white-space:nowrap;color:var(--px-muted)}
@@ -1010,14 +1019,20 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
     <!-- 💩 警告：放在田地下面、种子上面。
          没粑粑的时候 JS 会把它整个藏起来（display:none），一点地方都不占。 -->
     <div class="poopWarn" id="poopWarn"></div>
-    <div class="seeds" id="seeds"></div>
-    <div id="shop">
-      <button class="buyb fertilizer-item" id="fertb" type="button" aria-label="施肥，消耗3坨粑粑">
-        <span class="fertilizer-icon" aria-hidden="true"></span>
-        <span class="fertilizer-name">施肥桶</span>
-        <span class="fertilizer-price"><i class="poop-coin" aria-hidden="true"></i>×3</span>
-        <span class="fertilizer-stock"><i class="poop-mark" aria-hidden="true"></i><span id="fertStock">0</span></span>
-      </button>
+    <!-- 🛒 种子 + 商店：2026-11-09 用户要求「把这俩合并」，现在合成一个框、只剩一条标题栏。
+         做法：#shop 放进 #seeds 里面，CSS 再给 #shop 设 display:contents，
+         它里面的施肥桶和三种动物按钮就直接成为 #seeds 这个 4 列网格里的格子。
+         最终 12 格、3 行：2 行种子 + 1 行（施肥桶 / 小鸡 / 牛 / 猪）。
+         ⚠️ 三种动物的按钮不写在这里，由 JS 追加进 #shop（见 shopBox.appendChild 那一段）。 -->
+    <div class="seeds" id="seeds">
+      <div id="shop">
+        <button class="buyb fertilizer-item" id="fertb" type="button" aria-label="施肥，消耗3坨粑粑">
+          <span class="fertilizer-icon" aria-hidden="true"></span>
+          <span class="fertilizer-name">施肥桶</span>
+          <span class="fertilizer-price"><i class="poop-coin" aria-hidden="true"></i>×3</span>
+          <span class="fertilizer-stock"><i class="poop-mark" aria-hidden="true"></i><span id="fertStock">0</span></span>
+        </button>
+      </div>
     </div>
     <div class="secttl">🐾 牧场</div>
     <!-- 🪣 施肥 / 🧸 请小京：2026-09-27 用户要求"施肥按钮和小京帮种按钮上移"，
@@ -2152,7 +2167,11 @@ function paint(){
     if(cs.fill && kind==='growing') cs.fill.style.width=(prog(p)*100)+'%';
   });
 
-  Array.prototype.forEach.call(seedsBox.children,function(b,i){
+  /* 种子的「选中 / 买不起」高亮。
+     ⚠️ 2026-11-09 起不能再用 seedsBox.children —— #seeds 里面现在还装着 #shop
+     （合并后的商店容器），按 children 取下标会把 #shop 也算进去，整体错位一格，
+     最后一个种子永远拿不到高亮。只认 .seed 这个类，顺序仍然是 CROPS_SORTED 的顺序。 */
+  Array.prototype.forEach.call(seedsBox.querySelectorAll('.seed'),function(b,i){
     var sc=CROPS_SORTED[i];
     if(!sc) return;
     b.classList.toggle('on', sc.id===S.sel);
