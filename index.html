@@ -992,7 +992,8 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 /* ① 整页底色：2026-11-09 用户给了 pink_checker_100x200.png 并说「这个铺满」——
    换成浅紫粉棋盘格平铺。素材每格 10 像素、原尺寸 1000×2000，直接按原尺寸铺，格子不会糊。
    ⚠️ 那张图是「浅紫 + 全透明」交替的，所以底下必须垫一层粉色底色，否则会露出页面白底。 */
-body{background-color:#fdeef7;background-image:url("图标/ui/page-checker.png");background-size:1000px 2000px;background-repeat:repeat}
+/* 整页背景：2026-11-09 用户明确否掉棋盘格，也否掉白色，改回纯粉色块。 */
+body{background:#f9dcee}
 
 /* ② 商店那一整块：圆角 + 一层淡淡的落地投影，不再像一块贴死的方块 */
 #seeds{border-radius:14px;box-shadow:0 5px 0 rgba(118,42,92,.10),0 1px 0 rgba(255,255,255,.75) inset}
