@@ -827,7 +827,10 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
  /* 商店外框：2026-11-09 用户要求「不要这个框，加素材啊」——
    不再用 CSS 描边画，改用她给的粉色方框素材（裁成 400×382 存为 图标/ui/shop-frame.png），
    九宫格切片：素材边框约 45px，缩到 400 宽后约 18px，所以 slice 取 18。 */
-#seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:0 0 8px;padding:4px;background:transparent;border:0}
+/* 商店大框：2026-11-09 用户点名要用 exec-e72f344f 那张粉色长框。
+   这张素材我在做标题栏时已经裁好存成 图标/ui/farm-title-bar.png（1056×299，去掉了外面那圈透明边），
+   这里直接拿它做九宫格边框，slice 取 40（素材缩放后边框厚度约 38～45 像素）。 */
+#seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:0 0 8px;padding:9px;background:transparent;border:9px solid transparent;border-image:url("图标/ui/farm-title-bar.png") 40 40 40 40 fill/9px/0 stretch}
 /* 标题栏：2026-11-09 用户指定「长框当标题栏」——底色从深紫纯色换成 图标/ui/farm-title-bar.png
    （就是从她给的那张粉色长框上裁下来的一条：深紫顶边 + 白边 + 粉色虚线装饰带）。
    粉底上白字看不清，所以字色改成深紫，并加一层浅色投影提亮。
