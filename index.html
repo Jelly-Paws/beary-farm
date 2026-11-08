@@ -351,7 +351,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: #fff url("图标/ui/rail-trash.png") center/30px 30px no-repeat;
+  background: #fff url("图标/ui/rail-trash.png") center/34px 34px no-repeat;
   box-shadow: 0 4px 0 #f2dfd4, 0 0 0 3px #ffeef5 inset;
   display: flex;
   align-items: center;
@@ -766,7 +766,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 }
 /* PIXEL FARM SKIN 2026-11-09: reference-matched assets and card layout. */
 :root{
- --rail-w:52px;
+ --rail-w:56px;
  --px-bg:#f7e3ef;--px-paper:#fff4fa;--px-paper2:#f7d8e9;
  --px-plum:#4a1d4d;--px-plum2:#66305f;--px-outline:#793c70;
  --px-pink:#ee91bd;--px-pink2:#d86fa6;--px-shadow:#c36b9a;
@@ -879,18 +879,19 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 #shop .buyb .bn{flex:none;min-width:0;font-size:11px;line-height:1.05;font-weight:800;color:#6b2050;white-space:nowrap;max-width:100%}
 .seed .cqbadge{border-radius:0}
 .rail{width:var(--rail-w);gap:6px;padding:8px 4px;background:var(--px-plum);border-right:2px solid var(--px-outline);box-shadow:2px 0 0 var(--px-shadow)}
-.rail-btn{width:42px;height:42px;gap:0;border:7px solid transparent;border-image:var(--ui-purple32) 8/7px/0 stretch;border-radius:0;color:#fff2f9;background:var(--px-plum2);box-shadow:none;font-family:inherit}
+.rail-btn{width:46px;height:46px;gap:0;border:6px solid transparent;border-image:var(--ui-purple32) 8/6px/0 stretch;border-radius:0;color:#fff2f9;background:var(--px-plum2);box-shadow:none;font-family:inherit}
 /* 左侧导航栏四个按钮：2026-11-09 用户给了成套像素图标（背包 / 菜谱 / 工坊 / 小京），
    全部换成 图标/ui/rail-*.png。原来那四个 emoji 用 font-size:0 藏起来，图标走 ::before。
    ⚠️ .lb（「背包」「菜谱」这些小字）自己有字号，不会被 font-size:0 波及。
    ⚠️ 四个按钮的图标尺寸必须写在一起，漏一个就会那个按钮空着。 */
 .rail-btn#drawerBtn,.rail-btn#recipeBtn,.rail-btn#craftBtn,.rail-btn#bearBtn{font-size:0}
-.rail-btn#drawerBtn::before,.rail-btn#recipeBtn::before,.rail-btn#craftBtn::before,.rail-btn#bearBtn::before{content:"";display:block;width:26px;height:26px;background-position:center;background-size:contain;background-repeat:no-repeat}
+.rail-btn#drawerBtn::before,.rail-btn#recipeBtn::before,.rail-btn#craftBtn::before,.rail-btn#bearBtn::before{content:"";display:block;width:34px;height:34px;background-position:center;background-size:contain;background-repeat:no-repeat}
 .rail-btn#drawerBtn::before{background-image:url("图标/ui/rail-bag.png")}
 .rail-btn#recipeBtn::before{background-image:url("图标/ui/rail-recipe.png")}
 .rail-btn#craftBtn::before{background-image:url("图标/ui/rail-craft.png")}
 .rail-btn#bearBtn::before{background-image:url("图标/ui/rail-bear.png")}
-.rail-btn .lb{display:block;margin-top:2px;font-size:7px;letter-spacing:0;line-height:1;color:inherit;white-space:nowrap}
+/* 2026-11-09 用户要求「左边抽屉的按钮不要加名字了，放大 icon」—— 名字整条隐藏，位置全给图标。 */
+.rail-btn .lb{display:none}
 .rail-btn.is-on{background:var(--px-pink);border:2px solid var(--px-pink2);box-shadow:none;color:var(--px-ink)}
 .rail-orders{gap:4px;margin-bottom:8px;padding-top:8px}
 .rail-orders::before{left:3px;right:3px;height:2px;border-radius:0;background:var(--px-pink)}
