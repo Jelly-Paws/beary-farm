@@ -827,14 +827,14 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
  /* 商店外框：2026-11-09 用户要求「不要这个框，加素材啊」——
    不再用 CSS 描边画，改用她给的粉色方框素材（裁成 400×382 存为 图标/ui/shop-frame.png），
    九宫格切片：素材边框约 45px，缩到 400 宽后约 18px，所以 slice 取 18。 */
-#seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:0 0 8px;padding:8px;background:#ffffff;border:8px solid transparent;border-image:url("图标/ui/shop-frame.png") 18 18 18 18 fill/8px/0 stretch}
+#seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:0 0 8px;padding:4px;background:transparent;border:0}
 /* 标题栏：2026-11-09 用户指定「长框当标题栏」——底色从深紫纯色换成 图标/ui/farm-title-bar.png
    （就是从她给的那张粉色长框上裁下来的一条：深紫顶边 + 白边 + 粉色虚线装饰带）。
    粉底上白字看不清，所以字色改成深紫，并加一层浅色投影提亮。
    order:-1 让它永远排在第一行（商品按钮带 order，见下面的 #shop .buyb 和 #fertb）。 */
 /* 标题「🛒 商店」：2026-11-09 用户要求「这俩字不要加框，框加在外面」——
    所以它现在就是一行纯文字，没有任何边框和底色；框由下面的 #seeds 承担。 */
-#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:28px;padding:2px 6px;color:#904c73;background:none;border:0;border-left:4px solid #ef9fc6;font-size:15px;font-weight:800;letter-spacing:1px}
+#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:28px;padding:2px 6px;color:#904c73;background:none;border:0;font-size:15px;font-weight:800;letter-spacing:1px}
 /* ============================================================
    12 个格子统一规格（8 个种子 + 施肥桶 + 小鸡 / 牛 / 猪）
    —— 2026-11-09 用户要求：「这 12 个 UI 框统一一下，都要下面那四个的框，都要正方形」
