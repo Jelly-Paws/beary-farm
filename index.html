@@ -108,7 +108,8 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .tab.on{background:#f2a0bd;color:#fff;box-shadow:0 4px 0 #dd89a8}
 .tab:active{transform:translateY(2px)}
 .hide{display:none}
-.secttl{font-size:12px;font-weight:800;color:#bda99c;margin:6px 0 7px;letter-spacing:1px}
+/* 分区小标题（🐾 牧场 / 🧺 食材 / 📖 菜谱 等）：2026-11-09 也换成同一条粉色长框。 */
+.secttl{display:block;font-size:12px;font-weight:800;color:#6b1f4d;margin:6px 0 7px;padding:1px 10px;letter-spacing:1px;border:5px solid transparent;border-image:url("图标/ui/farm-title-bar.png") 14 15 14 15 fill/5px/0 stretch}
 .field{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .plot{position:relative;aspect-ratio:1/1;border:0;border-radius:18px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1;
@@ -336,18 +337,20 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
    现在它住进左侧导航栏，位置在【订单槽上面、那条粉色小横线的上方】——
    那一竖条本来就是空的，放这儿不挡任何东西。
    代价：导航栏只有 58px 宽，所以它从 62px 缩到了 46px。 */
+/* 🗑️ 垃圾桶（💩 的投放区）：2026-11-09 换成 图标/ui/rail-trash.png 那张粉色篮子，
+   原来的 emoji 用 font-size:0 藏起来，图标走 background。 */
 #trash{
   pointer-events: auto;
   flex: none;
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: #fff;
+  background: #fff url("图标/ui/rail-trash.png") center/30px 30px no-repeat;
   box-shadow: 0 4px 0 #f2dfd4, 0 0 0 3px #ffeef5 inset;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 0;
   line-height: 1;
   transition: transform .15s;
 }
@@ -779,6 +782,10 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 .bar{gap:5px;margin:0 0 10px}
 .bar .pill,.slot{min-height:42px;padding:7px 2px;color:var(--px-ink);background:#fff1f8;border:7px solid transparent;border:1px solid var(--px-outline);border-radius:0;box-shadow:none;font-family:inherit}
 .bar .pill{font-size:12px}
+/* 顶部四个数据条（金币 / 钻石 / 蜂蜜 / 小熊）：2026-11-09 用户指定换成她给的 frame_dialogue.png。
+   素材只保留了框体本身（裁掉外面那圈透明边后缩到 432×200），用九宫格切片做边框，
+   内部那层浅粉仍用 background 填，这样数字落在白底上看得清。 */
+.bar .pill{border:5px solid transparent;border-image:url("图标/ui/farm-data-frame.png") 25 25 25 25/5px/0 stretch;background:#fff1f8;padding:5px 6px}
 .tabs{gap:4px;margin:0 0 9px}
 .tab{position:relative;min-height:40px;padding:5px 2px;border:7px solid transparent;border-image:var(--ui-purple32) 8/7px/0 stretch;border-radius:0;background:var(--px-plum);box-shadow:none;color:#fff0f8;font-family:inherit;font-weight:800}
 .tab.on{color:var(--px-ink);background:var(--px-pink);border:2px solid var(--px-pink2);box-shadow:none}
@@ -805,16 +812,18 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 /* ② 网格：粉色棋盘格平铺，压在草坪下面 */
 .field::before{z-index:0;background-image:url("图标/ui/farm-grid-checker.png");background-position:center top;background-size:768px 768px;background-repeat:repeat;opacity:.85}
 /* ③ 草坪（下层，四边各缩 18px）+ ④ 栅栏（上层，距顶 16px）：写在前面的背景在最上面 */
-.field::after{z-index:0;background-image:url("图标/ui/farm-fence-top.png"),url("图标/ui/farm-grass.png");background-position:center 16px,center center;background-size:calc(100% - 36px) auto,calc(100% - 10px) calc(100% - 10px);background-repeat:no-repeat,no-repeat}
+.field::after{z-index:0;background-image:url("图标/ui/farm-fence-top.png"),url("图标/ui/farm-grass.png");background-position:center 16px,center center;background-size:calc(100% - 36px) auto,calc(100% + 20px) calc(100% + 20px);background-repeat:no-repeat,no-repeat}
 .plot{position:relative;z-index:1;border:0;border-radius:0;background-color:transparent;background-image:var(--ui-soil);background-position:center;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;box-shadow:none}
 .plot.empty,.plot.growing,.plot.ready{background-color:transparent;background-image:var(--ui-soil)}
 .plot.locked{border:0;border-radius:0;background-color:transparent;background-image:var(--ui-soil);background-position:center;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;box-shadow:none;opacity:.9}
 .plot .farmIcon{image-rendering:pixelated}
 .prog,.craftNow .cq,.fullBar{border-radius:0}
 #seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:0 0 10px;padding:6px;background:#fff0f7;border:8px solid transparent;border:2px solid var(--px-outline)}
-/* 标题栏：2026-11-09 种子和商店合并成一个框，所以这里只剩一条标题，写「🛒 商店」。
+/* 标题栏：2026-11-09 用户指定「长框当标题栏」——底色从深紫纯色换成 图标/ui/farm-title-bar.png
+   （就是从她给的那张粉色长框上裁下来的一条：深紫顶边 + 白边 + 粉色虚线装饰带）。
+   粉底上白字看不清，所以字色改成深紫，并加一层浅色投影提亮。
    order:-1 让它永远排在第一行（商品按钮带 order，见下面的 #shop .buyb 和 #fertb）。 */
-#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:24px;padding:2px 6px;color:#fff1f8;background:var(--px-plum);font-size:13px;font-weight:800;letter-spacing:1px}
+#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:30px;padding:1px 10px;color:#6b1f4d;border:6px solid transparent;border-image:url("图标/ui/farm-title-bar.png") 14 15 14 15 fill/6px/0 stretch;font-size:13px;font-weight:800;letter-spacing:1px}
 /* ============================================================
    12 个格子统一规格（8 个种子 + 施肥桶 + 小鸡 / 牛 / 猪）
    —— 2026-11-09 用户要求：「这 12 个 UI 框统一一下，都要下面那四个的框，都要正方形」
@@ -863,10 +872,16 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 .seed .cqbadge{border-radius:0}
 .rail{width:var(--rail-w);gap:6px;padding:8px 4px;background:var(--px-plum);border-right:2px solid var(--px-outline);box-shadow:2px 0 0 var(--px-shadow)}
 .rail-btn{width:42px;height:42px;gap:0;border:7px solid transparent;border-image:var(--ui-purple32) 8/7px/0 stretch;border-radius:0;color:#fff2f9;background:var(--px-plum2);box-shadow:none;font-family:inherit}
-.rail-btn#drawerBtn,.rail-btn#recipeBtn{font-size:0}
-.rail-btn#drawerBtn::before,.rail-btn#recipeBtn::before{content:"";display:block;width:24px;height:24px;background-position:center;background-size:contain;background-repeat:no-repeat;image-rendering:pixelated}
-.rail-btn#drawerBtn::before{background-image:var(--ui-sprout)}
-.rail-btn#recipeBtn::before{background-image:var(--ui-book)}
+/* 左侧导航栏四个按钮：2026-11-09 用户给了成套像素图标（背包 / 菜谱 / 工坊 / 小京），
+   全部换成 图标/ui/rail-*.png。原来那四个 emoji 用 font-size:0 藏起来，图标走 ::before。
+   ⚠️ .lb（「背包」「菜谱」这些小字）自己有字号，不会被 font-size:0 波及。
+   ⚠️ 四个按钮的图标尺寸必须写在一起，漏一个就会那个按钮空着。 */
+.rail-btn#drawerBtn,.rail-btn#recipeBtn,.rail-btn#craftBtn,.rail-btn#bearBtn{font-size:0}
+.rail-btn#drawerBtn::before,.rail-btn#recipeBtn::before,.rail-btn#craftBtn::before,.rail-btn#bearBtn::before{content:"";display:block;width:26px;height:26px;background-position:center;background-size:contain;background-repeat:no-repeat}
+.rail-btn#drawerBtn::before{background-image:url("图标/ui/rail-bag.png")}
+.rail-btn#recipeBtn::before{background-image:url("图标/ui/rail-recipe.png")}
+.rail-btn#craftBtn::before{background-image:url("图标/ui/rail-craft.png")}
+.rail-btn#bearBtn::before{background-image:url("图标/ui/rail-bear.png")}
 .rail-btn .lb{display:block;margin-top:2px;font-size:7px;letter-spacing:0;line-height:1;color:inherit;white-space:nowrap}
 .rail-btn.is-on{background:var(--px-pink);border:2px solid var(--px-pink2);box-shadow:none;color:var(--px-ink)}
 .rail-orders{gap:4px;margin-bottom:8px;padding-top:8px}
@@ -909,7 +924,7 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
  .bar{gap:3px}.bar .pill{font-size:10px;min-height:38px}
  .field{gap:10px;padding:74px 7px 8px}
  /* 手机上草坪四边缩进 14px，栅栏距顶 12px（和上面那套 18px / 16px 同比例） */
- .field::after{background-position:center 12px,center center;background-size:calc(100% - 28px) auto,calc(100% - 8px) calc(100% - 8px)}
+ .field::after{background-position:center 12px,center center;background-size:calc(100% - 28px) auto,calc(100% + 16px) calc(100% + 16px)}
  #seeds{gap:3px;padding:4px;border-width:6px}
  /* 手机上的 12 格：边框收细、底栏降到 12px、图标和字各缩一档，但仍然是正方形 */
  #seeds .seed,#shop .buyb,#fertb{padding:4px 2px 15px;border-width:5px;border-image:url("图标/ui/store-product-frame.png") 23 23 23 23 fill/5px/0 stretch}
@@ -1081,13 +1096,9 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
         </button>
       </div>
     </div>
-    <div class="secttl">🐾 牧场</div>
-    <!-- 🪣 施肥 / 🧸 请小京：2026-09-27 用户要求"施肥按钮和小京帮种按钮上移"，
-         所以从牧场区【最下面】搬到了牧场区【最上面】（标题下面第一件事）。 -->
-    
-    
+    <!-- 2026-11-09 用户要求：「牧场」这个小标题和「小京顺手替你补种」那个开关都删掉。
+         小京自动补种的机制本身保留（S.auto 默认就是 1 = 一直开着），只是不再有开关按钮。 -->
     <div class="anbox" id="anBox"></div>
-    <button class="toggle" id="auto"></button>
   </div>
 
   <div id="paneKitchen" class="hide">
@@ -2241,9 +2252,9 @@ function paint(){
   fb.disabled = S.dung<3;
   $('fertStock').textContent=S.dung;
 
-  var ab=$('auto');
-  ab.classList.toggle('on', !!S.auto);
-  ab.textContent = S.auto ? '小京顺手替你补种：开着' : '小京顺手替你补种：关着';
+  /* 「小京顺手替你补种」那个开关按钮 2026-11-09 已经删掉了，
+     所以这里不再去动它（去动一个不存在的元素会让整个 paint() 报错停摆）。
+     S.auto 本身保留，默认值 1 = 一直开着。 */
 
   $('tip').textContent = S.auto && S.bears>0 ? '小京替你种地，你负责看锅' : '点土地种下去，熟了再收';
 
@@ -3949,10 +3960,9 @@ $('fertb').addEventListener('click',function(){
 
 $('gemsPill').addEventListener('click',openWallet);
 
-$('auto').addEventListener('click',function(){
-  S.auto = S.auto?0:1;
-  save(); paint();
-});
+/* 【已删除 · 2026-11-09】原来自动补种的开关按钮 #auto 的点击监听就在这里。
+   用户要求把那个开关整个删掉，所以监听也一起删了 ——
+   留着它会让页面一加载就报错（找不到 #auto）。S.auto 默认 1，补种一直开着。 */
 
 /* 顶部两个标签：农场 / 厨房
    （小京原本是顶部标签，已经搬进左侧抽屉；
