@@ -788,9 +788,7 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 .bar{gap:5px;margin:0 0 10px}
 .bar .pill,.slot{min-height:42px;padding:7px 2px;color:var(--px-ink);background:#fff1f8;border:7px solid transparent;border:1px solid var(--px-outline);border-radius:0;box-shadow:none;font-family:inherit}
 .bar .pill{font-size:12px}
-/* 顶部四个数据条（金币 / 钻石 / 蜂蜜 / 小熊）：2026-11-09 用户指定换成她给的 frame_dialogue.png。
-   素材只保留了框体本身（裁掉外面那圈透明边后缩到 432×200），用九宫格切片做边框，
-   内部那层浅粉仍用 background 填，这样数字落在白底上看得清。 */
+/* Top resource pills use separate pixel frames. */
 .bar .pill{border:5px solid transparent;border-image:url("图标/ui/farm-data-frame.png") 25 25 25 25/5px/0 stretch;background:#fff1f8;padding:5px 6px}
 .tabs{gap:4px;margin:0 0 9px}
 .tab{position:relative;min-height:40px;padding:5px 2px;border:7px solid transparent;border-image:var(--ui-purple32) 8/7px/0 stretch;border-radius:0;background:var(--px-plum);box-shadow:none;color:#fff0f8;font-family:inherit;font-weight:800}
@@ -1303,7 +1301,6 @@ h1{border-radius:10px;background:linear-gradient(180deg,#904c73,#713c5b)}
       <div class="pill"><img class="farmIcon" src="图标/ui/y2k-icon-coin.png" alt=""> <span id="coins">0</span></div>
       <div class="pill tap" id="gemsPill"><img class="farmIcon" src="图标/ui/y2k-icon-gem.png" alt=""> <span id="gems">0</span></div>
       <div class="pill"><img class="farmIcon" src="图标/material/honey.png" alt=""> <span id="honey">0</span></div>
-      <div class="pill"><img class="farmIcon" src="图标/ui/y2k-icon-bear.png" alt=""> <span id="bears">0</span></div>
     </div>
   </div>
   <!-- 粑粑警告在农场页田地下面；粑粑达到6坨时顶部农场标签会亮叹号。 -->
@@ -2052,7 +2049,7 @@ function fresh(){
   for(var k=0;k<POT_N;k++) pot.push(null);              /* 锅：开局九格全空 */
   return {
     /* 初始金 500（2026-09-22 从 100 提上来的 —— 100 开局买不了几颗种子） */
-    coins:500, honey:0, gems:0, bears:0, sel:CROPS_SORTED[0].id, auto:1,
+    coins:500, honey:0, gems:0, sel:CROPS_SORTED[0].id, auto:1,
     plots:p, store:st, dish:dy, seen:{berry:1}, orders:[], orderT:[],
     animals:{hen:0,cow:0,pig:0}, anT:{hen:0,cow:0,pig:0},
     poops:[], dung:0, poopT:0,
@@ -2081,8 +2078,7 @@ if(!S||!S.plots){ S=fresh(); }
 else{
   /* 旧字段迁移：鱼→蜂蜜，猫→小熊 */
   if(typeof S.honey!=='number') S.honey = (typeof S.fish==='number' ? S.fish : 0);
-  if(typeof S.bears!=='number') S.bears = (typeof S.cats==='number' ? S.cats : 0);
-  delete S.fish; delete S.cats;
+  delete S.fish; delete S.cats; delete S.bears;
   if(typeof S.full!=='number') S.full=0;
   if(typeof S.bubbleBuffT!=='number') S.bubbleBuffT=0;
   if(typeof S.fullT!=='number') S.fullT=0;
@@ -2315,7 +2311,7 @@ var field=$('field'), seedsBox=$('seeds'),
     potRefBox=$('potRef'), outSlot=$('outSlot'), potGoBtn=$('potGo'),
     railOrders=$('railOrders');
 var plotEls=[], cellState=[], storeEls=[], trayEls=[], dishEls=[],
-    orderEls=[], bearNext=[], pantryEls=[], potCells=[];
+    orderEls=[], bearNextAt=0, pantryEls=[], potCells=[];
 
 for(var i=0;i<N;i++){
   (function(i){
@@ -2498,7 +2494,6 @@ function paint(){
   $('coins').textContent=Math.floor(S.coins);
   $('gems').textContent=S.gems;
   $('honey').textContent=S.honey;
-  $('bears').textContent=S.bears;
 
   var poopEl = $('poopWarn');
   var poopBad = S.poops.length >= POOP_LIMIT;
@@ -2596,7 +2591,7 @@ function paint(){
      所以这里不再去动它（去动一个不存在的元素会让整个 paint() 报错停摆）。
      S.auto 本身保留，默认值 1 = 一直开着。 */
 
-  $('tip').textContent = S.auto && S.bears>0 ? '小京替你种地，你负责看锅' : '点土地种下去，熟了再收';
+  $('tip').textContent = S.auto ? '小京替你种地，你负责看锅' : '点土地种下去，熟了再收';
 
   /* 导航栏「工坊」上的小叹号：有东西加工好了还没收，就亮起来 */
   $('craftBadge').classList.toggle('is-on', anyCraftReady());
@@ -2885,8 +2880,7 @@ function paintBear(){
   var ft=$('fullTxt');
   if(ft){
     var txt;
-    if(S.bears<=0) txt='还没有小熊呢，先去农场请一只吧 🧸';
-    else if(S.full>=BEAR_FULL_OK) txt='饱饱的 '+pct+'% · 正在帮你捡地上的粑粑 🧹';
+    if(S.full>=BEAR_FULL_OK) txt='饱饱的 '+pct+'% · 正在帮你捡地上的粑粑 🧹';
     else if(S.full>0) txt='有点饿 '+pct+'% · 吃饱 '+BEAR_FULL_OK+'% 就会帮你干活';
     else txt='肚子空空的 0% · 喂点小熊料理给它吧';
     if(ft.textContent!==txt) ft.textContent=txt;
@@ -2900,7 +2894,7 @@ function paintBear(){
   if(lootBtn) lootBtn.style.display = S.lootPending ? 'block' : 'none';
 
   var bf=$('bearFace');
-  if(bf) bf.classList.toggle('happy', S.bears>0 && S.full>=BEAR_FULL_OK);
+  if(bf) bf.classList.toggle('happy', S.full>=BEAR_FULL_OK);
 
   var expBox = $('expeditionBox');
   if(expBox){
@@ -3006,7 +3000,6 @@ function eatDish(d){
 function feedBear(id){
   var d=byDish(id);
   if(!d||!d.bear){ toast('这个不是小熊料理，小京不吃哦'); return; }
-  if(S.bears<=0){ toast('还没有小熊呢，先去农场请一只吧'); return; }
   var n=S.dish[d.id]||0;
   if(n<=0){ toast('还没有'+d.n+'呢，先去厨房做一份吧'); return; }
   S.dish[d.id]=n-1;
@@ -4330,7 +4323,7 @@ $('reset').addEventListener('click',function(){
     save();
     /* 缓存的「上次画成什么样」全部清空，免得新旧状态串味 */
     for(var i=0;i<N;i++) cellState[i]=null;
-    bearNext=[];
+    bearNextAt=0;
     overlay.classList.remove('on'); panel.innerHTML='';
     paint();
   }
@@ -4338,25 +4331,20 @@ $('reset').addEventListener('click',function(){
 
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
 
-/* ---------- 小熊自动收地 ---------- */
+/* ---------- 小京自动收地（唯一角色） ---------- */
 setInterval(function(){
-  if(S.bears<=0) return;
   var now=Date.now();
-  for(var k=0;k<S.bears;k++){
-    if(!bearNext[k]){ bearNext[k]=now+BEAR_SPEED; continue; }
-    if(now>=bearNext[k]){
-      bearNext[k]=now+BEAR_SPEED;
-      var idx=-1;
-      for(var i=0;i<N;i++){ if(S.plots[i].u&&isReady(S.plots[i])){ idx=i; break; } }
-      if(idx>=0) harvest(idx,true);
-    }
-  }
+  if(!bearNextAt){ bearNextAt=now+BEAR_SPEED; return; }
+  if(now<bearNextAt) return;
+  bearNextAt=now+BEAR_SPEED;
+  var idx=-1;
+  for(var i=0;i<N;i++){ if(S.plots[i].u&&isReady(S.plots[i])){ idx=i; break; } }
+  if(idx>=0) harvest(idx,true);
 },100);
 
-/* ---------- 小熊饱食度 / 自动捡粑粑 ---------- */
+/* ---------- 小京饱食度 / 自动捡粑粑 ---------- */
 var lastAutoPick=0;
 setInterval(function(){
-  if(S.bears<=0) return;
   var now=Date.now();
   if(!S.fullT) S.fullT=now;
   var dt=now-S.fullT;
