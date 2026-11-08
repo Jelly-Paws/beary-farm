@@ -995,8 +995,10 @@ body{background:linear-gradient(180deg,#fdeef7 0%,#f9e6f3 45%,#f4dcEF 100%) fixe
 /* ④ 顶部标题条：圆角 + 一层紫色渐变，不再是纯色块 */
 h1{border-radius:10px;background:linear-gradient(180deg,#7b3163,#54204a)}
 
-/* ⑤ 左侧导航栏：从纯色改成上浅下深的渐变，右边缘给个圆角 */
-.rail{background:linear-gradient(180deg,#76325f 0%,#54204a 100%);border-radius:0 12px 12px 0}
+/* ⑤ 左侧导航栏：上浅下深的渐变 + 右边缘圆角。
+   2026-11-09 用户说「底色太红了不要那么红」—— 把红分量压下来、往紫和蓝推，
+   原来是紫红 #76325f→#54204a，现在是中性紫 #5f3160→#3f2040。 */
+.rail{background:linear-gradient(180deg,#5f3160 0%,#3f2040 100%);border-radius:0 12px 12px 0}
 
 /* ⑥ 抽屉与面板：圆角，别那么板 */
 .drawer{border-radius:0 14px 14px 0}
