@@ -766,6 +766,70 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
   line-height: 1;
   white-space: nowrap;
 }
+/* PIXEL FARM SKIN 2026-11-09: style only; preserve markup, layout, and interactions. */
+:root{
+  --px-page:#f5dbea;--px-paper:#fff1f8;--px-paper-deep:#f9d8e9;
+  --px-plum-dark:#3b183f;--px-plum:#572452;--px-plum-mid:#79396f;
+  --px-outline:#783b6e;--px-outline-light:#a55387;
+  --px-pink:#ef8fb9;--px-pink-strong:#d9639b;--px-pink-soft:#ffe3f1;
+  --px-shadow:#bd6698;--px-ink:#341c3a;--px-muted:#906d87;
+  --px-green:#94b84f;--px-green-dark:#648643;--px-gold:#efbd43;
+}
+body{background:linear-gradient(180deg,#f2d6e8 0%,#fff0f7 52%,#f5ddeb 100%);color:var(--px-ink)}
+.wrap{background:rgba(255,241,248,.72);box-shadow:0 0 0 3px var(--px-outline),4px 4px 0 var(--px-shadow)}
+h1{color:#fff0f8;background:var(--px-plum-dark);box-shadow:inset 0 0 0 2px var(--px-pink),3px 3px 0 var(--px-shadow)}
+.sub,.buff,.secttl{color:var(--px-muted)}
+.bar .pill,.slot,.seed,.craftNow,.guideItem,.potRef,.anbox,.anrow{color:var(--px-ink);background:var(--px-paper);border-radius:3px;box-shadow:inset 0 0 0 2px var(--px-outline),3px 3px 0 var(--px-shadow)}
+.pill{color:var(--px-ink)}
+.slot.d,.seed.recipe{background:var(--px-paper-deep)}
+.tabs .tab{color:#ffeefa;background:var(--px-plum);border-radius:3px;box-shadow:inset 0 0 0 2px var(--px-outline-light),3px 3px 0 var(--px-plum-dark)}
+.tabs .tab.on{color:var(--px-ink);background:var(--px-pink);box-shadow:inset 0 0 0 2px #ffeaf4,3px 3px 0 var(--px-pink-strong)}
+.rail{background:var(--px-plum-dark);border-right:3px solid var(--px-outline);box-shadow:3px 0 0 var(--px-shadow)}
+.rail-btn{color:#ffeefa;background:var(--px-plum);border-radius:3px;box-shadow:inset 0 0 0 2px var(--px-outline-light),3px 3px 0 #28122e}
+.rail-btn.is-on{color:var(--px-ink);background:var(--px-pink);box-shadow:inset 0 0 0 2px #ffeaf4,3px 3px 0 var(--px-pink-strong)}
+.rail-btn .lb{color:inherit}
+.rail-orders::before{background:var(--px-pink)}
+.rail-note{color:#f5c6de}
+.oslot{color:var(--px-ink);background:var(--px-paper);border-color:var(--px-pink-strong);border-radius:3px;box-shadow:2px 2px 0 var(--px-shadow)}
+.oslot.wait{color:var(--px-muted);background:#eadde7;border-color:#a895a8;box-shadow:none}
+.drawerMask{background:rgba(51,22,59,.62)}
+.drawer{color:var(--px-ink);background:var(--px-paper);border-left:3px solid var(--px-outline);border-radius:0;box-shadow:4px 0 0 var(--px-shadow)}
+.drawer-tabs .dtab{color:#ffeefa;background:var(--px-plum);border-radius:3px;box-shadow:inset 0 0 0 2px var(--px-outline-light),2px 2px 0 var(--px-plum-dark)}
+.drawer-tabs .dtab.is-on{color:var(--px-ink);background:var(--px-pink);box-shadow:inset 0 0 0 2px #ffeaf4,2px 2px 0 var(--px-pink-strong)}
+.dsec-ttl,#bearTrash::before{color:var(--px-outline)}
+.field .plot{color:#f7d36c;background:#85533f;border-radius:3px;box-shadow:inset 0 0 0 2px #4b263f,inset 0 -5px 0 rgba(48,20,43,.25),3px 3px 0 var(--px-shadow)}
+.plot.empty{color:#f4cadd}
+.plot.growing{background:#7e533f}
+.plot.ready{background:#c58a37;color:#fff0a7}
+.plot.locked{color:#a58c9f;background:#eadde7}
+.prog,.craftNow .cq,.fullBar{border-radius:0;background:#e6bdd4}
+.prog i,.craftNow .cq i,.fullBar i{border-radius:0;background:repeating-linear-gradient(90deg,var(--px-green) 0 6px,var(--px-green-dark) 6px 8px)}
+#seeds .seed{color:var(--px-ink);background:var(--px-paper);border-radius:3px;box-shadow:inset 0 0 0 2px var(--px-outline),3px 3px 0 var(--px-shadow)}
+#seeds .seed.on{color:var(--px-ink);background:var(--px-pink-soft);box-shadow:inset 0 0 0 3px var(--px-pink-strong),3px 3px 0 var(--px-shadow)}
+#seeds .seed .p{color:var(--px-muted)}
+.seed .cqbadge{color:#fff5fb;background:var(--px-pink-strong);border-radius:2px;box-shadow:2px 2px 0 var(--px-shadow)}
+.pantryItem{color:var(--px-ink);border-radius:3px}
+.potCell{color:var(--px-outline);border-color:var(--px-outline-light);border-radius:3px;box-shadow:inset 0 0 0 1px rgba(120,59,110,.12)}
+.potCell.has{color:var(--px-ink);background:var(--px-paper-deep)}
+.potPick,.potRef,.outSlot,.dishBtn{border-radius:3px}
+.dishBtn{color:var(--px-ink);background:var(--px-paper);box-shadow:inset 0 0 0 2px var(--px-outline),3px 3px 0 var(--px-shadow)}
+.dishBtn.on,.potGo{color:var(--px-ink);background:var(--px-pink);box-shadow:inset 0 0 0 2px #ffeaf4,3px 3px 0 var(--px-pink-strong)}
+.potGo:disabled,.craftCollect:disabled,.buyb:disabled,.catb:disabled{color:#a895a8;background:#eadde7;box-shadow:inset 0 0 0 2px #b9a6b7,2px 2px 0 #9b8398}
+.seed,.sellall,.buyb,.catb,.potGo,.craftCollect,.toggle{border-radius:3px}
+.sellall,.buyb{color:var(--px-ink);background:var(--px-paper);box-shadow:inset 0 0 0 2px var(--px-outline),3px 3px 0 var(--px-shadow)}
+.catb,.craftCollect{color:#fff2f9;background:var(--px-plum);box-shadow:inset 0 0 0 2px var(--px-outline-light),3px 3px 0 var(--px-plum-dark)}
+.catb:active:not(:disabled),.craftCollect:active:not(:disabled){box-shadow:inset 0 0 0 2px var(--px-outline-light),1px 1px 0 var(--px-plum-dark)}
+.toggle{color:var(--px-ink);background:var(--px-paper);box-shadow:inset 0 0 0 2px var(--px-outline),2px 2px 0 var(--px-shadow)}
+.toggle.on{background:var(--px-pink);color:var(--px-ink)}
+.guideItem{color:var(--px-ink);background:var(--px-paper)}
+.panel{color:var(--px-ink);background:var(--px-paper);border-radius:3px;box-shadow:inset 0 0 0 3px var(--px-outline),4px 4px 0 var(--px-shadow)}
+.panel .ttl{color:var(--px-plum)}
+.panel .hintline{color:var(--px-muted)}
+.toast{color:#fff1f8;background:var(--px-plum-dark);border:2px solid var(--px-pink);border-radius:3px;box-shadow:3px 3px 0 var(--px-shadow)}
+.poopWarn.bad{color:#ae3f69}
+.dishPop.on{border-radius:3px;box-shadow:inset 0 0 0 2px var(--px-outline),3px 3px 0 var(--px-shadow)}
+.rail-badge.is-on{background:var(--px-gold);color:var(--px-plum-dark)}
+/* End of visual-only pixel skin. */
 </style>
 </head>
 <body>
