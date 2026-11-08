@@ -824,14 +824,14 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 .plot.locked{border:0;border-radius:0;background-color:transparent;background-image:var(--ui-soil);background-position:center;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;box-shadow:none;opacity:.9}
 .plot .farmIcon{image-rendering:pixelated}
 .prog,.craftNow .cq,.fullBar{border-radius:0}
- #seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;margin:0 0 10px;padding:5px;background:#fff8fc;border:3px solid var(--px-outline)}
+ #seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;margin:0 0 10px;padding:5px;background:#ffffff;border:2px solid #e2a7c6}
 /* 标题栏：2026-11-09 用户指定「长框当标题栏」——底色从深紫纯色换成 图标/ui/farm-title-bar.png
    （就是从她给的那张粉色长框上裁下来的一条：深紫顶边 + 白边 + 粉色虚线装饰带）。
    粉底上白字看不清，所以字色改成深紫，并加一层浅色投影提亮。
    order:-1 让它永远排在第一行（商品按钮带 order，见下面的 #shop .buyb 和 #fertb）。 */
 /* 标题「🛒 商店」：2026-11-09 用户要求「这俩字不要加框，框加在外面」——
    所以它现在就是一行纯文字，没有任何边框和底色；框由下面的 #seeds 承担。 */
-#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:26px;padding:2px 4px;color:#6b1f4d;background:none;border:0;font-size:14px;font-weight:800;letter-spacing:1px;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:28px;padding:2px 6px;color:#5c2746;background:none;border:0;border-left:4px solid #ef9fc6;font-size:15px;font-weight:800;letter-spacing:1px}
 /* ============================================================
    12 个格子统一规格（8 个种子 + 施肥桶 + 小鸡 / 牛 / 猪）
    —— 2026-11-09 用户要求：「这 12 个 UI 框统一一下，都要下面那四个的框，都要正方形」
@@ -875,8 +875,8 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 #fertb .fertilizer-icon{width:54px;height:54px}
 /* 名字：一行，不许换行，太长就省略 */
 #seeds .seed .info{display:contents;width:100%;min-width:0}
-#seeds .seed .n{font-size:11px;line-height:1;white-space:nowrap;max-width:100%}
-#shop .buyb .bn{flex:none;min-width:0;font-size:10px;line-height:1.1;white-space:nowrap;max-width:100%}
+#seeds .seed .n{font-size:12px;line-height:1;font-weight:800;color:#5c2746;white-space:nowrap;max-width:100%}
+#shop .buyb .bn{flex:none;min-width:0;font-size:10px;line-height:1.05;font-weight:800;color:#5c2746;white-space:nowrap;max-width:100%}
 .seed .cqbadge{border-radius:0}
 .rail{width:var(--rail-w);gap:6px;padding:8px 4px;background:var(--px-plum);border-right:2px solid var(--px-outline);box-shadow:2px 0 0 var(--px-shadow)}
 .rail-btn{width:42px;height:42px;gap:0;border:7px solid transparent;border-image:var(--ui-purple32) 8/7px/0 stretch;border-radius:0;color:#fff2f9;background:var(--px-plum2);box-shadow:none;font-family:inherit}
@@ -1008,9 +1008,9 @@ h1{border-radius:10px;background:linear-gradient(180deg,#7b3163,#54204a)}
 
 /* ⑧ 卡片内部：底色从浅粉提到接近白（例图里的卡片都是白卡，才显得干净），
       底栏压成更淡的粉片，三层粉色就不会叠在一起发闷。小卡结构没动。 */
-#seeds .seed,#shop .buyb,#fertb{background:#fffbfe}
+#seeds .seed,#shop .buyb,#fertb{background:#ffffff}
 #seeds .seed.on{background:#ffe9f4}
-#seeds .seed .p,#shop .buyb .bp,#fertb .fertilizer-price{background:#ffeaf4;color:#a34f7e}
+#seeds .seed .p,#shop .buyb .bp,#fertb .fertilizer-price{background:#fff0f7;color:#b35c88}
 
 /* ⑨ 卡片之间的空隙压到最小 —— 用户要的是「留白变少」，不是把框做小 */
 </style>
