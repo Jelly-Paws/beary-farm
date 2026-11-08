@@ -830,7 +830,7 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 /* 商店大框：2026-11-09 用户点名要用 exec-e72f344f 那张粉色长框。
    这张素材我在做标题栏时已经裁好存成 图标/ui/farm-title-bar.png（1056×299，去掉了外面那圈透明边），
    这里直接拿它做九宫格边框，slice 取 40（素材缩放后边框厚度约 38～45 像素）。 */
-#seeds{position:relative;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:30px 0 8px;padding:6px;background:transparent;border:6px solid transparent;border-image:url("图标/ui/farm-title-bar.png") 40 40 40 40 fill/6px/0 stretch}
+#seeds{position:relative;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:30px 0 8px;padding:6px;background:transparent;border:6px solid transparent;border-image:url("图标/ui/farm-title-bar.png") 40 40 40 40/6px/0 stretch}
 /* 标题栏：2026-11-09 用户指定「长框当标题栏」——底色从深紫纯色换成 图标/ui/farm-title-bar.png
    （就是从她给的那张粉色长框上裁下来的一条：深紫顶边 + 白边 + 粉色虚线装饰带）。
    粉底上白字看不清，所以字色改成深紫，并加一层浅色投影提亮。
