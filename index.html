@@ -828,8 +828,12 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 .oslot{width:38px;height:38px;border:2px solid var(--px-pink2);border-radius:0;background:#fff1f8;box-shadow:2px 2px 0 var(--px-shadow);font-size:20px}
 .oslot.wait{border:2px dashed #a895a8;background:#eadde7;box-shadow:none}
 #trash{border-radius:0}
-#shop{margin-top:4px;padding:6px;background:#fff0f7;border:8px solid transparent;border-image:var(--ui-pink64) 10 fill/10px/0 stretch}
-#shop::before{content:"🛒 商店";display:block;margin:0 0 6px;padding:4px 6px;color:#fff1f8;background:var(--px-plum);font-size:13px;font-weight:800;letter-spacing:1px}
+#shop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 0 10px;padding:6px;background:#fff0f7;border:8px solid transparent;border-image:var(--ui-pink64) 10 fill/10px/0 stretch}
+#shop::before{content:"🛒 商店";display:block;grid-column:1/-1;margin:0 0 2px;padding:4px 6px;color:#fff1f8;background:var(--px-plum);font-size:13px;font-weight:800;letter-spacing:1px}
+#shop .buyb{min-width:0;min-height:76px;padding:5px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;font-size:9px;line-height:1.15}
+#shop .buyb .be{font-size:22px;line-height:1}
+#shop .buyb .bn{flex:none;min-width:0;font-size:9px;white-space:nowrap}
+#shop .buyb .bp{font-size:9px;white-space:nowrap}
 #shop .buyb,.buyb,.catb,.craftCollect,.potGo,.sellall,.toggle{border-radius:0}
 #shop .buyb,.buyb,.sellall,.toggle,.guideItem,.anbox,.anrow,.potRef,.dishBtn,.potCell,.outSlot,.craftNow,.panel{border-radius:0}
 #shop .buyb,.buyb,.sellall{background:#fff4fa;border:6px solid transparent;border-image:var(--ui-pink64) 10 fill/7px/0 stretch;box-shadow:none;color:var(--px-ink)}
@@ -975,13 +979,13 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
          没粑粑的时候 JS 会把它整个藏起来（display:none），一点地方都不占。 -->
     <div class="poopWarn" id="poopWarn"></div>
     <div class="seeds" id="seeds"></div>
+    <div id="shop"></div>
     <div class="secttl">🐾 牧场</div>
     <!-- 🪣 施肥 / 🧸 请小京：2026-09-27 用户要求"施肥按钮和小京帮种按钮上移"，
          所以从牧场区【最下面】搬到了牧场区【最上面】（标题下面第一件事）。 -->
     <button class="catb" id="fertb" style="margin-top:4px;background:#b6d99a;box-shadow:0 4px 0 #9bc47e">🪣 施肥</button>
     <button class="catb" id="bearb" style="margin-top:9px"></button>
     <div class="anbox" id="anBox"></div>
-    <div id="shop"></div>
     <!-- 「×N 让卖出去的东西多赚 X%」—— 2026-09-24 从页面顶部搬到这里 -->
     <div class="buff" id="buff"></div>
     <button class="toggle" id="auto"></button>
