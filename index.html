@@ -109,14 +109,18 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 .tab:active{transform:translateY(2px)}
 .hide{display:none}
 /* 分区小标题（🐾 牧场 / 🧺 食材 / 📖 菜谱 等）：2026-11-09 也换成同一条粉色长框。 */
-.secttl{display:block;font-size:12px;font-weight:800;color:#6b1f4d;margin:6px 0 7px;padding:1px 10px;letter-spacing:1px;border:5px solid transparent;border-image:url("图标/ui/farm-title-bar.png") 14 15 14 15 fill/5px/0 stretch}
+/* 分区小标题（食材 / 菜谱 等）同样是纯文字，不加框 —— 和商店标题保持一致。 */
+.secttl{display:block;font-size:12px;font-weight:800;color:#7a3a63;margin:6px 0 7px;padding:0 4px;letter-spacing:1px;background:none;border:0}
 .field{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .plot{position:relative;aspect-ratio:1/1;border:0;border-radius:18px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1;
   background:#e4d3ba;box-shadow:inset 0 -6px 0 rgba(0,0,0,.07);overflow:hidden;
   transition:transform .12s ease;padding:0;color:#8d7565}
 .plot:active{transform:scale(.94)}
+/* 空地格子：2026-11-09 美化 —— 中间的「＋」换成小芽，格子不至于空得发慌。
+   小芽用的是页面里已有的 --ui-sprout 素材，不新增文件。 */
 .plot.empty{color:#c4ae95;font-size:26px}
+.plot.empty .em{display:block;width:46px;height:46px;font-size:0;background:var(--ui-sprout) center/contain no-repeat;margin:0 auto;opacity:.9}
 .plot.growing{background:#d3e9bd}
 .plot.ready{background:#ffefae}
 .plot.ready .em{display:block;animation:bob .8s ease-in-out infinite}
@@ -126,6 +130,8 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
    这里只定文字：价格字改成浅粉白，压在深棕土上才看得清。 */
 .plot.locked{color:#ffdcec;font-size:12px;font-weight:700;text-shadow:0 1px 0 rgba(60,20,40,.55);
   flex-direction:column;gap:3px}
+/* 作物图标放大到格子的六成左右（2026-11-09 美化），成熟和生长中都用这个字号。 */
+.plot.growing,.plot.ready{font-size:64px}
 .plot .farmIcon{width:1em;height:1em}
 .plot .poop{position:absolute;right:1px;bottom:1px;font-size:19px;line-height:1;z-index:2;
   filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
@@ -807,23 +813,25 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
       栅栏那张已经裁掉上下空白，只留木条本身，所以 background-size 用 100% auto。
    ⚠️ 草坪不是铺到贴边：它四边各缩进 18px（手机 14px），那圈缩进就是露出来的棋盘格边，
       照用户给的目标图（711×741 那张）对齐。栅栏上方也留 16px 的棋盘格。 */
-.field{position:relative;isolation:isolate;gap:14px;margin:0 0 9px;padding:96px 12px 12px;background-color:#f4e3f1;border:0}
+.field{position:relative;isolation:isolate;gap:9px;margin:0 0 9px;padding:96px 12px 12px;background-color:#f4e3f1;border:0}
 .field::before,.field::after{content:"";position:absolute;inset:0;pointer-events:none}
 /* ② 网格：粉色棋盘格平铺，压在草坪下面 */
 .field::before{z-index:0;background-image:url("图标/ui/farm-grid-checker.png");background-position:center top;background-size:768px 768px;background-repeat:repeat;opacity:.85}
 /* ③ 草坪（下层，四边各缩 18px）+ ④ 栅栏（上层，距顶 16px）：写在前面的背景在最上面 */
 .field::after{z-index:0;background-image:url("图标/ui/farm-fence-top.png"),url("图标/ui/farm-grass.png");background-position:center 16px,center center;background-size:calc(100% - 36px) auto,calc(100% + 20px) calc(100% + 20px);background-repeat:no-repeat,no-repeat}
-.plot{position:relative;z-index:1;border:0;border-radius:0;background-color:transparent;background-image:var(--ui-soil);background-position:center;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;box-shadow:none}
+.plot{position:relative;z-index:1;border:0;border-radius:0;background-color:transparent;background-image:var(--ui-soil);background-position:center;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;box-shadow:inset 0 -6px 0 rgba(74,34,22,.28),inset 0 3px 0 rgba(255,240,225,.12)}
 .plot.empty,.plot.growing,.plot.ready{background-color:transparent;background-image:var(--ui-soil)}
 .plot.locked{border:0;border-radius:0;background-color:transparent;background-image:var(--ui-soil);background-position:center;background-size:100% 100%;background-repeat:no-repeat;image-rendering:pixelated;box-shadow:none;opacity:.9}
 .plot .farmIcon{image-rendering:pixelated}
 .prog,.craftNow .cq,.fullBar{border-radius:0}
-#seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:0 0 10px;padding:6px;background:#fff0f7;border:8px solid transparent;border:2px solid var(--px-outline)}
+ #seeds{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;margin:0 0 10px;padding:5px;background:#fff8fc;border:3px solid var(--px-outline)}
 /* 标题栏：2026-11-09 用户指定「长框当标题栏」——底色从深紫纯色换成 图标/ui/farm-title-bar.png
    （就是从她给的那张粉色长框上裁下来的一条：深紫顶边 + 白边 + 粉色虚线装饰带）。
    粉底上白字看不清，所以字色改成深紫，并加一层浅色投影提亮。
    order:-1 让它永远排在第一行（商品按钮带 order，见下面的 #shop .buyb 和 #fertb）。 */
-#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:30px;padding:1px 10px;color:#6b1f4d;border:6px solid transparent;border-image:url("图标/ui/farm-title-bar.png") 14 15 14 15 fill/6px/0 stretch;font-size:13px;font-weight:800;letter-spacing:1px}
+/* 标题「🛒 商店」：2026-11-09 用户要求「这俩字不要加框，框加在外面」——
+   所以它现在就是一行纯文字，没有任何边框和底色；框由下面的 #seeds 承担。 */
+#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:26px;padding:2px 4px;color:#6b1f4d;background:none;border:0;font-size:14px;font-weight:800;letter-spacing:1px;text-shadow:0 1px 0 rgba(255,255,255,.7)}
 /* ============================================================
    12 个格子统一规格（8 个种子 + 施肥桶 + 小鸡 / 牛 / 猪）
    —— 2026-11-09 用户要求：「这 12 个 UI 框统一一下，都要下面那四个的框，都要正方形」
@@ -840,9 +848,9 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 #fertb{
   position:relative;
   min-width:0;min-height:0;width:100%;aspect-ratio:1/1;
-  margin:0;padding:6px 3px 17px;
+  margin:0;padding:1px 1px 14px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:1px;text-align:center;line-height:1.05;
+  gap:0;text-align:center;line-height:1.02;
   color:var(--px-ink);background:#fff4fa;
   border:6px solid transparent;
   border-image:url("图标/ui/store-product-frame.png") 23 23 23 23 fill/6px/0 stretch;
@@ -861,14 +869,14 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
   background:#fce3ef;box-shadow:inset 0 0 0 1px #f4b6d2;border-radius:2px;
 }
 /* 三种图标用同一套尺寸，看上去一般大 */
-#seeds .seed .e{font-size:30px;line-height:1}
-#seeds .seed .farmIcon{width:30px;height:30px;image-rendering:pixelated}
-#shop .buyb .animal-icon{width:30px;height:30px}
-#fertb .fertilizer-icon{width:36px;height:36px}
+#seeds .seed .e{font-size:55px;line-height:1}
+#seeds .seed .farmIcon{width:55px;height:55px;image-rendering:pixelated}
+#shop .buyb .animal-icon{width:50px;height:50px}
+#fertb .fertilizer-icon{width:54px;height:54px}
 /* 名字：一行，不许换行，太长就省略 */
 #seeds .seed .info{display:contents;width:100%;min-width:0}
-#seeds .seed .n{font-size:10px;line-height:1.1;white-space:nowrap;max-width:100%}
-#shop .buyb .bn{flex:none;min-width:0;font-size:9px;line-height:1.1;white-space:nowrap;max-width:100%}
+#seeds .seed .n{font-size:11px;line-height:1;white-space:nowrap;max-width:100%}
+#shop .buyb .bn{flex:none;min-width:0;font-size:10px;line-height:1.1;white-space:nowrap;max-width:100%}
 .seed .cqbadge{border-radius:0}
 .rail{width:var(--rail-w);gap:6px;padding:8px 4px;background:var(--px-plum);border-right:2px solid var(--px-outline);box-shadow:2px 0 0 var(--px-shadow)}
 .rail-btn{width:42px;height:42px;gap:0;border:7px solid transparent;border-image:var(--ui-purple32) 8/7px/0 stretch;border-radius:0;color:#fff2f9;background:var(--px-plum2);box-shadow:none;font-family:inherit}
@@ -922,7 +930,7 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 @media(max-width:430px){
  body{padding-right:5px;padding-left:calc(var(--rail-w) + 5px)}
  .bar{gap:3px}.bar .pill{font-size:10px;min-height:38px}
- .field{gap:10px;padding:74px 7px 8px}
+ .field{gap:7px;padding:74px 7px 8px}
  /* 手机上草坪四边缩进 14px，栅栏距顶 12px（和上面那套 18px / 16px 同比例） */
  .field::after{background-position:center 12px,center center;background-size:calc(100% - 28px) auto,calc(100% + 16px) calc(100% + 16px)}
  #seeds{gap:3px;padding:4px;border-width:6px}
@@ -964,6 +972,47 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
     ⚠️ 别再往这里加 min-height 或 border-image —— 会把正方形和统一框改坏。 */
  #fertb .poop-coin,#fertb .poop-mark{width:14px;height:14px;background-size:14px 14px}
 }
+/* ============================================================
+   2026-11-09 整体美化层（纯 CSS：渐变 / 圆角 / 投影 / 层次）
+   用户原话：「你整体美化一下吧。用点技术活吧不要天天贴贴图了。
+              看看我的例图里面多自然啊。」「小卡不要换」
+   ——— 所以这里【不新增任何素材、不改 12 张小卡的结构】，
+       只动整页底色、容器圆角、投影、卡片内的底色明度。
+   ⚠️ 很多按钮是靠 border-image 画框的，border-image 会吃掉 border-radius，
+      所以那些元件的圆角要靠 filter:drop-shadow() 补层次，而不是加 border-radius。
+   ============================================================ */
+
+/* ① 整页底色：柔和粉色从上到下的渐变，替掉原来那块死板的灰米色 */
+body{background:linear-gradient(180deg,#fdeef7 0%,#f9e6f3 45%,#f4dcEF 100%) fixed}
+
+/* ② 商店那一整块：圆角 + 一层淡淡的落地投影，不再像一块贴死的方块 */
+#seeds{border-radius:14px;box-shadow:0 5px 0 rgba(118,42,92,.10),0 1px 0 rgba(255,255,255,.75) inset}
+#seeds::before{border-radius:10px;box-shadow:inset 0 2px 0 rgba(255,255,255,.55)}
+
+/* ③ 田地：圆角 + 投影。草坪和栅栏都在背景层里，会跟着圆角一起收进去 */
+.field{border-radius:16px;box-shadow:0 5px 0 rgba(118,42,92,.10)}
+
+/* ④ 顶部标题条：圆角 + 一层紫色渐变，不再是纯色块 */
+h1{border-radius:10px;background:linear-gradient(180deg,#7b3163,#54204a)}
+
+/* ⑤ 左侧导航栏：从纯色改成上浅下深的渐变，右边缘给个圆角 */
+.rail{background:linear-gradient(180deg,#76325f 0%,#54204a 100%);border-radius:0 12px 12px 0}
+
+/* ⑥ 抽屉与面板：圆角，别那么板 */
+.drawer{border-radius:0 14px 14px 0}
+.panel{border-radius:14px}
+
+/* ⑦ 靠 border-image 画框的那些元件：加投影补层次（圆角对它们无效，投影有效） */
+.rail-btn,.tab,.bar .pill,#seeds .seed,#shop .buyb,#fertb{filter:drop-shadow(0 2px 1px rgba(118,42,92,.16))}
+.rail-btn:active,#seeds .seed:active,#shop .buyb:active{filter:drop-shadow(0 0 0 rgba(0,0,0,0))}
+
+/* ⑧ 卡片内部：底色从浅粉提到接近白（例图里的卡片都是白卡，才显得干净），
+      底栏压成更淡的粉片，三层粉色就不会叠在一起发闷。小卡结构没动。 */
+#seeds .seed,#shop .buyb,#fertb{background:#fffbfe}
+#seeds .seed.on{background:#ffe9f4}
+#seeds .seed .p,#shop .buyb .bp,#fertb .fertilizer-price{background:#ffeaf4;color:#a34f7e}
+
+/* ⑨ 卡片之间的空隙压到最小 —— 用户要的是「留白变少」，不是把框做小 */
 </style>
 </head>
 <body>
