@@ -128,7 +128,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 /* 锁定的地块：2026-11-09 用户要求「直接加锁头 emoji，不要变成空白」。
    ⚠️ 田地底色后来从深棕换成了浅粉（千禧风配色），所以字色必须用深紫，
       再用一层白色投影提亮 —— 原来的浅粉白字压在浅粉底上完全看不见。 */
-.plot.locked{color:#6b2050;font-size:14px;font-weight:800;text-shadow:0 1px 0 rgba(255,255,255,.9);
+.plot.locked{color:#904c73;font-size:14px;font-weight:800;text-shadow:0 1px 0 rgba(255,255,255,.9);
   flex-direction:column;gap:2px}
 /* 作物图标放大到格子的六成左右（2026-11-09 美化），成熟和生长中都用这个字号。 */
 .plot.growing,.plot.ready{font-size:46px}
@@ -768,7 +768,7 @@ h1{font-size:19px;text-align:center;margin:4px 0 3px;color:#c96a8c;letter-spacin
 :root{
  --rail-w:56px;
  --px-bg:#f7e3ef;--px-paper:#fff4fa;--px-paper2:#f7d8e9;
- --px-plum:#4a1d4d;--px-plum2:#66305f;--px-outline:#793c70;
+ --px-plum:#904c73;--px-plum2:#a4618a;--px-outline:#904c73;
  --px-pink:#ee91bd;--px-pink2:#d86fa6;--px-shadow:#c36b9a;
  --px-ink:#361b39;--px-muted:#9b7c91;--px-green:#96bd54;
  --ui-purple32:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABJUlEQVR4nGNgGGDAiE3wzcXv/7kEWaluGZccC4Z9jOgWw9iXjl6jquUWPvpYHcKIbjnIYsc4I6IMvbb/AUmOePn4HdwhMEcwIjsAZLm4rBCYr+WugLBoJ2kWEQKK+rKoDngD9T0o3u9ffMxQXlHJQAvQ2dEOd0B1WhtD/446Rhbk+AYFD9jnFQwM7KwcVLX85+8fcDbIkzDAxDDAgGnQOeAalRMcyQ6gN2Ciu42jDhjUUXAfqYAYEAcMBGAaEFtHHYAEmBgGGDCNOoBhNAoGGLCgN5thrWLkNhy1wZypi+FsRhhj37Sz4JYxzAG0BCAHgFrEIDZKCMBCgVYOAZk9d8ECBjEhUexds33QUKAFAFkMA0tPTcbsmjEggWizXJo4BNniQQMAo5tfjb7lsEQAAAAASUVORK5CYII=");
@@ -831,7 +831,7 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
    order:-1 让它永远排在第一行（商品按钮带 order，见下面的 #shop .buyb 和 #fertb）。 */
 /* 标题「🛒 商店」：2026-11-09 用户要求「这俩字不要加框，框加在外面」——
    所以它现在就是一行纯文字，没有任何边框和底色；框由下面的 #seeds 承担。 */
-#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:28px;padding:2px 6px;color:#5c2746;background:none;border:0;border-left:4px solid #ef9fc6;font-size:15px;font-weight:800;letter-spacing:1px}
+#seeds::before{content:"🛒 商店";order:-1;grid-column:1/-1;min-height:28px;padding:2px 6px;color:#904c73;background:none;border:0;border-left:4px solid #ef9fc6;font-size:15px;font-weight:800;letter-spacing:1px}
 /* ============================================================
    12 个格子统一规格（8 个种子 + 施肥桶 + 小鸡 / 牛 / 猪）
    —— 2026-11-09 用户要求：「这 12 个 UI 框统一一下，都要下面那四个的框，都要正方形」
@@ -875,8 +875,8 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
 #fertb .fertilizer-icon{width:54px;height:54px}
 /* 名字：一行，不许换行，太长就省略 */
 #seeds .seed .info{display:contents;width:100%;min-width:0}
-#seeds .seed .n{font-size:14px;line-height:1;font-weight:800;color:#6b2050;white-space:nowrap;max-width:100%}
-#shop .buyb .bn{flex:none;min-width:0;font-size:11px;line-height:1.05;font-weight:800;color:#6b2050;white-space:nowrap;max-width:100%}
+#seeds .seed .n{font-size:14px;line-height:1;font-weight:800;color:#904c73;white-space:nowrap;max-width:100%}
+#shop .buyb .bn{flex:none;min-width:0;font-size:11px;line-height:1.05;font-weight:800;color:#904c73;white-space:nowrap;max-width:100%}
 .seed .cqbadge{border-radius:0}
 .rail{width:var(--rail-w);gap:6px;padding:8px 4px;background:var(--px-plum);border-right:2px solid var(--px-outline);box-shadow:2px 0 0 var(--px-shadow)}
 .rail-btn{width:46px;height:46px;gap:0;border:6px solid transparent;border-image:var(--ui-purple32) 8/6px/0 stretch;border-radius:0;color:#fff2f9;background:var(--px-plum2);box-shadow:none;font-family:inherit}
@@ -996,12 +996,12 @@ body{background-color:#fdeef7;background-image:url("图标/ui/page-checker.png")
 .field{border-radius:16px;box-shadow:0 5px 0 rgba(118,42,92,.10)}
 
 /* ④ 顶部标题条：圆角 + 一层紫色渐变，不再是纯色块 */
-h1{border-radius:10px;background:linear-gradient(180deg,#7b3163,#54204a)}
+h1{border-radius:10px;background:linear-gradient(180deg,#904c73,#713c5b)}
 
 /* ⑤ 左侧导航栏：上浅下深的渐变 + 右边缘圆角。
    2026-11-09 用户说「底色太红了不要那么红」—— 把红分量压下来、往紫和蓝推，
-   原来是紫红 #76325f→#54204a，现在是中性紫 #5f3160→#3f2040。 */
-.rail{background:linear-gradient(180deg,#5f3160 0%,#3f2040 100%);border-radius:0 12px 12px 0}
+   原来是紫红 #76325f→#713c5b，现在是中性紫 #904c73→#713c5b。 */
+.rail{background:linear-gradient(180deg,#904c73 0%,#713c5b 100%);border-radius:0 12px 12px 0}
 
 /* ⑥ 抽屉与面板：圆角，别那么板 */
 .drawer{border-radius:0 14px 14px 0}
@@ -1025,13 +1025,13 @@ h1{border-radius:10px;background:linear-gradient(180deg,#7b3163,#54204a)}
    ⚠️ 数据条原来的框是 图标/ui/farm-data-frame.png（border-image），
       这里必须显式写 border-image:none 才能换成细彩边，否则换不动。
    ============================================================ */
-.topbox{margin:0 0 7px;padding:4px;border-radius:12px;background:linear-gradient(180deg,#f9dcee 0%,#f2cbe3 100%);border:2px solid #6b1f4d;box-shadow:0 3px 0 rgba(107,31,77,.20)}
+.topbox{margin:0 0 7px;padding:4px;border-radius:12px;background:linear-gradient(180deg,#f9dcee 0%,#f2cbe3 100%);border:2px solid #904c73;box-shadow:0 3px 0 rgba(107,31,77,.20)}
 .topbox h1{margin:0 0 4px}
 .topbox .bar{margin:0}
 /* 四个数据条：2026-11-09 用户说「最上面四个数值的框太高了，ui 和字太小了」——
    高度从 42 压到 28，字号提到 15，图标放大到 20，边框统一成深紫细线（照参考图的配色），
    不再一条一个颜色（金/紫/橙/粉四色是上一版，和参考图不搭，已去掉）。 */
-.topbox .bar .pill{min-height:28px;padding:2px 4px;border:2px solid #6b2050;border-image:none;border-radius:7px;background:#fff;box-shadow:none;color:#6b2050;font-weight:800;font-size:15px}
+.topbox .bar .pill{min-height:28px;padding:2px 4px;border:2px solid #904c73;border-image:none;border-radius:7px;background:#fff;box-shadow:none;color:#904c73;font-weight:800;font-size:15px}
 .topbox .bar .pill .farmIcon{width:20px;height:20px}
 .topbox .bar{gap:4px}
 /* ============================================================
