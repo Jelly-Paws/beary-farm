@@ -983,8 +983,10 @@ h1::after{content:"━　□　×";position:absolute;right:7px;top:50%;transform
       所以那些元件的圆角要靠 filter:drop-shadow() 补层次，而不是加 border-radius。
    ============================================================ */
 
-/* ① 整页底色：柔和粉色从上到下的渐变，替掉原来那块死板的灰米色 */
-body{background:linear-gradient(180deg,#fdeef7 0%,#f9e6f3 45%,#f4dcEF 100%) fixed}
+/* ① 整页底色：2026-11-09 用户给了 pink_checker_100x200.png 并说「这个铺满」——
+   换成浅紫粉棋盘格平铺。素材每格 10 像素、原尺寸 1000×2000，直接按原尺寸铺，格子不会糊。
+   ⚠️ 那张图是「浅紫 + 全透明」交替的，所以底下必须垫一层粉色底色，否则会露出页面白底。 */
+body{background-color:#fdeef7;background-image:url("图标/ui/page-checker.png");background-size:1000px 2000px;background-repeat:repeat}
 
 /* ② 商店那一整块：圆角 + 一层淡淡的落地投影，不再像一块贴死的方块 */
 #seeds{border-radius:14px;box-shadow:0 5px 0 rgba(118,42,92,.10),0 1px 0 rgba(255,255,255,.75) inset}
