@@ -1013,17 +1013,34 @@ h1{border-radius:10px;background:linear-gradient(180deg,#7b3163,#54204a)}
 #seeds .seed .p,#shop .buyb .bp,#fertb .fertilizer-price{background:#fff0f7;color:#b35c88}
 
 /* ⑨ 卡片之间的空隙压到最小 —— 用户要的是「留白变少」，不是把框做小 */
-</style>
+
+/* ============================================================
+   顶部「上框」—— 2026-11-09 用户指定，照她给的参考图做：
+   外层一个浅粉底 + 深紫描边的圆角框，框里是标题条和四个白底数据条。
+   ⚠️ 数据条原来的框是 图标/ui/farm-data-frame.png（border-image），
+      这里必须显式写 border-image:none 才能换成细彩边，否则换不动。
+   ============================================================ */
+.topbox{margin:0 0 9px;padding:6px;border-radius:12px;background:linear-gradient(180deg,#f9dcee 0%,#f2cbe3 100%);border:2px solid #6b1f4d;box-shadow:0 3px 0 rgba(107,31,77,.20)}
+.topbox h1{margin:0 0 6px}
+.topbox .bar{margin:0}
+/* 四个数据条：白底、圆角、各自一条细彩边（金币金 / 钻石紫 / 蜂蜜橙 / 小熊粉） */
+.topbox .bar .pill{border:2px solid #e8b53f;border-image:none;border-radius:8px;background:#fff;padding:5px 4px;box-shadow:0 2px 0 rgba(107,31,77,.12);color:#5c2746;font-weight:800}
+.topbox .bar .pill:nth-child(2){border-color:#8f7ae0}
+.topbox .bar .pill:nth-child(3){border-color:#f0a23c}
+.topbox .bar .pill:nth-child(4){border-color:#e18bb4}</style>
 </head>
 <body>
 <div class="wrap">
-  <h1>小熊小农场</h1>
-  <div class="sub">种地 · 喂动物 · 捡粑粑 · 做饭 · 喂小京</div>
-  <div class="bar">
-    <div class="pill">🪙 <span id="coins">0</span></div>
-    <div class="pill tap" id="gemsPill">💎 <span id="gems">0</span></div>
-    <div class="pill"><img class="farmIcon" src="图标/material/honey.png" alt=""> <span id="honey">0</span></div>
-    <div class="pill">🧸 <span id="bears">0</span></div>
+  <!-- 顶部整块（标题 + 四个数据条）包进一个外框里 —— 2026-11-09 用户要求「我要这样的上框」，
+       照她那张参考图：外层一圈浅粉底 + 深紫描边，里面才是标题条和四个白底数据条。 -->
+  <div class="topbox">
+    <h1>小熊小农场</h1>
+    <div class="bar">
+      <div class="pill">🪙 <span id="coins">0</span></div>
+      <div class="pill tap" id="gemsPill">💎 <span id="gems">0</span></div>
+      <div class="pill"><img class="farmIcon" src="图标/material/honey.png" alt=""> <span id="honey">0</span></div>
+      <div class="pill">🧸 <span id="bears">0</span></div>
+    </div>
   </div>
   <!-- 粑粑警告在农场页田地下面；粑粑达到6坨时顶部农场标签会亮叹号。 -->
 
