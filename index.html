@@ -1310,7 +1310,7 @@ h1{border-radius:10px;background:linear-gradient(180deg,#904c73,#713c5b)}
 .rail-poop-count .poop-mark{display:block;width:16px;height:16px;background:var(--ui-poop-mark32) center/16px 16px no-repeat;image-rendering:pixelated}
 
 /* 手机上让主画面占满左侧导航栏右边的可用宽度，避免按高度限制而缩窄。 */
-@media(max-width:700px){body{width:100vw;overflow-x:hidden}.wrap{width:calc(100vw - var(--rail-w) - 12px);max-width:none;margin:0}.field{width:100%;grid-template-columns:repeat(4,minmax(0,1fr));min-width:0}.bar,.tabs,#seeds{width:100%;min-width:0}.bar .pill{min-width:0;overflow:hidden}}
+@media(max-width:700px){body{width:auto;overflow-x:hidden}.wrap{width:100%;max-width:none;margin:0}.field{width:100%;grid-template-columns:repeat(4,minmax(0,1fr));min-width:0}.bar,.tabs,#seeds{width:100%;min-width:0}.bar .pill{min-width:0;overflow:hidden}}
 .loot-bear{font-size:42px;line-height:1;margin:8px 0 12px}
 .loot-intro,.loot-text{font-size:13px;font-weight:800;line-height:1.5;color:#62375c}
 .loot-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;max-height:26vh;overflow:auto;margin:8px 0 12px;padding:6px;border:6px solid transparent;border-image:url("图标/ui/y2k-counter.png") 20 fill/6px/0 stretch;background:#fff4fa}
@@ -1372,7 +1372,8 @@ h1{border-radius:10px;background:linear-gradient(180deg,#904c73,#713c5b)}
  .pantryItem{min-width:0;border-width:5px;border-image-width:5px;font-size:20px}
  #pantry .farmIcon{width:20px;height:20px}
  #pot{grid-template-columns:repeat(3,minmax(0,1fr))}
- #pot .potCell{min-width:0}
+ #pot .potCell{min-width:0;font-size:26px}
+ #pot .potCell .farmIcon{width:26px;height:26px}
 }
 /* 极窄手机收紧双页签与锅格，避免按钮和九宫格撑开页面。 */
 @media(max-width:300px){
