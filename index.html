@@ -1328,6 +1328,50 @@ h1{border-radius:10px;background:linear-gradient(180deg,#904c73,#713c5b)}
 #feedGrid .seed .n{font-size:12px;line-height:1.1;color:#4b2145;white-space:nowrap}
 #feedGrid .seed .p{font-size:10px;line-height:1.2;color:#8e6585;white-space:normal;overflow-wrap:anywhere}
 #feedGrid .seed.poor{opacity:1}
+/* 9:18 手机视口：收紧页面留白，让农场与商店在常见手机高度内完整呈现。 */
+@media(max-width:700px){
+ body{padding:6px 8px 0 calc(var(--rail-w) + 7px)}
+ .topbox{margin-bottom:2px}
+ .topbox h1{border-width:6px;font-size:16px}
+ .topbox h1::before{width:20px;height:20px}
+ .topbox .bar .pill{border-width:5px}
+ .tabs{margin-bottom:1px}
+ .tabs .tab,.tabs .tab.on{min-height:34px;border-width:6px}
+ .field{gap:2px;margin-bottom:2px;padding-top:54px;padding-bottom:4px}
+ #seeds{gap:1px;margin:3px 0}
+ .foot{margin-top:6px}
+}
+/* 320px 窄屏仍保留四列：种子卡信息上下排，避免名称与价格互相挤压。 */
+@media(max-width:700px){
+ body{padding-top:2px}
+ .field{padding-bottom:2px}
+ #seeds{margin:2px 0}
+ .foot{margin-top:2px}
+}
+@media(max-width:350px){
+ #seeds .seed .info{display:flex;flex-direction:column;align-items:center;gap:0;width:100%;min-width:0}
+ #seeds .seed .e{font-size:20px}
+ #seeds .seed .farmIcon{width:20px;height:20px}
+ #seeds .seed .n{font-size:9px;line-height:1;max-width:100%}
+ #seeds .seed .p{width:100%;min-width:0;flex-wrap:wrap;justify-content:center;gap:1px;font-size:7px;line-height:1;white-space:normal;overflow-wrap:anywhere}
+ #seeds .seed .p .farmIcon{width:8px;height:8px}
+}
+@media(max-width:700px){
+ .foot{margin-top:1px}
+ #shop .buyb:disabled,#fertb:disabled{opacity:.82}
+}
+/* 手机底栏横排显示状态和三个存档操作，避免按钮文字窄到逐字换行。 */
+@media(max-width:700px){
+ .foot{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,max-content);align-items:center;gap:4px}
+ #tip{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+ .foot button{padding:2px 0;font-size:10px;white-space:nowrap}
+}
+/* 窄手机保留厨房六列，并缩小食材格内边框和图标，避免整页被浏览器自动缩放。 */
+@media(max-width:374px){
+ .pantry{grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+ .pantryItem{min-width:0;border-width:5px;border-image-width:5px;font-size:20px}
+ #pantry .farmIcon{width:20px;height:20px}
+}
 </style>
 </head>
 <body>
