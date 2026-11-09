@@ -1318,6 +1318,16 @@ h1{border-radius:10px;background:linear-gradient(180deg,#904c73,#713c5b)}
 .loot-item .farmIcon{width:22px;height:22px;object-fit:contain;image-rendering:pixelated}
 .loot-summary-legacy{display:block;line-height:1.6;overflow-wrap:anywhere}
 .loot-empty{margin:8px 0 12px;padding:10px;border:6px solid transparent;border-image:url("图标/ui/y2k-counter.png") 20 fill/6px/0 stretch;background:#fff4fa;color:#62375c;font-size:13px;font-weight:800;line-height:1.5}
+/* 小京投喂卡接入同款像素框；库存为零时保留图标清晰度。 */
+#feedGrid{gap:5px;margin-bottom:8px}
+#feedGrid .seed{min-width:0;min-height:62px;padding:4px;gap:5px;border:6px solid transparent;border-image:url("图标/ui/y2k-counter.png") 20 fill/6px/0 stretch;border-radius:0;background:#f8e6ef;box-shadow:none;color:#4b2145}
+#feedGrid .seed:active{transform:none;box-shadow:none}
+#feedGrid .seed .e{font-size:30px;line-height:1}
+#feedGrid .seed .farmIcon{width:30px;height:30px;object-fit:contain;image-rendering:pixelated}
+#feedGrid .seed .info{min-width:0;gap:2px}
+#feedGrid .seed .n{font-size:12px;line-height:1.1;color:#4b2145;white-space:nowrap}
+#feedGrid .seed .p{font-size:10px;line-height:1.2;color:#8e6585;white-space:normal;overflow-wrap:anywhere}
+#feedGrid .seed.poor{opacity:1}
 </style>
 </head>
 <body>
@@ -4540,4 +4550,3 @@ paint();
 </script>
 </body>
 </html>
-
